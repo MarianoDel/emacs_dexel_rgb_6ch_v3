@@ -21,7 +21,7 @@
 
 
 // Externals -------------------------------------------------------------------
-extern volatile unsigned short pwm_saved[];
+extern volatile unsigned short pwm_chnls[];
 
 // Globals ---------------------------------------------------------------------
 
@@ -222,6 +222,40 @@ void TF_All_Chain_For_Channel_1 (void)
     DAC_Output(0);
 
     TIM6_Init();
+    // TIM7_Init();
+
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    while (1)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            pwm_chnls[0] = i;
+            pwm_chnls[1] = 0;
+            pwm_chnls[2] = 0;
+            pwm_chnls[3] = 0;
+            pwm_chnls[4] = 0;
+            pwm_chnls[5] = 0;
+            Wait_ms(5);
+        }
+
+        for (int i = 255; i > 0; i--)
+        {
+            pwm_chnls[0] = i;
+            pwm_chnls[1] = 0;
+            pwm_chnls[2] = 0;
+            pwm_chnls[3] = 0;
+            pwm_chnls[4] = 0;
+            pwm_chnls[5] = 0;
+            Wait_ms(5);
+        }
+    }
+
 
     while (1)
     {
@@ -232,12 +266,12 @@ void TF_All_Chain_For_Channel_1 (void)
             // No filter
             PWM_Map_Post_Filter (i, &pwm_ena, &dac_ch);
             DAC_Output(dac_ch);
-            pwm_saved[0] = pwm_ena;
-            pwm_saved[1] = 0;
-            pwm_saved[2] = 0;
-            pwm_saved[3] = 0;
-            pwm_saved[4] = 0;
-            pwm_saved[5] = 0;
+            // pwm_saved[0] = pwm_ena;
+            // pwm_saved[1] = 0;
+            // pwm_saved[2] = 0;
+            // pwm_saved[3] = 0;
+            // pwm_saved[4] = 0;
+            // pwm_saved[5] = 0;
             
             PWM_Timer_Arrange_Vector ();
             Wait_ms(5);
@@ -247,18 +281,18 @@ void TF_All_Chain_For_Channel_1 (void)
         Wait_ms(2000);
 
         // Decending to Min
-        for (int i = 4095; i > 0; i++)
+        for (int i = 4095; i > 1; i--)
         {
             // All Chain for Channel 1
             // No filter
             PWM_Map_Post_Filter (i, &pwm_ena, &dac_ch);
             DAC_Output(dac_ch);
-            pwm_saved[0] = pwm_ena;
-            pwm_saved[1] = 0;
-            pwm_saved[2] = 0;
-            pwm_saved[3] = 0;
-            pwm_saved[4] = 0;
-            pwm_saved[5] = 0;
+            // pwm_saved[0] = pwm_ena;
+            // pwm_saved[1] = 0;
+            // pwm_saved[2] = 0;
+            // pwm_saved[3] = 0;
+            // pwm_saved[4] = 0;
+            // pwm_saved[5] = 0;
             
             PWM_Timer_Arrange_Vector ();
             Wait_ms(5);

@@ -352,12 +352,17 @@ void TIM6_Init(void)
         RCC_TIM6_CLK_ON;
 
     //--- Config ----//
-    TIM6->ARR = 2550; //2550 -> 2KHz
+    TIM6->CR1 |= TIM_CR1_URS;
+    // TIM6->ARR = 2550; //2550 -> 2KHz
+    // TIM6->ARR = 5110; //5110 -> 1KHz
+    TIM6->ARR = PWM_INT_MAX * PWM_TIMER_MULTIPLIER; //5110 -> 1KHz    
     TIM6->CNT = 0;
     TIM6->PSC = 13;
-    TIM6->EGR = TIM_EGR_UG;
+    // TIM6->PSC = 25;    
+    // TIM6->PSC = 71;
+    // TIM6->PSC = 719;
 
-    // Enable timer ver UDIS
+    // Int on Update
     TIM6->DIER |= TIM_DIER_UIE;
 
     //Habilito NVIC
@@ -378,49 +383,42 @@ void TIM6_Update (unsigned short new_val)
 
 void TIM6_IRQHandler (void)
 {
+    // avoid int reentrant
+    TIM6->SR = 0;
+    
+    CTRL_C2_ON;    
     PWM_Timer_Handler();
+    CTRL_C2_OFF;
+    
+    // if (CTRL_C2)
+    //     CTRL_C2_OFF;
+    // else
+    //     CTRL_C2_ON;
 
     // low the flag
     if (TIM6->SR & TIM_SR_UIF)
-        TIM6->SR &= ~(TIM_SR_UIF);
+        TIM6->SR &= ~(TIM_SR_UIF);    
 }
 
-// void TIM7_IRQHandler (void)	//1mS
-// {
 
-//     // Signal_TIM1MS ();
-
-//     //Led3Toggle();
-//     // flagMuestreo = 1;
-//     if (take_current_samples)
-//         take_current_samples--;
-
-//     // ADC_TIM7_ISR();
-//     //GTK_SIGNAL_TIME_1MS ();
-
-//     if (antenna_timer)
-//         antenna_timer--;
-
-//     if (antenna_info_timer)
-//         antenna_info_timer--;
-
-//     //Wait_ms
-//     if (timer_wait)
-//         timer_wait--;
-
-// #ifdef USE_BUZZER_ON_BOARD
-//     if (buzzer_timeout)
-//         buzzer_timeout--;
-// #endif
-
-//     if (timer_led)
-//         timer_led--;
+void TIM7_IRQHandler (void)	//1mS
+{
+    // avoid int reentrant
+    TIM7->SR = 0;
     
+    if (LED)
+        LED_OFF;
+    else
+        LED_ON;
+    // if (CTRL_C1)
+    //     CTRL_C1_OFF;
+    // else
+    //     CTRL_C1_ON;
         
-//     //bajar flag
-//     if (TIM7->SR & 0x01)	
-//         TIM7->SR = 0x00;
-// }
+    // low the flag
+    if (TIM7->SR & TIM_SR_UIF)
+        TIM7->SR &= ~(TIM_SR_UIF);    
+}
 
 // void TIM5_Init (void)
 // {
@@ -464,34 +462,34 @@ void TIM6_IRQHandler (void)
 
 
 // //inicializo el TIM7 para interrupciones
-// void TIM7_Init(void)
-// {
-//     // Counter Register (TIMx_CNT)
-//     // Prescaler Register (TIMx_PSC)
-//     // Auto-Reload Register (TIMx_ARR)
-//     // The counter clock frequency CK_CNT is equal to fCK_PSC / (PSC[15:0] + 1)
-//     // Quiero una interrupcion por ms CK_INT es 72MHz
+void TIM7_Init(void)
+{
+    // Counter Register (TIMx_CNT)
+    // Prescaler Register (TIMx_PSC)
+    // Auto-Reload Register (TIMx_ARR)
+    // The counter clock frequency CK_CNT is equal to fCK_PSC / (PSC[15:0] + 1)
+    // Quiero una interrupcion por ms CK_INT es 72MHz
 
-//     //---- Clk ----//
-//     if (!RCC_TIM7_CLK)
-//         RCC_TIM7_CLK_ON;
+    //---- Clk ----//
+    if (!RCC_TIM7_CLK)
+        RCC_TIM7_CLK_ON;
 
-//     //--- Config ----//
-//     TIM7->ARR = 1000;
-//     //TIM7->ARR = 100;
-//     TIM7->CNT = 0;
-//     TIM7->PSC = 71;
-//     TIM7->EGR = TIM_EGR_UG; //update registers
+    //--- Config ----//
+    TIM7->ARR = 1000;
+    //TIM7->ARR = 100;
+    TIM7->CNT = 0;
+    TIM7->PSC = 71;
+    TIM7->EGR = TIM_EGR_UG; //update registers
 
-//     // Enable timer ver UDIS
-//     TIM7->DIER |= TIM_DIER_UIE;
-//     TIM7->CR1 |= TIM_CR1_CEN;
+    // Enable timer ver UDIS
+    TIM7->DIER |= TIM_DIER_UIE;
+    TIM7->CR1 |= TIM_CR1_CEN;
 
-//     //Habilito NVIC
-//     //Interrupcion timer7.
-//     NVIC_EnableIRQ(TIM7_IRQn);
-//     NVIC_SetPriority(TIM7_IRQn, 10);    
-// }
+    //Habilito NVIC
+    //Interrupcion timer7.
+    NVIC_EnableIRQ(TIM7_IRQn);
+    NVIC_SetPriority(TIM7_IRQn, 10);    
+}
 
 
 void Wait_ms (unsigned short a)
@@ -505,17 +503,17 @@ void Wait_ms (unsigned short a)
 // Special Functions -----------------------------------------------------------
 void TIM_Deactivate_Channels (unsigned char deact_chnls)
 {
-    if (deact_chnls & CH1_OFFSET)
+    if (deact_chnls & CH1_FLAG)
         TIM1->ARR = 0;
-    if (deact_chnls & CH2_OFFSET)
+    if (deact_chnls & CH2_FLAG)
         TIM8->ARR = 0;
-    if (deact_chnls & CH3_OFFSET)
+    if (deact_chnls & CH3_FLAG)
         TIM2->ARR = 0;
-    if (deact_chnls & CH4_OFFSET)
+    if (deact_chnls & CH4_FLAG)
         TIM3->ARR = 0;
-    if (deact_chnls & CH5_OFFSET)
+    if (deact_chnls & CH5_FLAG)
         TIM4->ARR = 0;
-    if (deact_chnls & CH6_OFFSET)
+    if (deact_chnls & CH6_FLAG)
         TIM5->ARR = 0;
     
 }
@@ -523,37 +521,37 @@ void TIM_Deactivate_Channels (unsigned char deact_chnls)
 
 void TIM_Activate_Channels (unsigned char act_chnls)
 {
-    if ((act_chnls & CH1_OFFSET) && (!TIM1->ARR))
+    if ((act_chnls & CH1_FLAG) && (!TIM1->ARR))
     {
         TIM1->ARR = VALUE_FOR_LEAST_FREQ;
         TIM1->EGR |= TIM_EGR_UG;    
     }
 
-    if ((act_chnls & CH2_OFFSET) && (!TIM8->ARR))
+    if ((act_chnls & CH2_FLAG) && (!TIM8->ARR))
     {
         TIM8->ARR = VALUE_FOR_LEAST_FREQ;
         TIM8->EGR |= TIM_EGR_UG;    
     }
 
-    if ((act_chnls & CH3_OFFSET) && (!TIM2->ARR))
+    if ((act_chnls & CH3_FLAG) && (!TIM2->ARR))
     {
         TIM2->ARR = VALUE_FOR_LEAST_FREQ;
         TIM2->EGR |= TIM_EGR_UG;    
     }
 
-    if ((act_chnls & CH4_OFFSET) && (!TIM3->ARR))
+    if ((act_chnls & CH4_FLAG) && (!TIM3->ARR))
     {
         TIM3->ARR = VALUE_FOR_LEAST_FREQ;
         TIM3->EGR |= TIM_EGR_UG;    
     }
 
-    if ((act_chnls & CH5_OFFSET) && (!TIM4->ARR))
+    if ((act_chnls & CH5_FLAG) && (!TIM4->ARR))
     {
         TIM4->ARR = VALUE_FOR_LEAST_FREQ;
         TIM4->EGR |= TIM_EGR_UG;    
     }
 
-    if ((act_chnls & CH6_OFFSET) && (!TIM5->ARR))
+    if ((act_chnls & CH6_FLAG) && (!TIM5->ARR))
     {
         TIM5->ARR = VALUE_FOR_LEAST_FREQ;
         TIM5->EGR |= TIM_EGR_UG;    

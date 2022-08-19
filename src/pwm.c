@@ -13,6 +13,7 @@
 #include "hard.h"
 #include "tim.h"
 
+// #include "stm32f10x.h"    //quitar luego de pruebas
 
 // Externals -------------------------------------------------------------------
 
@@ -173,28 +174,33 @@ volatile unsigned char activate_saved = 0;
 volatile unsigned char edges = 0;
 volatile unsigned char edges_saved = 0;
 volatile unsigned char int_edge = 0;
-void PWM_Timer_Handler (void)
-{
-    if (int_edge < edges)
-    {
-        // deactivate channels in this instance
-        PWM_Deactivate_Channels (deactivate[int_edge]);
+volatile unsigned char pwm_chnls [6];
+// void PWM_Timer_Handler (void)
+// {
+//     if (int_edge < edges)
+//     {
+//         // deactivate channels in this instance
+//         PWM_Deactivate_Channels (deactivate[int_edge]);
 
-        // set the next timer
-        int_edge++;
-        PWM_Timer_Update(vtime[int_edge]);
-    }
-    else
-    {
-        // start the next cycle loop
-        if (!pwm_update_block)
-            PWM_Timer_Setup ();
+//         // set the next timer
+//         int_edge++;
+//         PWM_Timer_Update(vtime[int_edge]);
+//     }
+//     else
+//     {
+//         // start the next cycle loop
+//         if (!pwm_update_block)
+//             PWM_Timer_Setup ();
         
-        int_edge = 0;
-        PWM_Timer_Update(vtime[0]);
-        PWM_Activate_Channels (activate);
-    }
-}
+//         int_edge = 0;
+//         PWM_Timer_Update(vtime[0]);
+//         PWM_Activate_Channels (activate);
+//         // if (LED)
+//         //     LED_OFF;
+//         // else
+//         //     LED_ON;
+//     }
+// }
 
 
 void PWM_Timer_Update (unsigned short next_time)
@@ -247,7 +253,7 @@ void PWM_Timer_Arrange_Vector (void)
     unsigned char posi = 0;    
     unsigned char masked = 0;
     unsigned char last_pwm = 0;
-    unsigned short remain = 255 * 10;
+    unsigned short remain = PWM_INT_MAX * PWM_TIMER_MULTIPLIER;
     unsigned short account = 0;
     unsigned char edges_cnt = 0;
 
@@ -266,7 +272,7 @@ void PWM_Timer_Arrange_Vector (void)
         else
             activate_saved |= (1 << posi);
 
-        if (least == 255)
+        if (least == PWM_INT_MAX)
         {
             deactivate_saved[edges_cnt] &= ~(1 << posi);
             continue;
@@ -280,7 +286,7 @@ void PWM_Timer_Arrange_Vector (void)
                 edges_cnt++;
             
             last_pwm = least;
-            diff = last_pwm * 10 - account;
+            diff = last_pwm * PWM_TIMER_MULTIPLIER - account;
             vtime_saved[edges_cnt] = diff;
             account += diff;
             deactivate_saved[edges_cnt] |= (1 << posi);
@@ -323,7 +329,7 @@ void PWM_Find_Least_Value_With_Mask (unsigned char *pwm,
     unsigned char i = 0;
 
     // *least = *pwm;
-    *least = 255;
+    *least = PWM_INT_MAX;
     for (i = 0; i < qtty; i++)
     {
         // if ((*least > *(pwm + i)) &&
@@ -336,6 +342,137 @@ void PWM_Find_Least_Value_With_Mask (unsigned char *pwm,
     }
 }
 
+volatile unsigned short pwm_int_cnt = 0;
+void PWM_Timer_Handler (void)
+{
+    unsigned char least_next = PWM_INT_MAX;
+    unsigned char pwm_ch = 0;
+
+    if (pwm_int_cnt < PWM_INT_MAX)
+    {
+        // deactivate channels in this instance
+        unsigned char deactivate = 0;
+
+        // Channel 1
+        pwm_ch = pwm_chnls[CH1_OFFSET];
+        if (pwm_int_cnt >= pwm_ch)
+            deactivate |= (1 << CH1_OFFSET);
+        else if (least_next > pwm_ch)
+            least_next = pwm_ch;
+
+        // Channel 2
+        pwm_ch = pwm_chnls[CH2_OFFSET];
+        if (pwm_int_cnt >= pwm_ch)
+            deactivate |= (1 << CH2_OFFSET);
+        else if (least_next > pwm_ch)
+            least_next = pwm_ch;
+
+        // Channel 3
+        pwm_ch = pwm_chnls[CH3_OFFSET];
+        if (pwm_int_cnt >= pwm_ch)
+            deactivate |= (1 << CH3_OFFSET);
+        else if (least_next > pwm_ch)
+            least_next = pwm_ch;
+
+        // Channel 4
+        pwm_ch = pwm_chnls[CH4_OFFSET];
+        if (pwm_int_cnt >= pwm_ch)
+            deactivate |= (1 << CH4_OFFSET);
+        else if (least_next > pwm_ch)
+            least_next = pwm_ch;
+
+        // Channel 5
+        pwm_ch = pwm_chnls[CH5_OFFSET];
+        if (pwm_int_cnt >= pwm_ch)
+            deactivate |= (1 << CH5_OFFSET);
+        else if (least_next > pwm_ch)
+            least_next = pwm_ch;
+
+        // Channel 6
+        pwm_ch = pwm_chnls[CH6_OFFSET];
+        if (pwm_int_cnt >= pwm_ch)
+            deactivate |= (1 << CH6_OFFSET);
+        else if (least_next > pwm_ch)
+            least_next = pwm_ch;
+        
+        PWM_Deactivate_Channels (deactivate);
+
+        // set the next counter and timer
+        // pwm_int_cnt += least_next;
+        unsigned char diff = least_next - pwm_int_cnt;
+        pwm_int_cnt = least_next;
+        PWM_Timer_Update(diff * PWM_TIMER_MULTIPLIER);
+    }
+    else
+    {
+        // activate channels in this instance
+        unsigned char activate = 0;
+        
+        // Channel 1
+        pwm_ch = pwm_chnls[CH1_OFFSET];
+        if (pwm_ch)
+        {
+            activate |= (1 << CH1_OFFSET);
+            if (least_next > pwm_ch)
+                least_next = pwm_ch;
+        }
+
+        // Channel 2
+        pwm_ch = pwm_chnls[CH2_OFFSET];
+        if (pwm_ch)
+        {
+            activate |= (1 << CH2_OFFSET);
+            if (least_next > pwm_ch)
+                least_next = pwm_ch;
+        }
+
+        // Channel 3
+        pwm_ch = pwm_chnls[CH3_OFFSET];
+        if (pwm_ch)
+        {
+            activate |= (1 << CH3_OFFSET);
+            if (least_next > pwm_ch)
+                least_next = pwm_ch;
+        }
+
+        // Channel 4
+        pwm_ch = pwm_chnls[CH4_OFFSET];
+        if (pwm_ch)
+        {
+            activate |= (1 << CH4_OFFSET);
+            if (least_next > pwm_ch)
+                least_next = pwm_ch;
+        }
+
+        // Channel 5
+        pwm_ch = pwm_chnls[CH5_OFFSET];
+        if (pwm_ch)
+        {
+            activate |= (1 << CH5_OFFSET);
+            if (least_next > pwm_ch)
+                least_next = pwm_ch;
+        }
+
+        // Channel 6
+        pwm_ch = pwm_chnls[CH6_OFFSET];
+        if (pwm_ch)
+        {
+            activate |= (1 << CH6_OFFSET);
+            if (least_next > pwm_ch)
+                least_next = pwm_ch;
+        }
+        
+        PWM_Activate_Channels (activate);
+
+        pwm_int_cnt = least_next;
+        PWM_Timer_Update(least_next * PWM_TIMER_MULTIPLIER);
+
+        // if (LED)
+        //     LED_OFF;
+        // else
+        //     LED_ON;
+    }
+}
 
 //--- end of file ---//
 

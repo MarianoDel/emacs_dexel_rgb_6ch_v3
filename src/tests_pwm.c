@@ -29,6 +29,7 @@ extern volatile unsigned char int_edge;
 extern volatile unsigned char pwm_saved [];
 extern volatile unsigned char pwm_seq [];
 extern volatile unsigned char pwm_seq_saved [];
+extern volatile unsigned char pwm_chnls [];
 
 
 // Globals ---------------------------------------------------------------------
@@ -248,36 +249,24 @@ void Test_Pwm_Arrange_Vector (void)
 
 void Test_Pwm_Handler (void)
 {
-    pwm_saved[0] = 0;
-    pwm_saved[1] = 100;
-    pwm_saved[2] = 0;
-    pwm_saved[3] = 0;
-    pwm_saved[4] = 0;
-    pwm_saved[5] = 0;
+    pwm_chnls[0] = 255;
+    pwm_chnls[1] = 255;
+    pwm_chnls[2] = 255;
+    pwm_chnls[3] = 255;
+    pwm_chnls[4] = 255;
+    pwm_chnls[5] = 255;
 
     printf("\noriginal: ");
     for (int i = 0; i < 6; i++)
-        printf("%d ", pwm_saved[i]);
+        printf("%d ", pwm_chnls[i]);
     
-    PWM_Timer_Arrange_Vector();
-    printf("\nactivate: 0x%02x edges: %d", activate_saved, edges_saved);
-
-    for (int i = 0; i < 7; i++)
-    {
-        printf("\nvtime_saved[%d] = %d\tdeactivate_saved[%d] = 0x%02x",
-               i,
-               vtime_saved[i],
-               i,
-               deactivate_saved[i]);
-    }
-
-    vtime[1] = 1;    //force first update
-    for (int i = 0; i < 3000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         if (timer_cnt == timer_overflow)
         {
             printf("\noverflow on i: %d timer_cnt: %d\n", i, timer_cnt);
             PWM_Timer_Handler();
+            printf(" timer_cnt: %d timer_overflow: %d\n", timer_cnt, timer_overflow);
         }
         timer_cnt++;
     }

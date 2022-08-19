@@ -12,11 +12,6 @@
 #ifndef __PWM_H_
 #define __PWM_H_
 
-// #include "tim.h"
-
-// Exported Types --------------------------------------------------------------
-
-
 
 // Exported Types Constants and Macros -----------------------------------------
 #define CH1_OFFSET    0
@@ -25,6 +20,18 @@
 #define CH4_OFFSET    3
 #define CH5_OFFSET    4
 #define CH6_OFFSET    5
+
+#define CH1_FLAG    0x01
+#define CH2_FLAG    0x02
+#define CH3_FLAG    0x04
+#define CH4_FLAG    0x08
+#define CH5_FLAG    0x10
+#define CH6_FLAG    0x20
+
+#define CHNLS_ALL    (CH1_FLAG | CH2_FLAG | CH3_FLAG | CH4_FLAG | CH5_FLAG | CH6_FLAG)
+
+#define PWM_INT_MAX    255
+#define PWM_TIMER_MULTIPLIER    20
 
 // #define POWER_CONTROL_GENERAL_THRESHOLD    512    // este es un valor total de dmx no pwm
 
