@@ -66,9 +66,9 @@
 // #define RCC_TIM17_CLK_ON    (RCC->APB2ENR |= 0x00040000)
 // #define RCC_TIM17_CLK_OFF    (RCC->APB2ENR &= ~0x00040000)
 
-// 40KHz -> 25us -> 1800 tick 13.88us
-#define VALUE_FOR_LEAST_FREQ    1541    //21.38us tick 13.88ns
-#define VALUE_FOR_CONSTANT_OFF    259    //3.6us tick 13.88ns
+// 40KHz -> 25us -> 1600 tick 15.625ns @ 64MHz
+#define VALUE_FOR_LEAST_FREQ    1485    //21.38us tick 15.62ns
+#define VALUE_FOR_CONSTANT_OFF    115    //1.8us tick 15.62ns
 
 // Externals -------------------------------------------------------------------
 //Wait_ms
@@ -170,7 +170,7 @@ void TIM_1_Init (void)
     TIM1->CCMR2 = 0x0000;
     TIM1->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;    // CH1 enable, polarity reversal
     
-    TIM1->ARR = VALUE_FOR_LEAST_FREQ;    //cada tick 13.88ns
+    TIM1->ARR = VALUE_FOR_LEAST_FREQ;
 
     TIM1->CNT = 0;
     TIM1->PSC = 0;
@@ -385,16 +385,12 @@ void TIM6_IRQHandler (void)
 {
     // avoid int reentrant
     TIM6->SR = 0;
+    TIM6->ARR = 2550;
     
     CTRL_C2_ON;    
     PWM_Timer_Handler();
     CTRL_C2_OFF;
     
-    // if (CTRL_C2)
-    //     CTRL_C2_OFF;
-    // else
-    //     CTRL_C2_ON;
-
     // low the flag
     if (TIM6->SR & TIM_SR_UIF)
         TIM6->SR &= ~(TIM_SR_UIF);    

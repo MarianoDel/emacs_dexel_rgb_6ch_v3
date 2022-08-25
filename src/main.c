@@ -18,6 +18,7 @@
 #include "adc.h"
 // #include "flash_program.h"
 #include "test_functions.h"
+#include "dac_mux.h"
 
 #include "gpio.h"
 #include "dma.h"
@@ -424,6 +425,8 @@ void TimingDelay_Decrement(void)
     // Modes Menus Timers
     // if (ptFTT != NULL)
     //     ptFTT();
+
+    DAC_MUX_Timeouts();
     
 }
 

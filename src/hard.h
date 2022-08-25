@@ -105,8 +105,23 @@
 #define SW_ON (GPIOA->BSRR = 0x00000100)
 #define SW_OFF (GPIOA->BSRR = 0x01000000)
 
+// PA10
+#define CTRL_C4    ((GPIOA->ODR & 0x0400) != 0)
+#define CTRL_C4_ON    (GPIOA->BSRR = 0x00000400)
+#define CTRL_C4_OFF    (GPIOA->BSRR = 0x04000000)
 
-//PA9, PA10 Alternative Usart 1 Tx Rx
+// PA11
+#define CTRL_C5    ((GPIOA->ODR & 0x0800) != 0)
+#define CTRL_C5_ON    (GPIOA->BSRR = 0x00000800)
+#define CTRL_C5_OFF    (GPIOA->BSRR = 0x08000000)
+
+// PA12
+#define CTRL_C6    ((GPIOA->ODR & 0x1000) != 0)
+#define CTRL_C6_ON    (GPIOA->BSRR = 0x00001000)
+#define CTRL_C6_OFF    (GPIOA->BSRR = 0x10000000)
+
+
+
 
 
 //--- Port B ---//
@@ -122,6 +137,10 @@
 
 //PB10, PB11 Alternative Usart 3 Tx Rx
 
+// PB15
+#define CTRL_C3    ((GPIOB->ODR & 0x8000) != 0)
+#define CTRL_C3_ON    (GPIOB->BSRR = 0x00008000)
+#define CTRL_C3_OFF    (GPIOB->BSRR = 0x80000000)
 
 
 

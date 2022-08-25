@@ -16,6 +16,7 @@
 #include "tim.h"
 #include "dac.h"
 #include "pwm.h"
+#include "dac_mux.h"
 
 #include <stdio.h>
 
@@ -43,6 +44,9 @@ void TF_Int_Timer5 (void);
 void TF_Complete_Channel_1 (void);
 
 void TF_All_Chain_For_Channel_1 (void);
+void TF_All_Chain_For_Channel_1_Max (void);
+
+void TF_Dac_Mux (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -58,7 +62,9 @@ void TF_Hardware_Tests (void)
     // TF_Dac1 ();
     // TF_Complete_Channel_1 ();
 
-    TF_All_Chain_For_Channel_1 ();
+    // TF_All_Chain_For_Channel_1 ();
+    // TF_All_Chain_For_Channel_1_Max ();
+    TF_Dac_Mux ();
     
 }
 
@@ -233,6 +239,7 @@ void TF_All_Chain_For_Channel_1 (void)
 
     while (1)
     {
+        // Go to max current with pwm
         for (int i = 0; i < 256; i++)
         {
             pwm_chnls[0] = i;
@@ -244,6 +251,28 @@ void TF_All_Chain_For_Channel_1 (void)
             Wait_ms(5);
         }
 
+        Wait_ms(5000);
+
+        // Max current with dac
+        for (int i = 0 ; i < 4096; i++)
+        {
+            DAC_Output(i);
+            Wait_ms(1);
+        }
+
+        Wait_ms(5000);
+
+        // Go to min from dac
+        for (int i = 4095 ; i >= 0; i--)
+        {
+            DAC_Output(i);
+            Wait_ms(1);
+        }
+
+        Wait_ms(5000);
+
+        // min from pwm
+
         for (int i = 255; i > 0; i--)
         {
             pwm_chnls[0] = i;
@@ -254,6 +283,9 @@ void TF_All_Chain_For_Channel_1 (void)
             pwm_chnls[5] = 0;
             Wait_ms(5);
         }
+
+        Wait_ms(5000);        
+        
     }
 
 
@@ -304,6 +336,62 @@ void TF_All_Chain_For_Channel_1 (void)
     }
 }
 
+
+void TF_All_Chain_For_Channel_1_Max (void)
+{
+    TIM_1_Init();
+    DAC_Config();
+
+    CTRL_C2_OFF;
+    CTRL_C1_ON;
+    DAC_Output(0);
+
+    TIM6_Init();
+    // TIM7_Init();
+
+    pwm_chnls[0] = 255;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    DAC_Output(4095);    
+
+    while (1);
+}
+
+
+void TF_Dac_Mux (void)
+{
+    unsigned short dac_chnls [6] = { 0 };
+    
+    TIM_1_Init();
+    DAC_Config();
+
+    DAC_Output(0);
+
+    TIM6_Init();
+
+    pwm_chnls[0] = 255;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    dac_chnls[0] = 4095;
+    dac_chnls[1] = 2048;
+    dac_chnls[2] = 1024;
+    dac_chnls[3] = 512;
+    dac_chnls[4] = 256;
+    dac_chnls[5] = 0;
+
+    while (1)
+    {
+        DAC_MUX_Update(dac_chnls);
+    }
+}
 
 // void TF_Int_Timer5 (void)
 // {

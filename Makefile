@@ -75,6 +75,7 @@ SRC += ./src/adc.c
 SRC += ./src/gpio.c
 SRC += ./src/dma.c
 SRC += ./src/dac.c
+SRC += ./src/dac_mux.c
 # SRC += ./src/utils.c
 SRC += ./src/test_functions.c
 SRC += ./src/pwm.c

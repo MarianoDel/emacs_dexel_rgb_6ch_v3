@@ -19,7 +19,8 @@
 // #define HSE_CRYSTAL_OSC
 
 // Select Sysclk frequency
-#define SYSCLK_FREQ_72MHz
+// #define SYSCLK_FREQ_72MHz
+#define SYSCLK_FREQ_64MHz
 // #define SYSCLK_FREQ_48MHz
 // #define SYSCLK_FREQ_8MHz
 

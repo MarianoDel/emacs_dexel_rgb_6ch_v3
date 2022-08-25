@@ -30,6 +30,7 @@
 
 // check sysclk selection
 #if (!defined SYSCLK_FREQ_72MHz) && \
+    (!defined SYSCLK_FREQ_64MHz) && \
     (!defined SYSCLK_FREQ_48MHz) && \
     (!defined SYSCLK_FREQ_8MHz)
 #error	"No Sysclk Frequency Selected (check startup_clocks.h)"
@@ -171,8 +172,11 @@ void SystemInit (void)
 #endif    //HSE_CRYSTAL_OSC
 
 #ifdef HSI_INTERNAL_RC
-
 #ifdef SYSCLK_FREQ_72MHz
+#error "Max sysclk freq. with HSI is 64MHz"
+#endif
+
+#ifdef SYSCLK_FREQ_64MHz
     //me aseguro que el PLL este deshabilitado
     RCC->CR &= ~RCC_CR_PLLON;
 
@@ -187,7 +191,10 @@ void SystemInit (void)
     /* Enable Prefetch Buffer */
     FLASH->ACR |= FLASH_ACR_PRFTBE;
 
-    /* Flash 2 wait state */
+    // Flash
+    // 0 wait state if 0 < SYSCLK <= 24MHz
+    // 1 wait state if 24MHz < SYSCLK <= 48MHz
+    // 2 wait state if 48MHz < SYSCLK <= 72MHz
     FLASH->ACR &= (uint32_t)((uint32_t)~FLASH_ACR_LATENCY);
     FLASH->ACR |= (uint32_t)FLASH_ACR_LATENCY_2;
 
@@ -196,12 +203,13 @@ void SystemInit (void)
       
     /* PCLK2 = HCLK */
     RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV1;
+    // RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV4;    
     
     /* PCLK1 = HCLK */
     RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE1_DIV2;
     
     //configuro el PLL
-    /*  PLL configuration: PLLCLK = HSI/2 * 16 = 72 MHz */
+    /*  PLL configuration: PLLCLK = HSI/2 * 16 = 64 MHz */
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE |
                                         RCC_CFGR_PLLMULL));
     RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSI_Div2 | RCC_CFGR_PLLMULL16);
@@ -224,7 +232,7 @@ void SystemInit (void)
     }
     
 
-#endif    //SYSCLK_FREQ_72MHz
+#endif    //SYSCLK_FREQ_64MHz
 
 #ifdef SYSCLK_FREQ_8MHz
     //uso todo por defualt despues del reset
