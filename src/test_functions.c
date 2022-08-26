@@ -23,6 +23,8 @@
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned short pwm_chnls[];
+extern volatile unsigned short timer_standby;
+
 
 // Globals ---------------------------------------------------------------------
 
@@ -47,6 +49,7 @@ void TF_All_Chain_For_Channel_1 (void);
 void TF_All_Chain_For_Channel_1_Max (void);
 
 void TF_Dac_Mux (void);
+void TF_All_Chain_For_Channel_1_With_Dac_Mux (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -64,7 +67,8 @@ void TF_Hardware_Tests (void)
 
     // TF_All_Chain_For_Channel_1 ();
     // TF_All_Chain_For_Channel_1_Max ();
-    TF_Dac_Mux ();
+    // TF_Dac_Mux ();
+    TF_All_Chain_For_Channel_1_With_Dac_Mux ();    
     
 }
 
@@ -393,6 +397,177 @@ void TF_Dac_Mux (void)
     }
 }
 
+
+void TF_All_Chain_For_Channel_1_With_Dac_Mux (void)
+{
+    unsigned short dac_chnls [6] = { 0 };
+    
+    TIM_1_Init();
+    DAC_Config();
+
+    DAC_Output(0);
+
+    TIM6_Init();
+
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    dac_chnls[0] = 0;
+    dac_chnls[1] = 0;
+    dac_chnls[2] = 0;
+    dac_chnls[3] = 0;
+    dac_chnls[4] = 0;
+    dac_chnls[5] = 0;
+
+    
+    int i = 0;
+    int stage = 0;
+    while (1)
+    {
+        // Go to max current with pwm        
+        if (stage == 0)
+        {
+            if (i < 256)
+            {
+                if (!timer_standby)
+                {
+                    pwm_chnls[0] = i;
+                    pwm_chnls[1] = 0;
+                    pwm_chnls[2] = 0;
+                    pwm_chnls[3] = 0;
+                    pwm_chnls[4] = 0;
+                    pwm_chnls[5] = 0;
+
+                    i++;
+                    timer_standby = 5;
+                }
+            }
+            else
+            {
+                stage = 1;
+                i = 0;
+                timer_standby = 5000;                
+            }
+        }
+
+        // Wait 5 secs
+        if (stage == 1)
+        {
+            if (!timer_standby)
+                stage = 2;
+
+        }
+        
+        // Max current with dac
+        if (stage == 2)
+        {
+            if (i < 4095)
+            {
+                if (!timer_standby)
+                {
+                    dac_chnls[0] = i;
+                    dac_chnls[1] = 0;
+                    dac_chnls[2] = 0;
+                    dac_chnls[3] = 0;
+                    dac_chnls[4] = 0;
+                    dac_chnls[5] = 0;
+
+                    i++;
+                    timer_standby = 5;
+                }
+            }
+            else
+            {
+                stage = 3;
+                i = 4095;
+                timer_standby = 5000;
+            }
+        }
+
+        // Wait 5 secs
+        if (stage == 3)
+        {
+            if (!timer_standby)
+                stage = 4;
+
+        }
+
+        // Go to min from dac
+        if (stage == 4)
+        {
+            if (i > 1)
+            {
+                if (!timer_standby)
+                {
+                    dac_chnls[0] = i;
+                    dac_chnls[1] = 0;
+                    dac_chnls[2] = 0;
+                    dac_chnls[3] = 0;
+                    dac_chnls[4] = 0;
+                    dac_chnls[5] = 0;
+
+                    i--;
+                    timer_standby = 5;
+                }
+            }
+            else
+            {
+                stage = 5;
+                i = 255;
+                timer_standby = 5000;
+            }
+        }
+
+        // Wait 5 secs
+        if (stage == 5)
+        {
+            if (!timer_standby)
+                stage = 6;
+
+        }
+        
+        // min from pwm
+        if (stage == 6)
+        {
+            if (i > 1)
+            {
+                if (!timer_standby)
+                {
+                    pwm_chnls[0] = i;
+                    pwm_chnls[1] = 0;
+                    pwm_chnls[2] = 0;
+                    pwm_chnls[3] = 0;
+                    pwm_chnls[4] = 0;
+                    pwm_chnls[5] = 0;
+
+                    i--;
+                    timer_standby = 5;
+                }
+            }
+            else
+            {
+                stage = 7;
+                i = 0;
+                timer_standby = 5000;
+            }
+        }
+
+        // Wait 5 secs
+        if (stage == 7)
+        {
+            if (!timer_standby)
+                stage = 0;
+
+        }
+
+        DAC_MUX_Update(dac_chnls);        
+        
+    }
+}
 // void TF_Int_Timer5 (void)
 // {
 //     TIM5_Init();

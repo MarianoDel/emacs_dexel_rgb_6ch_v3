@@ -145,15 +145,15 @@ void GpioInit (void)
     //--- GPIOA High Side ------------------//
     //PA8 TIM1_CH1 alternative push-pull 2MHz
     //PA9 TIM1_CH2 alternative input
-    //PA10 alternative Rx Usart1
-    //PA11 PWM2002 alternative push-pull 50MHz
-    //PA12 NC
+    //PA10 CTRL_C4
+    //PA11 CTRL_C5
+    //PA12 CTRL_C6
     //PA13 NC
     //PA14 NC
     //PA15 NC
     temp = GPIOA->CRH; 
-    temp &= 0xFFFFFF00;
-    temp |= 0x0000004A;
+    temp &= 0xFFF00000;
+    temp |= 0x0002224A;
     GPIOA->CRH = temp;
 
     //--- GPIOA Pull-Up Pull-Dwn ------------------//
@@ -186,10 +186,10 @@ void GpioInit (void)
     //PB12 LED3
     //PB13 EN_CH4
     //PB14 NC
-    //PB15 NC    
+    //PB15 CTRL_C3
     temp = GPIOB->CRH;
-    temp &= 0xFF000000;
-    temp |= 0x00224BBB;
+    temp &= 0x0F000000;
+    temp |= 0x20224BBB;
     GPIOB->CRH = temp;    
     
     //--- GPIOC Low Side -------------------//

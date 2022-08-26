@@ -205,7 +205,7 @@ void SystemInit (void)
     RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV1;
     // RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV4;    
     
-    /* PCLK1 = HCLK */
+    /* PCLK1 = HCLK/2 */
     RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE1_DIV2;
     
     //configuro el PLL

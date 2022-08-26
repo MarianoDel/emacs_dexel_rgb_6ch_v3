@@ -32,6 +32,7 @@ volatile unsigned short wait_ms_var = 0;
 // Globals ---------------------------------------------------------------------
 // -- for the timeouts in the modes ----
 // void (* ptFTT ) (void) = NULL;
+volatile unsigned short timer_standby = 0;
 
 
 // Private Functions -----------------------------------------------------------
@@ -48,7 +49,7 @@ int main (void)
     GpioInit();
 
     // Systick Timer Activation
-    if (SysTick_Config(72000))
+    if (SysTick_Config(64000))
         SysTickError();
 
     // Hardware Tests Functions
@@ -419,8 +420,8 @@ void TimingDelay_Decrement(void)
     if (wait_ms_var)
         wait_ms_var--;
 
-    // if (timer_standby)
-    //     timer_standby--;
+    if (timer_standby)
+        timer_standby--;
 
     // Modes Menus Timers
     // if (ptFTT != NULL)

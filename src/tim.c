@@ -387,9 +387,9 @@ void TIM6_IRQHandler (void)
     TIM6->SR = 0;
     TIM6->ARR = 2550;
     
-    CTRL_C2_ON;    
+    // CTRL_C2_ON;    
     PWM_Timer_Handler();
-    CTRL_C2_OFF;
+    // CTRL_C2_OFF;
     
     // low the flag
     if (TIM6->SR & TIM_SR_UIF)

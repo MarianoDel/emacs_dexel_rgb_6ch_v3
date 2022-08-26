@@ -38,7 +38,7 @@ void DAC_MUX_Update (unsigned short * values)
 
     dac_mux_ena = 1;    // 1ms update
     
-    if (dac_mux_cnt < 6)
+    if (dac_mux_cnt < 5)
         dac_mux_cnt++;
     else
         dac_mux_cnt = 0;
