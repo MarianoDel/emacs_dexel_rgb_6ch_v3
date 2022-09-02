@@ -397,94 +397,38 @@ void TIM6_IRQHandler (void)
 }
 
 
-void TIM7_IRQHandler (void)	//1mS
+// TIM7 is free running with 1us tick
+void TIM7_Init (void)
 {
-    // avoid int reentrant
-    TIM7->SR = 0;
-    
-    if (LED)
-        LED_OFF;
-    else
-        LED_ON;
-    // if (CTRL_C1)
-    //     CTRL_C1_OFF;
-    // else
-    //     CTRL_C1_ON;
-        
-    // low the flag
-    if (TIM7->SR & TIM_SR_UIF)
-        TIM7->SR &= ~(TIM_SR_UIF);    
-}
-
-// void TIM5_Init (void)
-// {
-//     if (!RCC_TIM5_CLK)
-//         RCC_TIM5_CLK_ON;
-
-//     TIM5->CR1 = 0x0000;
-
-//     //Configuracion del timer.
-//     TIM5->ARR = 100; //100uS.
-//     TIM5->CNT = 0;
-//     TIM5->PSC = 71;
-
-//     TIM5->CCMR2 = 0x7000;
-//     TIM5->CCR4 = 50;
-//     TIM5->CCER |= TIM_CCER_CC4E | TIM_CCER_CC4P;        
-    
-//     // Enable timer ver UDIS
-//     TIM5->DIER |= TIM_DIER_UIE;
-//     TIM5->CR1 |= TIM_CR1_CEN;
-
-//     //Habilito NVIC
-//     //Interrupcion timer5.
-//     NVIC_EnableIRQ(TIM5_IRQn);
-//     NVIC_SetPriority(TIM5_IRQn, 10);
-// }
-
-// void TIM5_IRQHandler (void)	//100uS
-// {
-//     //bajar flag
-//     if (TIM5->SR & 0x01)	//bajo el flag
-//         TIM5->SR = 0x00;
-
-//     if (LED)
-//         LED_OFF;
-//     else
-//         LED_ON;
-// }
-
-
-
-
-// //inicializo el TIM7 para interrupciones
-void TIM7_Init(void)
-{
-    // Counter Register (TIMx_CNT)
-    // Prescaler Register (TIMx_PSC)
-    // Auto-Reload Register (TIMx_ARR)
-    // The counter clock frequency CK_CNT is equal to fCK_PSC / (PSC[15:0] + 1)
-    // Quiero una interrupcion por ms CK_INT es 72MHz
-
     //---- Clk ----//
     if (!RCC_TIM7_CLK)
         RCC_TIM7_CLK_ON;
 
     //--- Config ----//
-    TIM7->ARR = 1000;
-    //TIM7->ARR = 100;
+    TIM7->ARR = 0xFFFF;
     TIM7->CNT = 0;
-    TIM7->PSC = 71;
+    TIM7->PSC = 63;
     TIM7->EGR = TIM_EGR_UG; //update registers
 
-    // Enable timer ver UDIS
-    TIM7->DIER |= TIM_DIER_UIE;
+    // Enable timer
+    // TIM7->DIER |= TIM_DIER_UIE;
     TIM7->CR1 |= TIM_CR1_CEN;
 
-    //Habilito NVIC
-    //Interrupcion timer7.
-    NVIC_EnableIRQ(TIM7_IRQn);
-    NVIC_SetPriority(TIM7_IRQn, 10);    
+    // NVIC Enable
+    // Int for timer7.
+    // NVIC_EnableIRQ(TIM7_IRQn);
+    // NVIC_SetPriority(TIM7_IRQn, 10);    
+}
+
+
+void TIM7_IRQHandler (void)	//1mS
+{
+    // avoid int reentrant
+    TIM7->SR = 0;
+            
+    // low the flag
+    if (TIM7->SR & TIM_SR_UIF)
+        TIM7->SR &= ~(TIM_SR_UIF);    
 }
 
 

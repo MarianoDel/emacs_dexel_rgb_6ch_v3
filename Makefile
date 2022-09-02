@@ -81,6 +81,7 @@ SRC += ./src/test_functions.c
 SRC += ./src/pwm.c
 # SRC += ./src/errors.c
 # SRC += ./src/first_pulse.c
+SRC += ./src/dmx_transceiver.c
 
 ## Core Support
 SRC += ./startup_src/syscalls.c

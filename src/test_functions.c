@@ -17,6 +17,7 @@
 #include "dac.h"
 #include "pwm.h"
 #include "dac_mux.h"
+#include "dmx_transceiver.h"
 
 #include <stdio.h>
 
@@ -51,6 +52,9 @@ void TF_All_Chain_For_Channel_1_Max (void);
 void TF_Dac_Mux (void);
 void TF_All_Chain_For_Channel_1_With_Dac_Mux (void);
 
+void TF_Dmx_Input_Break_Detect (void);
+void TF_Dmx_Input_Usart3_To_Usart4 (void);
+void TF_Dmx_All_Channels (void);
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
@@ -68,7 +72,10 @@ void TF_Hardware_Tests (void)
     // TF_All_Chain_For_Channel_1 ();
     // TF_All_Chain_For_Channel_1_Max ();
     // TF_Dac_Mux ();
-    TF_All_Chain_For_Channel_1_With_Dac_Mux ();    
+    // TF_All_Chain_For_Channel_1_With_Dac_Mux ();
+
+    TF_Dmx_Input_Break_Detect ();
+    // TF_Dmx_All_Channels ();
     
 }
 
@@ -568,14 +575,72 @@ void TF_All_Chain_For_Channel_1_With_Dac_Mux (void)
         
     }
 }
-// void TF_Int_Timer5 (void)
-// {
-//     TIM5_Init();
+
+
+void TF_Dmx_Input_Break_Detect (void)
+{
+    TIM7_Init();
+
+    DMX_EnableRx ();
+
+    while (1)
+    {
+        if ((Dmx_Get_Packet_Init_Flag()) &&
+            (!timer_standby))
+        {
+            LED_ON;
+            timer_standby = 20;
+        }
+
+        if (!timer_standby)
+            LED_OFF;
+    }
+}
+
+
+void TF_Dmx_Input_Usart3_To_Usart4 (void)
+{
+    TIM7_Init();
+
     
-//     while (1)
-//     {
-//         Wait_ms(1000);
-//     }    
-// }
+    
+}
+
+
+void TF_Dmx_All_Channels (void)
+{
+    unsigned short dac_chnls [6] = { 0 };
+    
+    TIM_1_Init();
+
+    DAC_Config();
+    DAC_Output(0);
+
+    TIM6_Init();
+
+    TIM7_Init();
+
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    dac_chnls[0] = 0;
+    dac_chnls[1] = 0;
+    dac_chnls[2] = 0;
+    dac_chnls[3] = 0;
+    dac_chnls[4] = 0;
+    dac_chnls[5] = 0;
+
+    while (1)
+    {
+        DAC_MUX_Update(dac_chnls);
+
+        
+        
+    }
+}
 
 //--- end of file ---//

@@ -28,6 +28,9 @@
 // Externals -------------------------------------------------------------------
 volatile unsigned short wait_ms_var = 0;
 
+// -- for Dmx
+volatile unsigned char dmx_timeout_timer = 0;
+
 
 // Globals ---------------------------------------------------------------------
 // -- for the timeouts in the modes ----

@@ -165,17 +165,17 @@ void GpioInit (void)
 #endif
         
     //--- GPIOB Low Side -------------------//
-    //PB0 EN_CH1
-    //PB1 EN_CH2
-    //PB2 EN_CH3
+    //PB0 NC
+    //PB1 EXTI_INPUT
+    //PB2 SW_RX_TX
     //PB3 NC
     //PB4 NC
     //PB5 NC
     //PB6 TIM4_CH1 alternative push-pull 2MHz
     //PB7 TIM4_CH2 alternative input
     temp = GPIOB->CRL;    
-    temp &= 0x00FFF000;
-    temp |= 0x4A000222;
+    temp &= 0x00FFF00F;
+    temp |= 0x4A000242;
     GPIOB->CRL = temp;
 
     //--- GPIOB High Side -------------------//
@@ -183,13 +183,13 @@ void GpioInit (void)
     //PB9 PWMN4
     //PB10 alternative Tx Usart3
     //PB11 alternative Rx Usart3
-    //PB12 LED3
-    //PB13 EN_CH4
+    //PB12 NC
+    //PB13 NC
     //PB14 NC
     //PB15 CTRL_C3
     temp = GPIOB->CRH;
-    temp &= 0x0F000000;
-    temp |= 0x20224BBB;
+    temp &= 0x0FFF0000;
+    temp |= 0x20004ABB;
     GPIOB->CRH = temp;    
     
     //--- GPIOC Low Side -------------------//
@@ -235,20 +235,20 @@ void GpioInit (void)
     GPIOD->CRL = temp;
 
 #ifdef USE_EXTERNAL_INTS
-    //Interrupt en PA4 y PA5
+    // Interrupt on PB1
     if (!RCC_AFIO_CLK)
         RCC_AFIO_CLKEN;
 
-    //Select Port A & Pin0 for external interrupt
+    //Select Port B & Pin1 for external interrupt
     temp = AFIO->EXTICR[0];
     temp &= ~AFIO_EXTICR1_EXTI0;
     temp |= AFIO_EXTICR1_EXTI0_PA;
     AFIO->EXTICR[0] = (unsigned short) temp;
     
-    // EXTI->IMR |= 0x00000001; 			//Corresponding mask bit for interrupts EXTI0
-    EXTI->EMR |= 0x00000000; 			//Corresponding mask bit for events
-    EXTI->RTSR |= 0x00000001; 			//Interrupt line on rising edge
-    EXTI->FTSR |= 0x00000000; 			//Interrupt line on falling edge
+    // EXTI->IMR |= 0x00000001;    //Corresponding mask bit for interrupts EXTI0
+    EXTI->EMR |= 0x00000000;    //Corresponding mask bit for events
+    EXTI->RTSR |= 0x00000001;    //Interrupt line on rising edge
+    EXTI->FTSR |= 0x00000000;    //Interrupt line on falling edge
 
     NVIC_EnableIRQ(EXTI0_IRQn);
     NVIC_SetPriority(EXTI0_IRQn, 2);

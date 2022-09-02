@@ -121,22 +121,19 @@
 #define CTRL_C6_OFF    (GPIOA->BSRR = 0x10000000)
 
 
-
-
-
 //--- Port B ---//
-//PB8 
-#define P0_14 ((GPIOB->ODR & 0x0100) != 0)
-#define P0_14_ON (GPIOB->BSRR = 0x00000100)
-#define P0_14_OFF (GPIOB->BSRR = 0x01000000)
+// PB1 
+#define DMX_INPUT    ((GPIOB->ODR & 0x0002) != 0)
 
-//PB9
-// #define RESET ((GPIOB->ODR & 0x0200) != 0)
-// #define RESET_ON (GPIOB->BSRR = 0x00000200)
-// #define RESET_OFF (GPIOB->BSRR = 0x02000000)
+// PB2
+#define SW_RX_TX    ((GPIOB->ODR & 0x0004) != 0)
+#define SW_RX_TX_DE    (GPIOB->BSRR = 0x00000004)
+#define SW_RX_TX_RE_NEG    (GPIOB->BSRR = 0x00040000)
 
-//PB10, PB11 Alternative Usart 3 Tx Rx
+// PB8 
 
+// PB10, PB11 Alternative Usart 3 Tx Rx
+    
 // PB15
 #define CTRL_C3    ((GPIOB->ODR & 0x8000) != 0)
 #define CTRL_C3_ON    (GPIOB->BSRR = 0x00008000)
