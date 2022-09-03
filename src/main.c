@@ -19,6 +19,7 @@
 // #include "flash_program.h"
 #include "test_functions.h"
 #include "dac_mux.h"
+#include "dmx_transceiver.h"
 
 #include "gpio.h"
 #include "dma.h"
@@ -27,10 +28,8 @@
 
 // Externals -------------------------------------------------------------------
 volatile unsigned short wait_ms_var = 0;
-
-// -- for Dmx
-volatile unsigned char dmx_timeout_timer = 0;
-
+// -- for dmx
+volatile unsigned char data11[];
 
 // Globals ---------------------------------------------------------------------
 // -- for the timeouts in the modes ----
@@ -431,6 +430,8 @@ void TimingDelay_Decrement(void)
     //     ptFTT();
 
     DAC_MUX_Timeouts();
+
+    Dmx_Timeouts ();
     
 }
 

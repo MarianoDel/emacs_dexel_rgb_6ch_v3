@@ -57,5 +57,6 @@ void UpdateRDMResponder(void);
 
 unsigned char Dmx_Get_Packet_Init_Flag (void);
 // unsigned char Dmx_Get_Packet_Detect_Flag (void);
+void Dmx_Timeouts (void);
 
 #endif /* DMX_TRANSCEIVER_H_ */

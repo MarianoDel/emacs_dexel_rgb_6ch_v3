@@ -15,7 +15,7 @@
 
 
 // Configurations --------------------------------------------------------------
-// #define USE_EXTERNAL_INTS
+#define USE_EXTERNAL_INTS
 
 
 
@@ -43,7 +43,7 @@
 
 
 // Externals -------------------------------------------------------------------
-
+extern void DmxInt_Break_Handler (void);
 
 // Globals ---------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ void GpioInit (void)
     //PB15 CTRL_C3
     temp = GPIOB->CRH;
     temp &= 0x0FFF0000;
-    temp |= 0x20004ABB;
+    temp |= 0x200049BB;
     GPIOB->CRH = temp;    
     
     //--- GPIOC Low Side -------------------//
@@ -241,17 +241,17 @@ void GpioInit (void)
 
     //Select Port B & Pin1 for external interrupt
     temp = AFIO->EXTICR[0];
-    temp &= ~AFIO_EXTICR1_EXTI0;
-    temp |= AFIO_EXTICR1_EXTI0_PA;
+    temp &= ~AFIO_EXTICR1_EXTI1;
+    temp |= AFIO_EXTICR1_EXTI1_PB;
     AFIO->EXTICR[0] = (unsigned short) temp;
     
-    // EXTI->IMR |= 0x00000001;    //Corresponding mask bit for interrupts EXTI0
+    EXTI->IMR |= 0x00000002;    //Corresponding mask bit for interrupts EXTI1
     EXTI->EMR |= 0x00000000;    //Corresponding mask bit for events
-    EXTI->RTSR |= 0x00000001;    //Interrupt line on rising edge
-    EXTI->FTSR |= 0x00000000;    //Interrupt line on falling edge
+    EXTI->RTSR |= 0x00000002;    //Interrupt line on rising edge
+    EXTI->FTSR |= 0x00000002;    //Interrupt line on falling edge
 
-    NVIC_EnableIRQ(EXTI0_IRQn);
-    NVIC_SetPriority(EXTI0_IRQn, 2);
+    NVIC_EnableIRQ(EXTI1_IRQn);
+    NVIC_SetPriority(EXTI1_IRQn, 2);
 
 #endif
 }
@@ -259,13 +259,26 @@ void GpioInit (void)
 #ifdef USE_EXTERNAL_INTS
 inline void EXTIOff (void)
 {
-    EXTI->IMR &= ~0x00000001;
+    EXTI->IMR &= ~0x00000002;
 }
+
 
 inline void EXTIOn (void)
 {
-    EXTI->IMR |= 0x00000001;
+    EXTI->IMR |= 0x00000002;
+}
+
+
+void EXTI1_IRQHandler (void)
+{
+    if(EXTI->PR & 0x0002)	//Line1
+    {
+        DmxInt_Break_Handler();
+        EXTI->PR |= 0x0002;
+    }
+    
 }
 #endif
+
 
 //--- end of file ---//

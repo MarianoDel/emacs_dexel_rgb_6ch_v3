@@ -68,13 +68,13 @@
 
 //--- Port C ---//
 // PC0
-#define EN_SW    ((GPIOC->ODR & 0x0001) != 0)
+#define EN_SW    ((GPIOC->IDR & 0x0001) != 0)
 
 // PC1
-#define EN_DT    ((GPIOC->ODR & 0x0002) != 0)
+#define EN_DT    ((GPIOC->IDR & 0x0002) != 0)
 
 // PC2
-#define EN_CLK    ((GPIOC->ODR & 0x0004) != 0)
+#define EN_CLK    ((GPIOC->IDR & 0x0004) != 0)
 
 // PC3
 #define CTRL_FAN    ((GPIOC->ODR & 0x0008) != 0)
@@ -123,7 +123,7 @@
 
 //--- Port B ---//
 // PB1 
-#define DMX_INPUT    ((GPIOB->ODR & 0x0002) != 0)
+#define DMX_INPUT    ((GPIOB->IDR & 0x0002) != 0)
 
 // PB2
 #define SW_RX_TX    ((GPIOB->ODR & 0x0004) != 0)

@@ -589,7 +589,7 @@ void TF_Dmx_Input_Break_Detect (void)
             (!timer_standby))
         {
             LED_ON;
-            timer_standby = 20;
+            timer_standby = 2;
         }
 
         if (!timer_standby)

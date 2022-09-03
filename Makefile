@@ -67,7 +67,7 @@ UADEFS =
 
 ## Source Files
 SRC  = ./src/main.c
-# SRC += ./src/usart.c
+SRC += ./src/usart.c
 SRC += ./src/tim.c
 SRC += ./src/it.c
 # SRC += ./src/flash_program.c

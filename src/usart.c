@@ -8,15 +8,51 @@
 // #### USART.C ################################
 //---------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
+// Includes --------------------------------------------------------------------
 #include "usart.h"
 #include "stm32f10x.h"
-// #include "hard.h"
+#include "dmx_transceiver.h"
   
 #include <stdio.h>
 #include <string.h>
 
+// Module Configs --------------------------------------------------------------
+// #define USE_USART1
+// #define USE_USART2
+#define USE_USART3
+#define USE_UART4
+// #define USE_UART5
 
+#define SIZEOF_PC_TXDATA        512
+#define SIZEOF_PC_RXDATA        512
+#define SIZEOF_TXDATA        256
+#define SIZEOF_RXDATA        256
+
+//---- Common Defines --------------------
+// fck is PCLK1 for USART 2,3,4,5 PCLK2 for USART1
+// baud = fck / (16 * USARTDIV)
+// USARTDIV 0xMMMF Mantissa MMM Fraction F/16
+//
+// For Xtal use and freq 72MHz (PCKL1 36MHz PCKL2 72MHz)
+#define USART_XTAL_PCKL1_9600    0x0EA6
+#define USART_XTAL_PCKL2_9600    0x1D4C
+
+// For Internal RC at 64MHz (PCKL1 32MHz PCKL2 64MHz)
+#define USART_RC_PCKL1_9600    0x0D04
+#define USART_RC_PCKL2_9600    0x1A0A
+
+#define USART_RC_PCKL1_250000    0x0080
+
+
+#define USART1_9600        USART_RC_PCKL2_9600
+#define USART2_9600        USART_RC_PCKL1_9600
+#define USART3_9600        USART_RC_PCKL1_9600
+#define UART4_9600         USART_RC_PCKL1_9600
+#define UART5_9600         USART_RC_PCKL1_9600
+
+#define USART3_250000    USART_RC_PCKL1_250000
+
+// Module Private Types Constants and Macros -----------------------------------
 #define RCC_USART1_CLK    (RCC->APB2ENR & 0x00004000)
 #define RCC_USART1_CLKEN    (RCC->APB2ENR |= 0x00004000)
 #define RCC_USART1_CLKDIS    (RCC->APB2ENR &= ~0x00004000)
@@ -38,7 +74,7 @@
 #define RCC_UART5_CLKDIS    (RCC->APB1ENR &= ~0x00100000)
 
 
-/* Externals ------------------------------------------------------------------*/
+// Externals -------------------------------------------------------------------
 extern volatile unsigned char usart1_have_data;
 extern volatile unsigned char usart2_have_data;
 extern volatile unsigned char usart3_have_data;
@@ -46,50 +82,59 @@ extern volatile unsigned char usart4_have_data;
 extern volatile unsigned char usart5_have_data;
 
 
-/* Globals ------------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 //--- Private variables ---//
 //--- USART1 ---//
+#ifdef USE_USART1
 volatile unsigned char * ptx1;
 volatile unsigned char * ptx1_pckt_index;
 volatile unsigned char * prx1;
 volatile unsigned char tx1buff[SIZEOF_PC_TXDATA];
 volatile unsigned char rx1buff[SIZEOF_PC_RXDATA];
+#endif
 
 //--- USART2 ---//
+#ifdef USE_USART2
 volatile unsigned char * ptx2;
 volatile unsigned char * ptx2_pckt_index;
 volatile unsigned char * prx2;
 volatile unsigned char tx2buff[SIZEOF_TXDATA];
 volatile unsigned char rx2buff[SIZEOF_RXDATA];
+#endif
 
 //--- USART3 ---//
-volatile unsigned char * ptx3;
-volatile unsigned char * ptx3_pckt_index;
-volatile unsigned char * prx3;
-volatile unsigned char tx3buff[SIZEOF_TXDATA];
-volatile unsigned char rx3buff[SIZEOF_RXDATA];
+#ifdef USE_USART3
+// volatile unsigned char * ptx3;
+// volatile unsigned char * ptx3_pckt_index;
+// volatile unsigned char * prx3;
+// volatile unsigned char tx3buff[SIZEOF_TXDATA];
+// volatile unsigned char rx3buff[SIZEOF_RXDATA];
+// used with dmx
+#endif
 
 //--- UART4 ---//
+#ifdef USE_UART4
 volatile unsigned char * ptx4;
 volatile unsigned char * ptx4_pckt_index;
 volatile unsigned char * prx4;
 volatile unsigned char tx4buff[SIZEOF_TXDATA];
 volatile unsigned char rx4buff[SIZEOF_RXDATA];
+#endif
 
 //--- UART5 ---//
+#ifdef USE_UART5
 volatile unsigned char * ptx5;
 volatile unsigned char * ptx5_pckt_index;
 volatile unsigned char * prx5;
 volatile unsigned char tx5buff[SIZEOF_TXDATA];
 volatile unsigned char rx5buff[SIZEOF_RXDATA];
+#endif
 
 
-volatile unsigned short dummy = 0;
-
-
-/* Module Exported Functions -----------------------------------------------------------*/
+// Module Functions ------------------------------------------------------------
 
 //---- USART1 Functions ----
+#ifdef USE_USART1
 void Usart1Config(void)
 {
     unsigned long temp;
@@ -143,7 +188,7 @@ void Usart1SendUnsigned (unsigned char * send, unsigned char size)
     }
 }
 
-unsigned char ReadUsart1Buffer (unsigned char * bout, unsigned short max_len)
+unsigned char Usart1ReadBuffer (unsigned char * bout, unsigned short max_len)
 {
     unsigned int len;
 
@@ -226,8 +271,10 @@ void USART1_IRQHandler (void)
         dummy = USART1->DR;
     }
 }
+#endif    //USE_USART1
 
 //---- USART2 Functions ----
+#ifdef USE_USART2
 void Usart2Config(void)
 {
     unsigned long temp;
@@ -279,7 +326,7 @@ void Usart2SendUnsigned (unsigned char * send, unsigned char size)
     }
 }
 
-unsigned char ReadUsart2Buffer (unsigned char * bout, unsigned short max_len)
+unsigned char Usart2ReadBuffer (unsigned char * bout, unsigned short max_len)
 {
     unsigned int len;
 
@@ -364,137 +411,101 @@ void USART2_IRQHandler (void)
         dummy = USART2->DR;
     }
 }
+#endif    //USE_USART2
 
 //---- USART3 Functions ----
+#ifdef USE_USART3
 void Usart3Config(void)
 {
-    unsigned long temp;
-    
-    //---- Clk USART3 ----
+    //-- USART3 Clk
     if (!RCC_USART3_CLK)
         RCC_USART3_CLKEN;
 
-    //---- Acomodo punteros ----
-    ptx3 = tx3buff;
-    ptx3_pckt_index = tx3buff;
-    prx3 = rx3buff;
+    //-- Pointers init
+    // ptx3 = tx3buff;
+    // ptx3_pckt_index = tx3buff;
+    // prx3 = rx3buff;
 
-    //---- Configuro velocidad y opciones del puerto
-    USART3->BRR = USART3_9600;
-    // USART3->CR2 |= USART_CR2_STOP_1;	//2 bits stop
+    //-- Baudrate and port options
+    USART3->BRR = USART3_250000;
+    USART3->CR2 |= USART_CR2_STOP_1;	//2 stop bits
     // USART3->CR1 = USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
     // USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE;	//SIN TX
-    USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;	//para pruebas TX
+    USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
 
     //---- Configuro salidas alternativas ----
     //----GPIOB----//
     //----TX:PB10 RX:PB11----//
-    temp = GPIOB->CRH;
-    temp &= 0xFFFF00FF;
-    temp |= 0x00004B00;
-    GPIOB->CRH = temp;
+    // unsigned long temp;
+    // temp = GPIOB->CRH;
+    // temp &= 0xFFFF00FF;
+    // temp |= 0x00004B00;
+    // GPIOB->CRH = temp;
 
     //---- Habilito Int y prioridad ----
     NVIC_EnableIRQ(USART3_IRQn);
-    NVIC_SetPriority(USART3_IRQn, 7);
+    NVIC_SetPriority(USART3_IRQn, 5);
 }
 
-void Usart3Send (char * send)
-{
-    unsigned char i;
+// void Usart3Send (char * send)
+// {
+//     unsigned char i;
 
-    i = strlen(send);
-    Usart3SendUnsigned((unsigned char *) send, i);
-}
+//     i = strlen(send);
+//     Usart3SendUnsigned((unsigned char *) send, i);
+// }
 
-void Usart3SendUnsigned (unsigned char * send, unsigned char size)
-{
-    if ((ptx3_pckt_index + size) < &tx3buff[SIZEOF_TXDATA])
-    {
-        memcpy((unsigned char *)ptx3_pckt_index, send, size);
-        ptx3_pckt_index += size;
-        USART3->CR1 |= USART_CR1_TXEIE;
-    }
-}
+// void Usart3SendUnsigned (unsigned char * send, unsigned char size)
+// {
+//     if ((ptx3_pckt_index + size) < &tx3buff[SIZEOF_TXDATA])
+//     {
+//         memcpy((unsigned char *)ptx3_pckt_index, send, size);
+//         ptx3_pckt_index += size;
+//         USART3->CR1 |= USART_CR1_TXEIE;
+//     }
+// }
 
-unsigned char ReadUsart3Buffer (unsigned char * bout, unsigned short max_len)
-{
-    unsigned int len;
+// unsigned char Usart3ReadBuffer (unsigned char * bout, unsigned short max_len)
+// {
+//     unsigned int len;
 
-    len = prx3 - rx3buff;
+//     len = prx3 - rx3buff;
 
-    if (len < max_len)
-    {
-        //prx3 points to the '\0' end of line        
-        len += 1;
-        memcpy(bout, (unsigned char *) rx3buff, len);
-    }
-    else
-    {
-        memcpy(bout, (unsigned char *) rx3buff, len);
-        len = max_len;
-    }
+//     if (len < max_len)
+//     {
+//         //prx3 points to the '\0' end of line        
+//         len += 1;
+//         memcpy(bout, (unsigned char *) rx3buff, len);
+//     }
+//     else
+//     {
+//         memcpy(bout, (unsigned char *) rx3buff, len);
+//         len = max_len;
+//     }
 
-    //ajusto punteros de rx luego de la copia
-    prx3 = rx3buff;
+//     //ajusto punteros de rx luego de la copia
+//     prx3 = rx3buff;
 
-    return (unsigned char) len;
-}
+//     return (unsigned char) len;
+// }
 
 void USART3_IRQHandler (void)
 {
-    // unsigned short dummy;
-
-    /* USART in Receive mode --------------------------------------------------*/
+    unsigned short dummy;
+    
+    // USART in Receiver mode --------------------------------------------------
     if (USART3->SR & USART_SR_RXNE)
     {
         dummy = (unsigned short) USART3->DR & 0x00FF;
-
-        //para usar solo one-wire reviso si no estoy transmitiendo yo
-        if (USART3->SR & USART_SR_TC)
-        {        
-            if (prx3 < &rx3buff[SIZEOF_RXDATA - 1])
-            {
-                // USART3->DR = (unsigned char) dummy;    //para debug
-
-                // if ((dummy == '\n') || (dummy == '\r') || (dummy == 26))		//26 es CTRL-Z
-                if ((dummy == '\n') || (dummy == 26))		//26 es CTRL-Z                
-                {
-                    *prx3 = '\0';
-                    usart3_have_data = 1;
-                }
-                else
-                {
-                    *prx3 = dummy;
-                    prx3++;
-                }
-            }
-            else
-                prx3 = rx3buff;    //soluciona problema bloqueo con garbage
-        }
+        DmxInt_Serial_Handler_Receiver (dummy);
     }
 
-    /* USART in Transmit mode -------------------------------------------------*/
+    // USART in Transmiter mode -------------------------------------------------
     if (USART3->CR1 & USART_CR1_TXEIE)
     {
-        // if (L_SERV)
-        //     L_SERV_OFF;
-        // else
-        //     L_SERV_ON;
-
         if (USART3->SR & USART_SR_TXE)
         {
-            if ((ptx3 < &tx3buff[SIZEOF_TXDATA]) && (ptx3 < ptx3_pckt_index))
-            {
-                USART3->DR = *ptx3;
-                ptx3++;
-            }
-            else
-            {
-                ptx3 = tx3buff;
-                ptx3_pckt_index = tx3buff;
-                USART3->CR1 &= ~USART_CR1_TXEIE;
-            }
+            DmxInt_Serial_Handler_Transmitter ();
         }
     }
 
@@ -504,8 +515,10 @@ void USART3_IRQHandler (void)
         dummy = USART3->DR;
     }
 }
+#endif    //USE_USART3
 
 //---- UART4 Functions ----
+#ifdef USE_UART4
 void Uart4Config(void)
 {
     unsigned long temp;
@@ -558,7 +571,7 @@ void Uart4SendUnsigned (unsigned char * send, unsigned char size)
     }
 }
 
-unsigned char ReadUart4Buffer (unsigned char * bout, unsigned short max_len)
+unsigned char Uart4ReadBuffer (unsigned char * bout, unsigned short max_len)
 {
     unsigned int len;
 
@@ -584,9 +597,9 @@ unsigned char ReadUart4Buffer (unsigned char * bout, unsigned short max_len)
 
 void UART4_IRQHandler (void)
 {
-    unsigned char dummy;
+    unsigned short dummy;
 
-    /* USART in Receive mode --------------------------------------------------*/
+    // USART in Receiver mode --------------------------------------------------
     if (UART4->SR & USART_SR_RXNE)
     {
         dummy = UART4->DR & 0x0FF;
@@ -618,7 +631,7 @@ void UART4_IRQHandler (void)
         }
     }
 
-    /* USART in Transmit mode -------------------------------------------------*/
+    // USART in Transmit mode -------------------------------------------------
     if (UART4->CR1 & USART_CR1_TXEIE)
     {
         if (UART4->SR & USART_SR_TXE)
@@ -643,8 +656,10 @@ void UART4_IRQHandler (void)
         dummy = UART4->DR;
     }
 }
+#endif    //USE_UART4
 
 //---- UART5 Functions ----
+#ifdef USE_UART5
 void Uart5Config(void)
 {
     unsigned long temp;
@@ -702,7 +717,7 @@ void Uart5SendUnsigned (unsigned char * send, unsigned char size)
     }
 }
 
-unsigned char ReadUart5Buffer (unsigned char * bout, unsigned short max_len)
+unsigned char Uart5ReadBuffer (unsigned char * bout, unsigned short max_len)
 {
     unsigned int len;
 
@@ -787,5 +802,8 @@ void UART5_IRQHandler (void)
         dummy = UART5->DR;
     }
 }
+#endif    //USE_UART5
 
-//---- End of File ----//
+
+//--- end of file ---//
+

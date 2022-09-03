@@ -44,7 +44,6 @@ extern volatile unsigned char DMX_packet_flag;
 extern volatile unsigned char RDM_packet_flag;
 extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
-extern volatile unsigned char dmx_timeout_timer;
 
 extern volatile unsigned char * pdmx;
 
@@ -53,6 +52,7 @@ extern volatile unsigned char * pdmx;
 volatile pckt_rx_t dmx_signal_state = PCKT_RX_IDLE;
 volatile unsigned short current_channel_index = 0;
 volatile unsigned char dmx_receive_flag = 0;
+volatile unsigned char dmx_timeout_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
@@ -245,6 +245,16 @@ unsigned char Dmx_Get_Packet_Init_Flag (void)
 // }
 
 
+void Dmx_Timeouts (void)
+{
+    //after a start of pck rx, leave 20ms the int in off
+    if (dmx_timeout_timer)
+        dmx_timeout_timer--;
+    else
+        EXTIOn();
+    
+}
+
 #ifdef DMX_WITH_RDM
 //revisa si existe paquete RDM y que hacer con el mismo
 //
@@ -270,7 +280,7 @@ void UpdateRDMResponder(void)
 }
 #endif
 
-#ifdef DMX_BIDIRECTIONAL
+#if defined DMX_BIDIRECTIONAL
 typedef enum {
     SEND_BREAK,
     SEND_MARK,
@@ -341,7 +351,11 @@ __attribute__((always_inline)) void UsartSendDMX (void)
     USART_DMX->CR1 |= USART_CR1_TXEIE;
 }
 
-#endif //DMX_BIDIRECTIONAL
+#else //DMX_BIDIRECTIONAL
+void DmxInt_Serial_Handler_Transmitter (void)
+{
+}
+#endif
 
 
 //--- end of file ---//
