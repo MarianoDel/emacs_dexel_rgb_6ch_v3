@@ -18,13 +18,17 @@
 #include "pwm.h"
 #include "dac_mux.h"
 #include "dmx_transceiver.h"
+#include "usart.h"
 
 #include <stdio.h>
 
 
 // Externals -------------------------------------------------------------------
-extern volatile unsigned short pwm_chnls[];
+extern volatile unsigned char pwm_chnls[];
 extern volatile unsigned short timer_standby;
+
+extern volatile unsigned short DMX_channel_selected;
+extern volatile unsigned char DMX_channel_quantity;
 
 
 // Globals ---------------------------------------------------------------------
@@ -37,10 +41,15 @@ extern volatile unsigned short timer_standby;
 void TF_Led_On_Ctrl_Fan (void);
 void TF_Pwm_Channel_1 (void);
 void TF_Pwm_Channel_2 (void);
+void TF_Pwm_Channel_2_50_Percent (void);
 void TF_Pwm_Channel_3 (void);
 void TF_Pwm_Channel_4 (void);
 void TF_Pwm_Channel_5 (void);
 void TF_Pwm_Channel_6 (void);
+void TF_Pwm_All_Channels (void);
+void TF_Pwm_All_Channels_50_Percent (void);
+void TF_Pwm_All_Channels_Up_Down (void);
+
 void TF_Dac1 (void);
 void TF_Int_Timer5 (void);
 
@@ -50,9 +59,11 @@ void TF_All_Chain_For_Channel_1 (void);
 void TF_All_Chain_For_Channel_1_Max (void);
 
 void TF_Dac_Mux (void);
+void TF_Dac_Mux_All_Channels (void);
 void TF_All_Chain_For_Channel_1_With_Dac_Mux (void);
 
 void TF_Dmx_Input_Break_Detect (void);
+void TF_Dmx_Input_Packet_Detect (void);
 void TF_Dmx_Input_Usart3_To_Usart4 (void);
 void TF_Dmx_All_Channels (void);
 
@@ -62,20 +73,27 @@ void TF_Hardware_Tests (void)
     // TF_Led_On_Ctrl_Fan ();
     // TF_Pwm_Channel_1 ();
     // TF_Pwm_Channel_2 ();
+    // TF_Pwm_Channel_2_50_Percent ();
     // TF_Pwm_Channel_3 ();
     // TF_Pwm_Channel_4 ();
     // TF_Pwm_Channel_5 ();
     // TF_Pwm_Channel_6 ();
+    // TF_Pwm_All_Channels ();
+    // TF_Pwm_All_Channels_50_Percent ();
+    // TF_Pwm_All_Channels_Up_Down ();
+
     // TF_Dac1 ();
     // TF_Complete_Channel_1 ();
 
     // TF_All_Chain_For_Channel_1 ();
     // TF_All_Chain_For_Channel_1_Max ();
     // TF_Dac_Mux ();
+    // TF_Dac_Mux_All_Channels ();
     // TF_All_Chain_For_Channel_1_With_Dac_Mux ();
 
-    TF_Dmx_Input_Break_Detect ();
-    // TF_Dmx_All_Channels ();
+    // TF_Dmx_Input_Break_Detect ();
+    // TF_Dmx_Input_Packet_Detect ();
+    TF_Dmx_All_Channels ();
     
 }
 
@@ -125,6 +143,24 @@ void TF_Pwm_Channel_2 (void)
     }    
 }
 
+
+void TF_Pwm_Channel_2_50_Percent (void)
+{
+    TIM_8_Init();
+
+    TIM6_Init();
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 127;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+    
+    while (1)
+    {
+        Wait_ms(1000);
+    }    
+}
 
 void TF_Pwm_Channel_3 (void)
 {
@@ -190,6 +226,109 @@ void TF_Pwm_Channel_6 (void)
 }
 
 
+void TF_Pwm_All_Channels (void)
+{
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
+    
+    while (1)
+    {
+        if (LED)
+            LED_OFF;
+        else
+            LED_ON;
+
+        Wait_ms(1000);
+    }    
+}
+
+
+void TF_Pwm_All_Channels_50_Percent (void)
+{
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
+
+    TIM6_Init();
+    pwm_chnls[0] = 127;
+    pwm_chnls[1] = 127;
+    pwm_chnls[2] = 127;
+    pwm_chnls[3] = 127;
+    pwm_chnls[4] = 127;
+    pwm_chnls[5] = 127;
+    
+    while (1)
+    {
+        if (LED)
+            LED_OFF;
+        else
+            LED_ON;
+
+        Wait_ms(1000);
+    }    
+}
+
+void TF_Pwm_All_Channels_Up_Down (void)
+{
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
+
+    TIM6_Init();
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+    
+    while (1)
+    {
+        // Go to max current with pwm
+        for (int i = 0; i < 256; i++)
+        {
+            pwm_chnls[0] = i;
+            pwm_chnls[1] = i;
+            pwm_chnls[2] = i;
+            pwm_chnls[3] = i;
+            pwm_chnls[4] = i;
+            pwm_chnls[5] = i;
+            Wait_ms(5);
+        }
+
+        Wait_ms(5000);
+
+        // min from pwm
+        for (int i = 255; i > 0; i--)
+        {
+            pwm_chnls[0] = i;
+            pwm_chnls[1] = i;
+            pwm_chnls[2] = i;
+            pwm_chnls[3] = i;
+            pwm_chnls[4] = i;
+            pwm_chnls[5] = i;
+            Wait_ms(5);
+        }
+
+        Wait_ms(5000);        
+        
+    }
+}
+
+
 void TF_Dac1 (void)
 {
     DAC_Config();
@@ -228,7 +367,7 @@ void TF_Complete_Channel_1 (void)
 
 void TF_All_Chain_For_Channel_1 (void)
 {
-    unsigned short pwm_ena = 0;
+    unsigned char pwm_ena = 0;
     unsigned short dac_ch = 0;
     
     TIM_1_Init();
@@ -378,8 +517,8 @@ void TF_Dac_Mux (void)
     unsigned short dac_chnls [6] = { 0 };
     
     TIM_1_Init();
+    
     DAC_Config();
-
     DAC_Output(0);
 
     TIM6_Init();
@@ -390,6 +529,44 @@ void TF_Dac_Mux (void)
     pwm_chnls[3] = 0;
     pwm_chnls[4] = 0;
     pwm_chnls[5] = 0;
+
+    dac_chnls[0] = 4095;
+    dac_chnls[1] = 2048;
+    dac_chnls[2] = 1024;
+    dac_chnls[3] = 512;
+    dac_chnls[4] = 256;
+    dac_chnls[5] = 0;
+
+    while (1)
+    {
+        DAC_MUX_Update(dac_chnls);
+    }
+}
+
+
+void TF_Dac_Mux_All_Channels (void)
+{
+    unsigned short dac_chnls [6] = { 0 };
+
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
+    
+    DAC_Config();
+    DAC_Output(0);
+
+    TIM6_Init();
+
+    pwm_chnls[0] = 255;
+    pwm_chnls[1] = 255;
+    pwm_chnls[2] = 255;
+    pwm_chnls[3] = 255;
+    pwm_chnls[4] = 255;
+    pwm_chnls[5] = 255;
 
     dac_chnls[0] = 4095;
     dac_chnls[1] = 2048;
@@ -581,6 +758,9 @@ void TF_Dmx_Input_Break_Detect (void)
 {
     TIM7_Init();
 
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 6;
+
     DMX_EnableRx ();
 
     while (1)
@@ -598,6 +778,36 @@ void TF_Dmx_Input_Break_Detect (void)
 }
 
 
+extern volatile unsigned char DMX_packet_flag;
+void TF_Dmx_Input_Packet_Detect (void)
+{
+    TIM7_Init();
+
+    Usart3Config ();
+
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 6;
+
+    DMX_EnableRx ();
+
+    while (1)
+    {
+        if ((DMX_packet_flag) &&
+            (!timer_standby))
+        {
+            LED_ON;
+            timer_standby = 10;
+            DMX_packet_flag = 0;
+        }
+
+        if (!timer_standby)
+            LED_OFF;
+
+        UpdatePackets();
+    }
+}
+
+
 void TF_Dmx_Input_Usart3_To_Usart4 (void)
 {
     TIM7_Init();
@@ -606,18 +816,23 @@ void TF_Dmx_Input_Usart3_To_Usart4 (void)
     
 }
 
-
+extern volatile unsigned char data11[];
 void TF_Dmx_All_Channels (void)
 {
     unsigned short dac_chnls [6] = { 0 };
-    
-    TIM_1_Init();
+
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
 
     DAC_Config();
     DAC_Output(0);
 
     TIM6_Init();
-
     TIM7_Init();
 
     pwm_chnls[0] = 0;
@@ -634,12 +849,49 @@ void TF_Dmx_All_Channels (void)
     dac_chnls[4] = 0;
     dac_chnls[5] = 0;
 
+    Usart3Config ();
+
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 6;
+
+    DMX_EnableRx ();
+    
     while (1)
     {
-        DAC_MUX_Update(dac_chnls);
+        if ((DMX_packet_flag) &&
+            (!timer_standby))
+        {
+            LED_ON;
+            timer_standby = 10;
+            DMX_packet_flag = 0;
 
-        
-        
+            unsigned short dmx_input = 0;
+            // channel 1
+            dmx_input = data11[1] << 1;            
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[0], &dac_chnls[0]);
+            // channel 2
+            dmx_input = data11[2] << 1;
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[1], &dac_chnls[1]);
+            // channel 3
+            dmx_input = data11[3] << 1;
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[2], &dac_chnls[2]);
+            // channel 4
+            dmx_input = data11[4] << 1;
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[3], &dac_chnls[3]);
+            // channel 5
+            dmx_input = data11[5] << 1;
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[4], &dac_chnls[4]);
+            // channel 6
+            dmx_input = data11[6] << 1;
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[5], &dac_chnls[5]);
+            
+        }
+
+        if (!timer_standby)
+            LED_OFF;
+
+        UpdatePackets();
+        DAC_MUX_Update(dac_chnls);
     }
 }
 

@@ -197,9 +197,13 @@ void TIM_8_Init (void)
     
     //CH1 output PWM mode 2 (channel active TIM8->CNT > TIM8->CCR1)
     //CH2 input map IC2->TI2; filtered / 4 N = 6
-    TIM8->CCMR1 = 0x0070 |
-        TIM_CCMR1_CC2S_0 | TIM_CCMR1_IC2F_2 | TIM_CCMR1_IC2F_1;
+    // TIM8->CCMR1 = 0x0070 |
+    //     TIM_CCMR1_CC2S_0 | TIM_CCMR1_IC2F_2 | TIM_CCMR1_IC2F_1;
 
+    // less filter 0.39A?
+    TIM8->CCMR1 = 0x0070 |
+        TIM_CCMR1_CC2S_0 | TIM_CCMR1_IC2F_2;
+    
     TIM8->CCMR2 = 0x0000;
     TIM8->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;    // CH1 enable, polarity reversal
     

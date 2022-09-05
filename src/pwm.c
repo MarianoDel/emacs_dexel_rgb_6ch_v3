@@ -16,6 +16,7 @@
 // #include "stm32f10x.h"    //quitar luego de pruebas
 
 // Externals -------------------------------------------------------------------
+extern volatile unsigned char pwm_chnls [];
 
 
 // Globals ---------------------------------------------------------------------
@@ -137,7 +138,7 @@ void PWM_Find_Least_Value_With_Mask (unsigned char *pwm,
 // get dmx_filtered from 0 to 4095
 // answer pwm_ena 0 to 255
 // answer dac_ch 0 to 4095
-void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned short * pwm_ena, unsigned short * pwm_ch)
+void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned char * pwm_ena, unsigned short * pwm_ch)
 {
     unsigned short dmx_ena = 0;
     unsigned int dmx_ch = 0;
@@ -174,7 +175,7 @@ volatile unsigned char activate_saved = 0;
 volatile unsigned char edges = 0;
 volatile unsigned char edges_saved = 0;
 volatile unsigned char int_edge = 0;
-volatile unsigned char pwm_chnls [6];
+
 // void PWM_Timer_Handler (void)
 // {
 //     if (int_edge < edges)

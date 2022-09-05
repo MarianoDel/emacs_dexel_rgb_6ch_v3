@@ -75,11 +75,6 @@
 
 
 // Externals -------------------------------------------------------------------
-extern volatile unsigned char usart1_have_data;
-extern volatile unsigned char usart2_have_data;
-extern volatile unsigned char usart3_have_data;
-extern volatile unsigned char usart4_have_data;
-extern volatile unsigned char usart5_have_data;
 
 
 // Globals ---------------------------------------------------------------------
@@ -91,6 +86,7 @@ volatile unsigned char * ptx1_pckt_index;
 volatile unsigned char * prx1;
 volatile unsigned char tx1buff[SIZEOF_PC_TXDATA];
 volatile unsigned char rx1buff[SIZEOF_PC_RXDATA];
+volatile unsigned char usart1_have_data;
 #endif
 
 //--- USART2 ---//
@@ -100,6 +96,7 @@ volatile unsigned char * ptx2_pckt_index;
 volatile unsigned char * prx2;
 volatile unsigned char tx2buff[SIZEOF_TXDATA];
 volatile unsigned char rx2buff[SIZEOF_RXDATA];
+volatile unsigned char usart2_have_data;
 #endif
 
 //--- USART3 ---//
@@ -109,6 +106,7 @@ volatile unsigned char rx2buff[SIZEOF_RXDATA];
 // volatile unsigned char * prx3;
 // volatile unsigned char tx3buff[SIZEOF_TXDATA];
 // volatile unsigned char rx3buff[SIZEOF_RXDATA];
+// volatile unsigned char usart3_have_data;
 // used with dmx
 #endif
 
@@ -119,6 +117,7 @@ volatile unsigned char * ptx4_pckt_index;
 volatile unsigned char * prx4;
 volatile unsigned char tx4buff[SIZEOF_TXDATA];
 volatile unsigned char rx4buff[SIZEOF_RXDATA];
+volatile unsigned char uart4_have_data;
 #endif
 
 //--- UART5 ---//
@@ -128,6 +127,7 @@ volatile unsigned char * ptx5_pckt_index;
 volatile unsigned char * prx5;
 volatile unsigned char tx5buff[SIZEOF_TXDATA];
 volatile unsigned char rx5buff[SIZEOF_RXDATA];
+volatile unsigned char uart5_have_data;
 #endif
 
 
@@ -595,6 +595,19 @@ unsigned char Uart4ReadBuffer (unsigned char * bout, unsigned short max_len)
     return (unsigned char) len;
 }
 
+
+unsigned char Uart4HaveData (void)
+{
+    return uart4_have_data;
+}
+
+
+void Uart4HaveDataReset (void)
+{
+    uart4_have_data = 0;
+}
+
+
 void UART4_IRQHandler (void)
 {
     unsigned short dummy;
@@ -613,7 +626,7 @@ void UART4_IRQHandler (void)
                 if ((dummy == '\n') || (dummy == 26))		//26 es CTRL-Z                
                 {
                     *prx4 = '\0';
-                    usart4_have_data = 1;
+                    uart4_have_data = 1;
                     // if (LED)
                     // 	LED_OFF;
                     // else

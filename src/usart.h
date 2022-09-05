@@ -37,6 +37,8 @@ void Uart4Config (void);
 void Uart4Send (char *);
 void Uart4SendUnsigned (unsigned char *, unsigned char);
 unsigned char Uart4ReadBuffer (unsigned char *, unsigned short);
+unsigned char Uart4HaveData (void);
+void Uart4HaveDataReset (void);
 void UART4_IRQHandler (void);
 
 void Uart5Config (void);

@@ -29,7 +29,16 @@
 // Externals -------------------------------------------------------------------
 volatile unsigned short wait_ms_var = 0;
 // -- for dmx
-volatile unsigned char data11[];
+volatile unsigned char data11[SIZEOF_DMX_DATA11];
+volatile unsigned char Packet_Detected_Flag = 0;
+volatile unsigned char DMX_packet_flag = 0;
+volatile unsigned char RDM_packet_flag = 0;
+volatile unsigned short DMX_channel_selected = 0;
+volatile unsigned char DMX_channel_quantity = 0;
+
+// -- for pwm channels
+volatile unsigned char pwm_chnls [6] = { 0 };
+
 
 // Globals ---------------------------------------------------------------------
 // -- for the timeouts in the modes ----

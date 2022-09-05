@@ -52,6 +52,8 @@ void DMX_EnableTx (void);
 void DMX_EnableRx (void);
 void DMX_Disable (void);
 
+void UpdatePackets (void);
+
 void SendDMXPacket (unsigned char);
 void UpdateRDMResponder(void);
 
