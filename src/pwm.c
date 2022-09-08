@@ -158,6 +158,11 @@ void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned char * pwm_ena, 
     
     dmx_ch = dmx_ch * 114;
     dmx_ch = dmx_ch / 100;
+
+    // rooftop
+    if (dmx_ch > 4095)
+        dmx_ch = 4095;
+    
     *pwm_ch = (unsigned short) dmx_ch;
     
 }

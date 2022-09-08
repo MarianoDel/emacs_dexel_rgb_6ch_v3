@@ -19,6 +19,8 @@
 #include "dac_mux.h"
 #include "dmx_transceiver.h"
 #include "usart.h"
+#include "dsp.h"
+#include "i2c.h"
 
 #include <stdio.h>
 
@@ -66,6 +68,9 @@ void TF_Dmx_Input_Break_Detect (void);
 void TF_Dmx_Input_Packet_Detect (void);
 void TF_Dmx_Input_Usart3_To_Usart4 (void);
 void TF_Dmx_All_Channels (void);
+void TF_Dmx_All_Channels_5ms_filter (void);
+
+void TF_I2C_Send_Data (void);
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
@@ -93,7 +98,10 @@ void TF_Hardware_Tests (void)
 
     // TF_Dmx_Input_Break_Detect ();
     // TF_Dmx_Input_Packet_Detect ();
-    TF_Dmx_All_Channels ();
+    // TF_Dmx_All_Channels ();
+    // TF_Dmx_All_Channels_5ms_filter ();
+
+    TF_I2C_Send_Data ();
     
 }
 
@@ -867,22 +875,24 @@ void TF_Dmx_All_Channels (void)
 
             unsigned short dmx_input = 0;
             // channel 1
-            dmx_input = data11[1] << 1;            
+            // dmx_input = MA16_U16Circular (&st_sp1, data11[1] << 4);
+            // PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[0], &dac_chnls[0]);            
+            dmx_input = data11[1] << 4;
             PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[0], &dac_chnls[0]);
             // channel 2
-            dmx_input = data11[2] << 1;
+            dmx_input = data11[2] << 4;
             PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[1], &dac_chnls[1]);
             // channel 3
-            dmx_input = data11[3] << 1;
+            dmx_input = data11[3] << 4;
             PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[2], &dac_chnls[2]);
             // channel 4
-            dmx_input = data11[4] << 1;
+            dmx_input = data11[4] << 4;
             PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[3], &dac_chnls[3]);
             // channel 5
-            dmx_input = data11[5] << 1;
+            dmx_input = data11[5] << 4;
             PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[4], &dac_chnls[4]);
             // channel 6
-            dmx_input = data11[6] << 1;
+            dmx_input = data11[6] << 4;
             PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[5], &dac_chnls[5]);
             
         }
@@ -895,4 +905,120 @@ void TF_Dmx_All_Channels (void)
     }
 }
 
+
+ma16_u16_data_obj_t st_sp1;
+ma16_u16_data_obj_t st_sp2;
+ma16_u16_data_obj_t st_sp3;
+ma16_u16_data_obj_t st_sp4;
+ma16_u16_data_obj_t st_sp5;
+ma16_u16_data_obj_t st_sp6;
+void TF_Dmx_All_Channels_5ms_filter (void)
+{
+    unsigned short dac_chnls [6] = { 0 };
+    unsigned short dmx_getted [6] = { 0 };
+
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
+
+    DAC_Config();
+    DAC_Output(0);
+
+    TIM6_Init();
+    TIM7_Init();
+
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    dac_chnls[0] = 0;
+    dac_chnls[1] = 0;
+    dac_chnls[2] = 0;
+    dac_chnls[3] = 0;
+    dac_chnls[4] = 0;
+    dac_chnls[5] = 0;
+
+    Usart3Config ();
+
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 6;
+
+    DMX_EnableRx ();
+
+    MA16_U16Circular_Reset (&st_sp1);
+    MA16_U16Circular_Reset (&st_sp2);
+    MA16_U16Circular_Reset (&st_sp3);
+    MA16_U16Circular_Reset (&st_sp4);
+    MA16_U16Circular_Reset (&st_sp5);
+    MA16_U16Circular_Reset (&st_sp6);    
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            unsigned short dmx_input = 0;
+
+            // channel 1
+            dmx_input = MA16_U16Circular (&st_sp1, dmx_getted[0]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[0], &dac_chnls[0]);
+            // channel 2
+            dmx_input = MA16_U16Circular (&st_sp2, dmx_getted[1]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[1], &dac_chnls[1]);
+            // channel 3
+            dmx_input = MA16_U16Circular (&st_sp3, dmx_getted[2]);            
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[2], &dac_chnls[2]);
+            // channel 4
+            dmx_input = MA16_U16Circular (&st_sp4, dmx_getted[3]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[3], &dac_chnls[3]);
+            // channel 5
+            dmx_input = MA16_U16Circular (&st_sp5, dmx_getted[4]);            
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[4], &dac_chnls[4]);
+            // channel 6
+            dmx_input = MA16_U16Circular (&st_sp6, dmx_getted[5]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[5], &dac_chnls[5]);
+            
+            timer_standby = 5;
+                        
+        }
+        
+        if (DMX_packet_flag)
+        {
+            DMX_packet_flag = 0;
+
+            if (LED)
+                LED_OFF;
+            else
+                LED_ON;
+            
+            for (int i = 0; i < 6; i++)
+                dmx_getted[i] = data11[i+1] << 4;
+            
+        }
+
+        UpdatePackets();
+        DAC_MUX_Update(dac_chnls);
+    }
+}
+
+
+void TF_I2C_Send_Data (void)
+{
+    I2C1_Init();
+    
+    while (1)
+    {
+        LED_ON;
+        I2C1_SendByte (I2C_ADDRESS_SLV, 0x55);
+        LED_OFF;
+        Wait_ms (30);
+    }
+    
+}
 //--- end of file ---//

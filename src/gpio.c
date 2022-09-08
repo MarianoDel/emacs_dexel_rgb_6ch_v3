@@ -179,8 +179,8 @@ void GpioInit (void)
     GPIOB->CRL = temp;
 
     //--- GPIOB High Side -------------------//
-    //PB8 PWM404
-    //PB9 PWMN4
+    //PB8 alternative I2C1 SCL
+    //PB9 alternative I2C1 SDA
     //PB10 alternative Tx Usart3
     //PB11 alternative Rx Usart3
     //PB12 NC
@@ -189,7 +189,7 @@ void GpioInit (void)
     //PB15 CTRL_C3
     temp = GPIOB->CRH;
     temp &= 0x0FFF0000;
-    temp |= 0x200049BB;
+    temp |= 0x200049AA;
     GPIOB->CRH = temp;    
     
     //--- GPIOC Low Side -------------------//

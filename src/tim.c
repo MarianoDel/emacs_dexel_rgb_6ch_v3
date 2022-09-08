@@ -229,9 +229,9 @@ void TIM_2_Init (void)
     // timer configuration
     TIM2->CR1 = 0x00 | TIM_CR1_ARPE;        //clk int / 1 , auto preload enable
 
-    //Reset mode, trigger with TI1 ver esto estaba conf para TI2
+    //Reset mode, trigger with TI1
     TIM2->SMCR |= TIM_SMCR_SMS_2 |
-        TIM_SMCR_TS_2 | TIM_SMCR_TS_1;
+        TIM_SMCR_TS_2 | TIM_SMCR_TS_0;
     
     //CH3 output PWM mode 2 (channel active TIM2->CNT > TIM2->CCR3)
     //CH1 input map IC1->TI1; filtered / 4 N = 6
