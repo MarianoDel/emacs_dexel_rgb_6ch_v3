@@ -51,7 +51,9 @@ void I2C1_Init (void)
     // Speed and Port options
     // APB freq = 32MHz peripheral clk = 10MHz
     I2C1->CR2 = 10;
+    // I2C1->CR2 = 2;    
     I2C1->CCR |= I2C_CCR_FS | I2C_CCR_DUTY | 0x0004;    //100KHz
+    // I2C1->CCR |= I2C_CCR_FS | I2C_CCR_DUTY | 0x0006;    //100KHz    
 
     // I2C1 remap to PB8 PB9 SCL SDA
     unsigned int temp = 0;
@@ -86,9 +88,6 @@ void I2C1_SendByte (unsigned char addr, unsigned char data)
 
         // wait for slave addr be sent
         unsigned short dummy = 0;
-        // while (!(I2C1->SR1 & I2C_SR1_ADDR));
-        // while (!(I2C1->SR2 & I2C_SR2_MSL));    //dummy read to clear ADDR
-        
         unsigned char error = 1;
         do {
             if (I2C1->SR1 & I2C_SR1_ADDR)
@@ -117,6 +116,99 @@ void I2C1_SendByte (unsigned char addr, unsigned char data)
     }
 }
 
+
+unsigned char I2C1_SendAddr (unsigned char addr)
+{
+    // we can send start even if the bus is busy, hard will wait its turn
+    //check not busy and not master
+    if ((!(I2C1->SR2 & I2C_SR2_BUSY)) &&
+        (!(I2C1->SR2 & I2C_SR2_MSL)))
+    {
+        // send START
+        I2C1->CR1 |= I2C_CR1_START;
+        // wait for START be sent
+        while (!(I2C1->SR1 & I2C_SR1_SB));
+        // send slave addr, always for transmit LSB = 0
+        I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
+        I2C1->DR = addr & 0xFE;
+
+        // wait for slave addr be sent
+        unsigned short dummy = 0;
+        unsigned char error = 1;
+        do {
+            if (I2C1->SR1 & I2C_SR1_ADDR)
+            {
+                dummy = I2C1->SR2;    //dummy read to clear ADDR
+                error = 0;
+                dummy = 1;
+            }
+            
+            if ((I2C1->SR1 & I2C_SR1_AF) ||
+                (I2C1->SR1 & I2C_SR1_TIMEOUT))
+            {
+                error = 0;
+                dummy = 2;
+            }
+            
+        } while (error);
+        
+        I2C1->CR1 |= I2C_CR1_STOP;
+        return (unsigned char) dummy;
+    }
+
+    return 0;
+}
+
+
+// no ints
+void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned short size)
+{
+    if ((!(I2C1->SR2 & I2C_SR2_BUSY)) &&
+        (!(I2C1->SR2 & I2C_SR2_MSL)))
+    {
+        // send START
+        I2C1->CR1 |= I2C_CR1_START;
+        // wait for START be sent
+        while (!(I2C1->SR1 & I2C_SR1_SB));
+
+        I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
+        // send slave addr is right aligned
+        I2C1->DR = (addr << 1) & 0xFE;
+
+        // wait for slave addr be sent
+        unsigned short dummy = 0;
+        unsigned char error = 1;
+        do {
+            if (I2C1->SR1 & I2C_SR1_ADDR)
+            {
+                dummy = I2C1->SR2;    //dummy read to clear ADDR
+                error = 0;
+            }
+            
+            if ((I2C1->SR1 & I2C_SR1_AF) ||
+                (I2C1->SR1 & I2C_SR1_TIMEOUT))
+            {
+                error = 0;
+                I2C1->CR1 |= I2C_CR1_STOP;
+                return;
+            }
+            
+        } while (error);
+
+
+        for (int i = 0; i < size; i++)
+        {
+            while (!(I2C1->SR1 & I2C_SR1_TXE));
+            I2C1->DR = *(pdata + i);
+        }
+
+        // wait for send STOP
+        while (!(I2C1->SR1 & I2C_SR1_TXE));
+        I2C1->CR1 |= I2C_CR1_STOP;
+        
+    }
+    
+}
 
 // Send multiple bytes to a slave address
 // void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned short size)
@@ -164,47 +256,6 @@ void I2C1_SendByte (unsigned char addr, unsigned char data)
 // }
 
 
-// void I2C1_SendMiddleChunk (unsigned char *pdata, unsigned char size)
-// {
-//     unsigned char i = 0;
-
-//     while (i < size)
-//     {
-//         if (I2C1->ISR & I2C_ISR_TXIS)
-//         {
-//             I2C1->TXDR = *(pdata + i);
-//             i++;
-//         }
-//     }
-
-//     while (!(I2C1->ISR & I2C_ISR_TCR));
-// }
-
-
-//TODO: chequear tambien NACK
-// void I2C1_SendLastChunk (unsigned char *pdata, unsigned char size)
-// {
-//     unsigned char i = 0;
-
-//     //clear the stop
-//     I2C1->ICR |= I2C_ICR_STOPCF;
-//     while (i < size)
-//     {
-//         if (I2C1->ISR & I2C_ISR_TXIS)
-//         {
-//             I2C1->TXDR = *(pdata + i);
-//             i++;
-//         }
-//     }
-
-//     //espero final de transmision
-//     while (!(I2C1->ISR & I2C_ISR_STOPF));
-    
-//     // si termino con AUTOEND no recibo TC
-//     // while (!(I2C1->ISR & I2C_ISR_TC));
-//     // i2 = I2C1->CR2;
-//     // i2 += 1;
-// }
 #endif    //I2C_USE_I2C1
 
 ////////////////////

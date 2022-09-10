@@ -85,6 +85,12 @@ SRC += ./src/dmx_transceiver.c
 SRC += ./src/dsp.c
 SRC += ./src/i2c.c
 
+SRC += ./src/ssd1306_display.c
+SRC += ./src/ssd1306_gfx.c
+SRC += ./src/screen.c
+
+
+
 ## Core Support
 SRC += ./startup_src/syscalls.c
 SRC += ./startup_src/startup_clocks.c

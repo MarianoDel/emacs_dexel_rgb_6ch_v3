@@ -21,6 +21,7 @@
 #include "usart.h"
 #include "dsp.h"
 #include "i2c.h"
+#include "screen.h"
 
 #include <stdio.h>
 
@@ -71,6 +72,9 @@ void TF_Dmx_All_Channels (void);
 void TF_Dmx_All_Channels_5ms_filter (void);
 
 void TF_I2C_Send_Data (void);
+void TF_I2C_Check_Address (void);
+void TF_Oled_Screen (void);
+
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
@@ -101,7 +105,9 @@ void TF_Hardware_Tests (void)
     // TF_Dmx_All_Channels ();
     // TF_Dmx_All_Channels_5ms_filter ();
 
-    TF_I2C_Send_Data ();
+    // TF_I2C_Send_Data ();
+    // TF_I2C_Check_Address ();
+    TF_Oled_Screen ();    
     
 }
 
@@ -1021,4 +1027,121 @@ void TF_I2C_Send_Data (void)
     }
     
 }
+
+
+void TF_I2C_Check_Address (void)
+{
+    LED_OFF;
+    
+    I2C1_Init();
+    
+    while (1)
+    {
+        for (unsigned char i = 0; i < 128; i++)
+        {
+            // LED_ON;
+            // if (I2C1_SendAddr(i << 1) != 0)
+            if (I2C1_SendAddr(i) == 1)
+            {
+                LED_ON;
+                // i = 128;
+                break;
+            }
+            
+            Wait_ms(1);
+            LED_OFF;
+            Wait_ms(9);
+            // Wait_ms(10);
+        }
+
+        Wait_ms(999);
+        LED_OFF;
+        
+        // LED_ON;
+        // I2C1_SendAddr(I2C_ADDRESS_SLV);
+        // Wait_ms(1);
+        // LED_OFF;
+        // Wait_ms(50);
+    }
+}
+
+
+extern uint8_t SSD1306_buffer[];
+void TF_Oled_Screen (void)
+{
+    // OLED Init
+    Wait_ms(500);    //for supply stability
+    I2C1_Init();
+    Wait_ms(10);
+
+    //primer pantalla
+    LED_ON;
+    SCREEN_Init();
+    LED_OFF;
+    
+    while (1)
+    {
+        LED_ON;
+        SCREEN_ShowText2(
+            "Primera  ",
+            " Pantalla",
+            "         ",
+            "         "
+            );
+
+        LED_OFF;
+    
+
+        Wait_ms(5000);
+        display_contrast (10);
+        Wait_ms(5000);
+        display_contrast (255);
+        Wait_ms(5000);
+        // display_off (255);
+        // Wait_ms(5000);            
+        display_invert (1);
+        Wait_ms(5000);            
+        display_invert (0);
+        Wait_ms(5000);
+        memset(SSD1306_buffer, 1, 1025);
+        display_update();
+        Wait_ms(5000);
+        
+    }
+    
+
+    unsigned char a = 0;
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            CTRL_FAN_ON;
+            timer_standby = 1000;
+            if (a)
+            {
+                SCREEN_ShowText2(
+                    "Primera  ",
+                    " Pantalla",
+                    "         ",
+                    "         "
+                    );
+                a = 0;
+            }
+            else
+            {
+                SCREEN_ShowText2(
+                    "         ",
+                    "         ",
+                    "Segunda  ",
+                    " Pantalla"
+                    );
+                a = 1;
+            }
+            CTRL_FAN_OFF;
+        }
+        // display_update_int_state_machine();
+
+    }
+}
+
 //--- end of file ---//

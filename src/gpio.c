@@ -189,7 +189,7 @@ void GpioInit (void)
     //PB15 CTRL_C3
     temp = GPIOB->CRH;
     temp &= 0x0FFF0000;
-    temp |= 0x200049AA;
+    temp |= 0x200049EE;
     GPIOB->CRH = temp;    
     
     //--- GPIOC Low Side -------------------//
