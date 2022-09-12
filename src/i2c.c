@@ -130,7 +130,7 @@ unsigned char I2C1_SendAddr (unsigned char addr)
         while (!(I2C1->SR1 & I2C_SR1_SB));
         // send slave addr, always for transmit LSB = 0
         I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
-        I2C1->DR = addr & 0xFE;
+        I2C1->DR = addr;
 
         // wait for slave addr be sent
         unsigned short dummy = 0;
@@ -163,50 +163,48 @@ unsigned char I2C1_SendAddr (unsigned char addr)
 // no ints
 void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned short size)
 {
-    if ((!(I2C1->SR2 & I2C_SR2_BUSY)) &&
-        (!(I2C1->SR2 & I2C_SR2_MSL)))
-    {
-        // send START
-        I2C1->CR1 |= I2C_CR1_START;
-        // wait for START be sent
-        while (!(I2C1->SR1 & I2C_SR1_SB));
+    // wait no busy line
+    while (I2C1->SR2 & I2C_SR2_BUSY);
+    
+    // send START
+    I2C1->CR1 |= I2C_CR1_START;
+    // wait for START be sent
+    while (!(I2C1->SR1 & I2C_SR1_SB));
 
-        I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
-        // send slave addr is right aligned
-        I2C1->DR = (addr << 1) & 0xFE;
+    I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
+    // send slave addr is right aligned
+    I2C1->DR = (addr << 1) & 0xFE;
 
-        // wait for slave addr be sent
-        unsigned short dummy = 0;
-        unsigned char error = 1;
-        do {
-            if (I2C1->SR1 & I2C_SR1_ADDR)
-            {
-                dummy = I2C1->SR2;    //dummy read to clear ADDR
-                error = 0;
-            }
-            
-            if ((I2C1->SR1 & I2C_SR1_AF) ||
-                (I2C1->SR1 & I2C_SR1_TIMEOUT))
-            {
-                error = 0;
-                I2C1->CR1 |= I2C_CR1_STOP;
-                return;
-            }
-            
-        } while (error);
-
-
-        for (int i = 0; i < size; i++)
+    // wait for slave addr be sent
+    unsigned short dummy = 0;
+    unsigned char error = 1;
+    do {
+        if (I2C1->SR1 & I2C_SR1_ADDR)
         {
-            while (!(I2C1->SR1 & I2C_SR1_TXE));
-            I2C1->DR = *(pdata + i);
+            dummy = I2C1->SR2;    //dummy read to clear ADDR
+            error = 0;
         }
+            
+        if ((I2C1->SR1 & I2C_SR1_AF) ||
+            (I2C1->SR1 & I2C_SR1_TIMEOUT))
+        {
+            error = 0;
+            I2C1->CR1 |= I2C_CR1_STOP;
+            return;
+        }
+            
+    } while (error);
 
-        // wait for send STOP
+
+    for (int i = 0; i < size; i++)
+    {
         while (!(I2C1->SR1 & I2C_SR1_TXE));
-        I2C1->CR1 |= I2C_CR1_STOP;
-        
+        I2C1->DR = *(pdata + i);
     }
+
+    // wait to send STOP
+    while (!(I2C1->SR1 & I2C_SR1_TXE));
+    I2C1->CR1 |= I2C_CR1_STOP;
     
 }
 

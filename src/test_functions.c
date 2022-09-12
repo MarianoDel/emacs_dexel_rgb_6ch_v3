@@ -1039,12 +1039,12 @@ void TF_I2C_Check_Address (void)
     {
         for (unsigned char i = 0; i < 128; i++)
         {
-            // LED_ON;
-            // if (I2C1_SendAddr(i << 1) != 0)
-            if (I2C1_SendAddr(i) == 1)
+            // addr is right aligned
+            // b0 = 0 for write b0 = 1 for read
+            unsigned char addr = (i << 1) & 0xFE;    
+            if (I2C1_SendAddr(addr) == 1)
             {
                 LED_ON;
-                // i = 128;
                 break;
             }
             
@@ -1057,11 +1057,6 @@ void TF_I2C_Check_Address (void)
         Wait_ms(999);
         LED_OFF;
         
-        // LED_ON;
-        // I2C1_SendAddr(I2C_ADDRESS_SLV);
-        // Wait_ms(1);
-        // LED_OFF;
-        // Wait_ms(50);
     }
 }
 
@@ -1082,6 +1077,7 @@ void TF_Oled_Screen (void)
     while (1)
     {
         LED_ON;
+        display_contrast (255);        
         SCREEN_ShowText2(
             "Primera  ",
             " Pantalla",
@@ -1090,56 +1086,109 @@ void TF_Oled_Screen (void)
             );
 
         LED_OFF;
-    
+        Wait_ms(5000);
 
-        Wait_ms(5000);
+        LED_ON;
         display_contrast (10);
+        SCREEN_ShowText2(
+            "         ",
+            "         ",
+            "Segunda  ",
+            " Pantalla"
+            );
+        LED_OFF;
         Wait_ms(5000);
-        display_contrast (255);
+
+        display_contrast (255);        
+        LED_ON;
+        display_invert(1);
+        SCREEN_ShowText2(
+            "Third    ",
+            "  Screen ",
+            "         ",
+            "         "
+            );
+        LED_OFF;
         Wait_ms(5000);
-        // display_off (255);
-        // Wait_ms(5000);            
-        display_invert (1);
-        Wait_ms(5000);            
-        display_invert (0);
-        Wait_ms(5000);
-        memset(SSD1306_buffer, 1, 1025);
-        display_update();
+
+        LED_ON;
+        display_invert(0);
+        SCREEN_ShowText2(
+            "         ",
+            "         ",            
+            "Forth    ",
+            "  Screen "
+            );
+        LED_OFF;
         Wait_ms(5000);
         
-    }
-    
+        
 
-    unsigned char a = 0;
+    }
+}
+
+
+void TF_Oled_Screen_With_Ints (void)
+{
+    // OLED Init
+    Wait_ms(500);    //for supply stability
+    I2C1_Init();
+    Wait_ms(10);
+
+    //primer pantalla
+    LED_ON;
+    SCREEN_Init();
+    LED_OFF;
+    
     while (1)
     {
-        if (!timer_standby)
-        {
-            CTRL_FAN_ON;
-            timer_standby = 1000;
-            if (a)
-            {
-                SCREEN_ShowText2(
-                    "Primera  ",
-                    " Pantalla",
-                    "         ",
-                    "         "
-                    );
-                a = 0;
-            }
-            else
-            {
-                SCREEN_ShowText2(
-                    "         ",
-                    "         ",
-                    "Segunda  ",
-                    " Pantalla"
-                    );
-                a = 1;
-            }
-            CTRL_FAN_OFF;
-        }
-        // display_update_int_state_machine();
+        LED_ON;
+        display_contrast (255);        
+        SCREEN_ShowText2(
+            "Primera  ",
+            " Pantalla",
+            "         ",
+            "         "
+            );
+
+        LED_OFF;
+        Wait_ms(5000);
+
+        LED_ON;
+        display_contrast (10);
+        SCREEN_ShowText2(
+            "         ",
+            "         ",
+            "Segunda  ",
+            " Pantalla"
+            );
+        LED_OFF;
+        Wait_ms(5000);
+
+        display_contrast (255);        
+        LED_ON;
+        display_invert(1);
+        SCREEN_ShowText2(
+            "Third    ",
+            "  Screen ",
+            "         ",
+            "         "
+            );
+        LED_OFF;
+        Wait_ms(5000);
+
+        LED_ON;
+        display_invert(0);
+        SCREEN_ShowText2(
+            "         ",
+            "         ",            
+            "Forth    ",
+            "  Screen "
+            );
+        LED_OFF;
+        Wait_ms(5000);
+        
+        
 
     }
 }
