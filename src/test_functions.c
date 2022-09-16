@@ -21,7 +21,9 @@
 #include "usart.h"
 #include "dsp.h"
 #include "i2c.h"
+
 #include "screen.h"
+#include "dmx_menu.h"
 
 #include <stdio.h>
 
@@ -74,7 +76,8 @@ void TF_Dmx_All_Channels_5ms_filter (void);
 void TF_I2C_Send_Data (void);
 void TF_I2C_Check_Address (void);
 void TF_Oled_Screen (void);
-
+void TF_Oled_Screen_Int (void);
+void TF_Dmx_All_Channels_5ms_filter_with_Oled (void);
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
@@ -107,7 +110,10 @@ void TF_Hardware_Tests (void)
 
     // TF_I2C_Send_Data ();
     // TF_I2C_Check_Address ();
-    TF_Oled_Screen ();    
+    // TF_Oled_Screen ();
+    // TF_Oled_Screen_Int ();
+    // TF_Oled_Screen_Int2 ();
+    TF_Dmx_All_Channels_5ms_filter_with_Oled ();
     
 }
 
@@ -1128,7 +1134,38 @@ void TF_Oled_Screen (void)
 }
 
 
-void TF_Oled_Screen_With_Ints (void)
+void TF_Oled_Screen_Int (void)
+{
+    // OLED Init
+    Wait_ms(500);    //for supply stability
+    I2C1_Init();
+    Wait_ms(10);
+
+    //primer pantalla
+    // LED_ON;
+    // SCREEN_Init();
+    // LED_OFF;
+
+    // pruebo falla en la int, salta por STOPF?
+    // no, reentra antes de generar el stop, si no tengo START no hago nada
+    while (1)
+    {
+        unsigned short dummy = I2C1->SR1;
+        dummy += 1;
+        dummy = I2C1->SR2;
+        dummy += 1;
+        Wait_ms(1);
+        LED_ON;
+        display_contrast (10);
+        Wait_ms(1);
+        LED_OFF;
+        Wait_ms(5000);
+    }
+
+}
+
+
+void TF_Oled_Screen_Int2 (void)
 {
     // OLED Init
     Wait_ms(500);    //for supply stability
@@ -1139,57 +1176,221 @@ void TF_Oled_Screen_With_Ints (void)
     LED_ON;
     SCREEN_Init();
     LED_OFF;
-    
+
+    int a = 1;
+
     while (1)
     {
-        LED_ON;
-        display_contrast (255);        
-        SCREEN_ShowText2(
-            "Primera  ",
-            " Pantalla",
-            "         ",
-            "         "
-            );
+        if ((a == 1) &&
+            (!timer_standby))
+        {
+            LED_ON;
+            display_contrast (255);        
+            SCREEN_ShowText2(
+                "Primera  ",
+                " Pantalla",
+                "         ",
+                "         "
+                );
 
-        LED_OFF;
-        Wait_ms(5000);
+            LED_OFF;
+            timer_standby = 5000;
+            a++;
+        }
 
-        LED_ON;
-        display_contrast (10);
-        SCREEN_ShowText2(
-            "         ",
-            "         ",
-            "Segunda  ",
-            " Pantalla"
-            );
-        LED_OFF;
-        Wait_ms(5000);
+        if ((a == 2) &&
+            (!timer_standby))
+        {        
+            LED_ON;
+            display_contrast (10);
+            SCREEN_ShowText2(
+                "         ",
+                "         ",
+                "Segunda  ",
+                " Pantalla"
+                );
+            LED_OFF;
+            timer_standby = 5000;
+            a++;
+        }
 
-        display_contrast (255);        
-        LED_ON;
-        display_invert(1);
-        SCREEN_ShowText2(
-            "Third    ",
-            "  Screen ",
-            "         ",
-            "         "
-            );
-        LED_OFF;
-        Wait_ms(5000);
+        if ((a == 3) &&
+            (!timer_standby))
+        {
+            LED_ON;
+            display_contrast (255);        
+            display_invert(1);
+            SCREEN_ShowText2(
+                "Third    ",
+                "  Screen ",
+                "         ",
+                "         "
+                );
+            LED_OFF;
+            timer_standby = 5000;
+            a++;
+        }
 
-        LED_ON;
-        display_invert(0);
-        SCREEN_ShowText2(
-            "         ",
-            "         ",            
-            "Forth    ",
-            "  Screen "
-            );
-        LED_OFF;
-        Wait_ms(5000);
+
+        if ((a == 4) &&
+            (!timer_standby))
+        {        
+            LED_ON;
+            display_invert(0);
+            SCREEN_ShowText2(
+                "         ",
+                "         ",            
+                "Forth    ",
+                "  Screen "
+                );
+            LED_OFF;
+            timer_standby = 5000;
+            a = 1;            
+        }
+
+        display_update_int_state_machine ();
+    }
+}
+
+
+// all channels plus oled
+void TF_Dmx_All_Channels_5ms_filter_with_Oled (void)
+{
+    unsigned short dac_chnls [6] = { 0 };
+    unsigned short dmx_getted [6] = { 0 };
+    unsigned char dmx_to_show [6] = { 0 };    
+
+    // enable timers for channels
+    TIM_1_Init();    //ch1
+    TIM_8_Init();    //ch2
+    TIM_2_Init();    //ch3
+    TIM_3_Init();    //ch4
+    TIM_4_Init();    //ch5
+    TIM_5_Init();    //ch6
+
+    DAC_Config();
+    DAC_Output(0);
+
+    TIM6_Init();
+    TIM7_Init();
+
+    pwm_chnls[0] = 0;
+    pwm_chnls[1] = 0;
+    pwm_chnls[2] = 0;
+    pwm_chnls[3] = 0;
+    pwm_chnls[4] = 0;
+    pwm_chnls[5] = 0;
+
+    dac_chnls[0] = 0;
+    dac_chnls[1] = 0;
+    dac_chnls[2] = 0;
+    dac_chnls[3] = 0;
+    dac_chnls[4] = 0;
+    dac_chnls[5] = 0;
+
+    Usart3Config ();
+
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 6;
+
+    DMX_EnableRx ();
+
+    MA16_U16Circular_Reset (&st_sp1);
+    MA16_U16Circular_Reset (&st_sp2);
+    MA16_U16Circular_Reset (&st_sp3);
+    MA16_U16Circular_Reset (&st_sp4);
+    MA16_U16Circular_Reset (&st_sp5);
+    MA16_U16Circular_Reset (&st_sp6);    
+
+    // OLED Init
+    Wait_ms(500);    //for supply stability
+    I2C1_Init();
+    Wait_ms(10);
+
+    //primer pantalla
+    LED_ON;
+    SCREEN_Init();
+    LED_OFF;
+
+    SCREEN_ShowText2(
+        "Kirno    ",
+        "   Tech  ",
+        "Smart    ",
+        "   Driver"
+        );
+    timer_standby = 1300;
+    
+    while (timer_standby)
+        display_update_int_state_machine();
+
+    unsigned char update_menu = 0;
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            unsigned short dmx_input = 0;
+
+            // channel 1
+            dmx_input = MA16_U16Circular (&st_sp1, dmx_getted[0]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[0], &dac_chnls[0]);
+            // channel 2
+            dmx_input = MA16_U16Circular (&st_sp2, dmx_getted[1]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[1], &dac_chnls[1]);
+            // channel 3
+            dmx_input = MA16_U16Circular (&st_sp3, dmx_getted[2]);            
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[2], &dac_chnls[2]);
+            // channel 4
+            dmx_input = MA16_U16Circular (&st_sp4, dmx_getted[3]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[3], &dac_chnls[3]);
+            // channel 5
+            dmx_input = MA16_U16Circular (&st_sp5, dmx_getted[4]);            
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[4], &dac_chnls[4]);
+            // channel 6
+            dmx_input = MA16_U16Circular (&st_sp6, dmx_getted[5]);
+            PWM_Map_Post_Filter (dmx_input, (unsigned char *)&pwm_chnls[5], &dac_chnls[5]);
+            
+            timer_standby = 5;
+                        
+        }
         
-        
+        if (DMX_packet_flag)
+        {
+            DMX_packet_flag = 0;
 
+            if (LED)
+                LED_OFF;
+            else
+                LED_ON;
+            
+            for (int i = 0; i < 6; i++)
+            {
+                dmx_getted[i] = data11[i+1] << 4;
+                dmx_to_show[i] = data11[i+1];
+            }
+
+            update_menu = 1;
+        }
+
+        if (update_menu)
+        {
+            unsigned short dmx_channel = 1;
+            
+            resp_t resp = resp_continue;
+            dmx_menu_data_t dmx1_st;
+            dmx1_st.dmx_first_chnl = &dmx_channel;
+            dmx1_st.mode = 0;    //DMX1_MODE
+            dmx1_st.pchannels = dmx_to_show;
+            dmx1_st.chnls_qtty = 6;
+            dmx1_st.show_addres = 1;
+
+            resp = DMXModeMenu(&dmx1_st);
+            if (resp == resp_finish)
+                update_menu = 0;
+        }
+        display_update_int_state_machine();
+
+        UpdatePackets();
+        DAC_MUX_Update(dac_chnls);
     }
 }
 

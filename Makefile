@@ -88,6 +88,8 @@ SRC += ./src/i2c.c
 SRC += ./src/ssd1306_display.c
 SRC += ./src/ssd1306_gfx.c
 SRC += ./src/screen.c
+SRC += ./src/dmx_menu.c
+SRC += ./src/display_utils.c
 
 
 

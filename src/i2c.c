@@ -16,7 +16,7 @@
 // Private Types Constants and Macros ------------------------------------------
 #define I2C_USE_I2C1
 // #define I2C_USE_I2C2
-// #define I2C_WITH_INTS
+#define I2C_WITH_INTS
 
 
 #define RCC_I2C1_CLK    (RCC->APB1ENR & 0x00200000)
@@ -27,6 +27,22 @@
 #define RCC_I2C2_CLKEN    (RCC->APB1ENR |= 0x00400000)
 #define RCC_I2C2_CLKDIS    (RCC->APB1ENR &= ~0x00400000)
 
+#ifdef I2C_WITH_INTS
+typedef enum {
+    wait_start,
+    wait_addr,
+    sending_bytes,
+    wait_stop
+
+} i2c1_int_states_e;
+
+typedef struct {
+    unsigned char slave_addr;
+    unsigned char * pbuff;
+    unsigned short buff_size;
+    
+} i2c1_int_pckt_st;
+#endif
 
 // Externals -------------------------------------------------------------------
 
@@ -64,7 +80,8 @@ void I2C1_Init (void)
     I2C1->CR1 = I2C_CR1_PE;
 
 #ifdef I2C_WITH_INTS
-    I2C1->CR2 |= I2C_CR2_ITBUFEN;
+    // I2C1->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN;
+    I2C1->CR2 |= I2C_CR2_ITEVTEN;    
     // Int and priority
     NVIC_EnableIRQ(I2C1_EV_IRQn);
     NVIC_SetPriority(I2C1_EV_IRQn, 8);
@@ -74,89 +91,82 @@ void I2C1_Init (void)
 
 void I2C1_SendByte (unsigned char addr, unsigned char data)
 {
-    // we can send start even if the bus is busy, hard will wait its turn
-    //check not busy and not master
-    if ((!(I2C1->SR2 & I2C_SR2_BUSY)) &&
-        (!(I2C1->SR2 & I2C_SR2_MSL)))
-    {
-        // send START
-        I2C1->CR1 |= I2C_CR1_START;
-        // wait for START be sent
-        while (!(I2C1->SR1 & I2C_SR1_SB));
-        // send slave addr
-        I2C1->DR = addr;
+    // wait no busy line
+    while (I2C1->SR2 & I2C_SR2_BUSY);
 
-        // wait for slave addr be sent
-        unsigned short dummy = 0;
-        unsigned char error = 1;
-        do {
-            if (I2C1->SR1 & I2C_SR1_ADDR)
-            {
-                dummy = I2C1->SR2;    //dummy read to clear ADDR
-            }
+    // send START
+    I2C1->CR1 |= I2C_CR1_START;
+    // wait for START be sent
+    while (!(I2C1->SR1 & I2C_SR1_SB));
+    I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
+    // send slave addr
+    I2C1->DR = addr;
+
+    // wait for slave addr be sent
+    unsigned short dummy = 0;
+    unsigned char error = 1;
+    do {
+        if (I2C1->SR1 & I2C_SR1_ADDR)
+        {
+            dummy = I2C1->SR2;    //dummy read to clear ADDR
+        }
             
-            if ((I2C1->SR1 & I2C_SR1_AF) ||
-                (I2C1->SR1 & I2C_SR1_TIMEOUT))
-            {
-                error = 0;
-                I2C1->CR1 |= I2C_CR1_STOP;
-                return;
-            }
+        if ((I2C1->SR1 & I2C_SR1_AF) ||
+            (I2C1->SR1 & I2C_SR1_TIMEOUT))
+        {
+            error = 0;
+            I2C1->CR1 |= I2C_CR1_STOP;
+            return;
+        }
             
-        } while (error);
+    } while (error);
 
 
-        while (!(I2C1->SR1 & I2C_SR1_TXE));
-        I2C1->DR = data;
+    while (!(I2C1->SR1 & I2C_SR1_TXE));
+    I2C1->DR = data;
 
-        // wait for send STOP
-        while (!(I2C1->SR1 & I2C_SR1_TXE));
-        I2C1->CR1 |= I2C_CR1_STOP;
-        
-    }
+    // wait for send STOP
+    while (!(I2C1->SR1 & I2C_SR1_TXE));
+    I2C1->CR1 |= I2C_CR1_STOP;
+
 }
 
 
 unsigned char I2C1_SendAddr (unsigned char addr)
 {
-    // we can send start even if the bus is busy, hard will wait its turn
-    //check not busy and not master
-    if ((!(I2C1->SR2 & I2C_SR2_BUSY)) &&
-        (!(I2C1->SR2 & I2C_SR2_MSL)))
-    {
-        // send START
-        I2C1->CR1 |= I2C_CR1_START;
-        // wait for START be sent
-        while (!(I2C1->SR1 & I2C_SR1_SB));
-        // send slave addr, always for transmit LSB = 0
-        I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
-        I2C1->DR = addr;
+    // wait no busy line
+    while (I2C1->SR2 & I2C_SR2_BUSY);
 
-        // wait for slave addr be sent
-        unsigned short dummy = 0;
-        unsigned char error = 1;
-        do {
-            if (I2C1->SR1 & I2C_SR1_ADDR)
-            {
-                dummy = I2C1->SR2;    //dummy read to clear ADDR
-                error = 0;
-                dummy = 1;
-            }
+    // send START
+    I2C1->CR1 |= I2C_CR1_START;
+    // wait for START be sent
+    while (!(I2C1->SR1 & I2C_SR1_SB));
+
+    I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
+    I2C1->DR = addr;
+
+    // wait for slave addr be sent
+    unsigned short dummy = 0;
+    unsigned char error = 1;
+    do {
+        if (I2C1->SR1 & I2C_SR1_ADDR)
+        {
+            dummy = I2C1->SR2;    //dummy read to clear ADDR
+            error = 0;
+            dummy = 1;
+        }
             
-            if ((I2C1->SR1 & I2C_SR1_AF) ||
-                (I2C1->SR1 & I2C_SR1_TIMEOUT))
-            {
-                error = 0;
-                dummy = 2;
-            }
+        if ((I2C1->SR1 & I2C_SR1_AF) ||
+            (I2C1->SR1 & I2C_SR1_TIMEOUT))
+        {
+            error = 0;
+            dummy = 2;
+        }
             
-        } while (error);
+    } while (error);
         
-        I2C1->CR1 |= I2C_CR1_STOP;
-        return (unsigned char) dummy;
-    }
-
-    return 0;
+    I2C1->CR1 |= I2C_CR1_STOP;
+    return (unsigned char) dummy;
 }
 
 
@@ -208,51 +218,167 @@ void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned shor
     
 }
 
-// Send multiple bytes to a slave address
-// void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned short size)
-// {
-//     //check START ready
-//     if (!(I2C1->CR2 & I2C_CR2_START))
-//     {
-//         if (size > 255)
-//         {
-//             unsigned short offset = 0;
+
+#ifdef I2C_WITH_INTS
+i2c1_int_pckt_st i2c1_int_pckt;
+volatile unsigned char i2c1_int_active = 0;
+// with ints
+void I2C1_SendMultiByte_Int (unsigned char addr, unsigned char *pdata, unsigned short size)
+{
+    if (!(I2C1->SR2 & I2C_SR2_MSL))
+    {
+        i2c1_int_active = 1;
+        i2c1_int_pckt.slave_addr = addr;
+        i2c1_int_pckt.pbuff = pdata;
+        i2c1_int_pckt.buff_size = size;
+        // send START
+        I2C1->CR1 |= I2C_CR1_START;
+    }
+    // wait no busy line
+    // while (I2C1->SR2 & I2C_SR2_BUSY);    
+}
+
+
+unsigned char I2C1_CheckEnded_Int (void)
+{
+    if ((I2C1->SR2 & I2C_SR2_MSL) ||
+        (i2c1_int_active))
+        return 0;
+    else
+        return 1;
+}
+
+
+i2c1_int_states_e i2c1_int_state = wait_start;
+volatile unsigned short i2c1_pdata_cnt = 0;
+void I2C1_EV_IRQHandler (void)
+{
+    unsigned char error_send_stop = 0;
+    
+    switch (i2c1_int_state)
+    {
+    case wait_start:
+        if (I2C1->SR1 & I2C_SR1_SB)
+        {
+            // send addr
+            I2C1->DR = (i2c1_int_pckt.slave_addr << 1) & 0xFE;
+            I2C1->SR1 &= ~I2C_SR1_AF;    // reset NACK
             
-//             I2C1_ChangeNBytes(255);
-//             I2C1_RELOAD;
-//             I2C1_ChangeSlaveAddr(addr);
-//             I2C1->CR2 |= I2C_CR2_START;
+            i2c1_pdata_cnt = 0;
+            i2c1_int_state++;
+        }
+        // else    // protocol error, send stop
+        //     error_send_stop = 1;
 
-//             while (size > (offset + 255))
-//             {
-//                 I2C1_SendMiddleChunk((pdata + offset), 255);
-//                 offset += 255;
-//                 if (size > (offset + 255))
-//                 {
-//                     I2C1_ChangeNBytes(255);
-//                     I2C1_RELOAD;
-//                 }
-//             }
+        break;
 
-//             //envio ultimo chunk fig 310 pag 843
-//             unsigned char bytes_left = size - offset;
-//             I2C1_ChangeNBytes(bytes_left);
-//             I2C1_AUTOEND;
-//             I2C1_SendLastChunk((pdata + offset), bytes_left);
-//             // I2C1_SendLastChunk_e((pdata + offset), bytes_left);            
-//         }
-//         else
-//         {
-//             //fig 309 pag 842
-//             I2C1_ChangeNBytes(size);
-//             I2C1_AUTOEND;
-//             I2C1_ChangeSlaveAddr(addr);
-//             I2C1->CR2 |= I2C_CR2_START;
-//             I2C1_SendLastChunk(pdata, (unsigned char) size);
-//         }
-//     }
-// }
+    case wait_addr:
+        if (I2C1->SR1 & I2C_SR1_ADDR)
+        {
+            unsigned short dummy = I2C1->SR2;    //dummy read to clear ADDR
+            dummy += 1;
+            if (I2C1->SR1 & I2C_SR1_TXE)
+            {
+                I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
+                i2c1_pdata_cnt++;
+                i2c1_int_state++;
+            }
+            else    // protocol error, send stop
+                error_send_stop = 1;
 
+            // LED_OFF;
+
+        }
+        else    // protocol error, send stop
+            error_send_stop = 1;
+        
+        break;
+
+    case sending_bytes:
+        // if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
+        // {
+        //     if (I2C1->SR1 & I2C_SR1_TXE)
+        //     {
+        //         I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
+        //         i2c1_pdata_cnt++;
+        //     }
+        //     else    // protocol error, send stop
+        //         error_send_stop = 1;
+            
+        // }
+        // else    // transmittion end, send stop
+        // {
+        //     I2C1->CR1 |= I2C_CR1_STOP;
+        //     i2c1_int_state = wait_stop;
+        // }
+
+        if (I2C1->SR1 & I2C_SR1_TXE)
+        {
+            if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
+            {
+                I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
+                i2c1_pdata_cnt++;
+            }
+            else    // transmittion end, send stop
+            {
+                error_send_stop = 1;
+                // I2C1->CR1 |= I2C_CR1_STOP;
+                // i2c1_int_state = wait_stop;
+            }
+        }
+        else    // protocol error, send stop
+            error_send_stop = 1;
+        
+        // if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
+        // {
+        //     if (I2C1->SR1 & I2C_SR1_TXE)
+        //     {
+        //         I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
+        //         i2c1_pdata_cnt++;
+        //     }
+        //     else    // protocol error, send stop
+        //         error_send_stop = 1;
+            
+        // }
+        // else    // transmittion end
+        //     error_send_stop = 1;
+        
+
+        // if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
+        // {
+        //     if (I2C1->SR1 & I2C_SR1_BTF)
+        //     {
+        //         I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
+        //         i2c1_pdata_cnt++;
+        //     }
+        //     else    // protocol error, send stop
+        //         error_send_stop = 1;
+        // }
+        // else    // transmittion end
+        //     error_send_stop = 1;
+        
+        break;
+
+    // case wait_stop:
+    //     // transmition complete end
+    //     i2c1_int_state = wait_start;
+    //     i2c1_int_active = 0;
+    //     break;
+    }
+
+    // if (LED)
+    //     LED_OFF;
+    // else
+    //     LED_ON;
+    
+    if (error_send_stop)
+    {
+        I2C1->CR1 |= I2C_CR1_STOP;
+        i2c1_int_state = wait_start;
+        i2c1_int_active = 0;
+    }
+}
+#endif    //I2C_WITH_INTS
 
 #endif    //I2C_USE_I2C1
 
