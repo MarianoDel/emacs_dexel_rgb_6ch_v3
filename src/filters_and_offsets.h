@@ -11,15 +11,17 @@
 #ifndef _FILTERS_AND_OFFSETS_H_
 #define _FILTERS_AND_OFFSETS_H_
 
-
+#include "parameters.h"
 // Exported Types Constants and Macros -----------------------------------------
 
 
 // Module Exported Functions ---------------------------------------------------
-void FiltersAndOffsets_Calc (unsigned char * ch_dmx_val);
-void FiltersAndOffsets_Calc_SM (volatile unsigned char * ch_dmx_val);
-void FiltersAndOffsets_Calc_NoTimed (volatile unsigned char * ch_dmx_val, unsigned char which_channel);
+void FiltersAndOffsets_Channels_to_Backup (unsigned char * channels);
+void FiltersAndOffsets_Enable_Outputs (void);
+void FiltersAndOffsets_Disable_Outputs (void);
+void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem);
 void FiltersAndOffsets_Filters_Reset (void);
+void FiltersAndOffsets_Channels_Reset (void);
 
 
 #endif    /* _FILTERS_AND_OFFSETS_H_ */

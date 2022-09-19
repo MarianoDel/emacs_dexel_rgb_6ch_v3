@@ -77,19 +77,47 @@ SRC += ./src/dma.c
 SRC += ./src/dac.c
 SRC += ./src/dac_mux.c
 # SRC += ./src/utils.c
+
 SRC += ./src/test_functions.c
 SRC += ./src/pwm.c
-# SRC += ./src/errors.c
-# SRC += ./src/first_pulse.c
+SRC += ./src/hard.c
 SRC += ./src/dmx_transceiver.c
 SRC += ./src/dsp.c
 SRC += ./src/i2c.c
 
+SRC += ./src/manager.c
+SRC += ./src/filters_and_offsets.c
+
+# linked modules
 SRC += ./src/ssd1306_display.c
 SRC += ./src/ssd1306_gfx.c
 SRC += ./src/screen.c
 SRC += ./src/dmx_menu.c
 SRC += ./src/display_utils.c
+SRC += ./src/dmx1_mode.c
+SRC += ./src/dmx2_mode.c
+SRC += ./src/master_slave_mode.c
+SRC += ./src/manual_mode.c
+SRC += ./src/reset_mode.c
+SRC += ./src/main_menu.c
+SRC += ./src/hardware_mode.c
+SRC += ./src/colors_functions.c
+SRC += ./src/fixed_menu.c
+SRC += ./src/colors_menu.c
+SRC += ./src/slave_menu.c
+SRC += ./src/master_slave_menu.c
+SRC += ./src/master_menu.c
+SRC += ./src/manual_menu.c
+SRC += ./src/options_menu.c
+SRC += ./src/current_menu.c
+SRC += ./src/limits_menu.c
+SRC += ./src/channels_menu.c
+SRC += ./src/temp_menu.c
+SRC += ./src/version_menu.c
+
+
+
+
 
 
 

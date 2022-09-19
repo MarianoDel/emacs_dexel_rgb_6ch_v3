@@ -12,10 +12,7 @@
 
 //----------- Defines For Configuration --------------//
 //----------- Some ADC Configurations ----------------//
-// #define ADC_WITH_INT
-#ifndef USE_ADC_SAMPLE_BY_SAMPLE
 #define ADC_WITH_DMA
-#endif
 
 #ifdef WITH_TEMP_CONTROL
 #define ADC_WITH_TEMP_SENSE
@@ -26,13 +23,9 @@
 #endif
 //----------- End of ADC Configurations --------------//
 
-#define IS1		adc_ch[0]
-#define IS2	        adc_ch[1]
-#define IS3    	       	adc_ch[2]
-#define IS4    	       	adc_ch[3]
-#define V200_Sense      adc_ch[4]
-#define V40_Sense      	adc_ch[5]
-#define ADC_CHANNEL_QUANTITY         6
+#define V_Sense_48V    adc_ch[0]
+#define Temp_Channel    adc_ch[1]
+#define ADC_CHANNEL_QUANTITY         2
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
 
 #define RCC_ADC_CLK 		(RCC->APB2ENR & 0x00000200)

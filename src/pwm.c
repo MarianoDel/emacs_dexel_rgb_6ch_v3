@@ -75,64 +75,67 @@ void PWM_Find_Least_Value_With_Mask (unsigned char *pwm,
 // }
 
 
-// // void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty, unsigned short max_power)
-// // {
-// //     unsigned short total_dmx = 0;
+void PWM_Set_PwrCtrl_512 (unsigned short * ch_dmx_val, unsigned char chnls_qtty, unsigned short max_power)
+{
+    unsigned short total_dmx = 0;
 
-// //     //cuantos en total
-// //     for (unsigned char i = 0; i < chnls_qtty; i++)
-// //         total_dmx += *(ch_dmx_val + i);
+    // how many in total
+    for (unsigned char i = 0; i < chnls_qtty; i++)
+        total_dmx += *(ch_dmx_val + i);
 
-// //     if (total_dmx > max_power)
-// //     {
-// //         unsigned int new = 0;
-// //         for (unsigned char i = 0; i < chnls_qtty; i++)
-// //         {
-// //             // si el canal tiene algo
-// //             if (*(ch_dmx_val + i))
-// //             {
-// //                 new = *(ch_dmx_val + i) * max_power;
-// //                 new = new / total_dmx;
+    if (total_dmx > (max_power << 1))
+    {
+        unsigned int new = 0;
+        for (unsigned char i = 0; i < chnls_qtty; i++)
+        {
+            // if its something on the channel
+            if (*(ch_dmx_val + i))
+            {
+                new = *(ch_dmx_val + i) * max_power;
+                new = new / total_dmx;
 
-// //                 // no dejo que se apaguen los canales
-// //                 if (new)
-// //                     *(ch_dmx_val + i) = (unsigned char) new;
-// //                 else
-// //                     *(ch_dmx_val + i) = 1;
+                // no dejo que se apaguen los canales
+                if (new)
+                    *(ch_dmx_val + i) = (unsigned short) new;
+                else
+                    *(ch_dmx_val + i) = 1;
                 
-// //             }
-// //         }
-// //     }
-// // }
+            }
+        }
+    }
+}
 
 
-// // get dmx_data from 0 to 255
-// // answer pwm_ena 0 to 4096
-// // answer pwm_ch 0 to 4096
-// void PWM_Map_Pre_Filter (unsigned char dmx_data, unsigned short * pwm_ena, unsigned short * pwm_ch)
-// {
-//     unsigned char dmx_ena = 0;
-//     unsigned short dmx_ch = 0;
-    
-//     if (dmx_data > 4)
-//     {
-//         dmx_ena = 4;
-//         dmx_ch = dmx_data - 4;
-//     }
-//     else
-//     {
-//         dmx_ena = dmx_data;
-//         dmx_ch = 0;
-//     }
+void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty, unsigned short max_power)
+{
+    unsigned short total_dmx = 0;
 
-//     // *pwm_ena = dmx_ena * 1024;
-//     *pwm_ena = dmx_ena << 10;
-    
-//     dmx_ch = dmx_ch * 164;
-//     dmx_ch = dmx_ch / 10;
-//     *pwm_ch = dmx_ch;
-    
-// }
+    // how many in total
+    for (unsigned char i = 0; i < chnls_qtty; i++)
+        total_dmx += *(ch_dmx_val + i);
+
+    if (total_dmx > max_power)
+    {
+        unsigned int new = 0;
+        for (unsigned char i = 0; i < chnls_qtty; i++)
+        {
+            // if its something on the channel
+            if (*(ch_dmx_val + i))
+            {
+                new = *(ch_dmx_val + i) * max_power;
+                new = new / total_dmx;
+
+                // no dejo que se apaguen los canales
+                if (new)
+                    *(ch_dmx_val + i) = (unsigned char) new;
+                else
+                    *(ch_dmx_val + i) = 1;
+                
+            }
+        }
+    }
+}
+
 
 
 // get dmx_filtered from 0 to 4095
@@ -472,11 +475,6 @@ void PWM_Timer_Handler (void)
 
         pwm_int_cnt = least_next;
         PWM_Timer_Update(least_next * PWM_TIMER_MULTIPLIER);
-
-        // if (LED)
-        //     LED_OFF;
-        // else
-        //     LED_ON;
     }
 }
 

@@ -31,8 +31,7 @@
 typedef enum {
     wait_start,
     wait_addr,
-    sending_bytes,
-    wait_stop
+    sending_bytes
 
 } i2c1_int_states_e;
 
@@ -234,8 +233,6 @@ void I2C1_SendMultiByte_Int (unsigned char addr, unsigned char *pdata, unsigned 
         // send START
         I2C1->CR1 |= I2C_CR1_START;
     }
-    // wait no busy line
-    // while (I2C1->SR2 & I2C_SR2_BUSY);    
 }
 
 
@@ -266,10 +263,7 @@ void I2C1_EV_IRQHandler (void)
             
             i2c1_pdata_cnt = 0;
             i2c1_int_state++;
-        }
-        // else    // protocol error, send stop
-        //     error_send_stop = 1;
-
+        }    // else discard silently
         break;
 
     case wait_addr:
@@ -286,8 +280,6 @@ void I2C1_EV_IRQHandler (void)
             else    // protocol error, send stop
                 error_send_stop = 1;
 
-            // LED_OFF;
-
         }
         else    // protocol error, send stop
             error_send_stop = 1;
@@ -295,23 +287,6 @@ void I2C1_EV_IRQHandler (void)
         break;
 
     case sending_bytes:
-        // if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
-        // {
-        //     if (I2C1->SR1 & I2C_SR1_TXE)
-        //     {
-        //         I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
-        //         i2c1_pdata_cnt++;
-        //     }
-        //     else    // protocol error, send stop
-        //         error_send_stop = 1;
-            
-        // }
-        // else    // transmittion end, send stop
-        // {
-        //     I2C1->CR1 |= I2C_CR1_STOP;
-        //     i2c1_int_state = wait_stop;
-        // }
-
         if (I2C1->SR1 & I2C_SR1_TXE)
         {
             if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
@@ -320,57 +295,16 @@ void I2C1_EV_IRQHandler (void)
                 i2c1_pdata_cnt++;
             }
             else    // transmittion end, send stop
-            {
                 error_send_stop = 1;
-                // I2C1->CR1 |= I2C_CR1_STOP;
-                // i2c1_int_state = wait_stop;
-            }
+            
         }
         else    // protocol error, send stop
             error_send_stop = 1;
         
-        // if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
-        // {
-        //     if (I2C1->SR1 & I2C_SR1_TXE)
-        //     {
-        //         I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
-        //         i2c1_pdata_cnt++;
-        //     }
-        //     else    // protocol error, send stop
-        //         error_send_stop = 1;
-            
-        // }
-        // else    // transmittion end
-        //     error_send_stop = 1;
-        
-
-        // if (i2c1_pdata_cnt < i2c1_int_pckt.buff_size)
-        // {
-        //     if (I2C1->SR1 & I2C_SR1_BTF)
-        //     {
-        //         I2C1->DR = *(i2c1_int_pckt.pbuff + i2c1_pdata_cnt);
-        //         i2c1_pdata_cnt++;
-        //     }
-        //     else    // protocol error, send stop
-        //         error_send_stop = 1;
-        // }
-        // else    // transmittion end
-        //     error_send_stop = 1;
-        
         break;
 
-    // case wait_stop:
-    //     // transmition complete end
-    //     i2c1_int_state = wait_start;
-    //     i2c1_int_active = 0;
-    //     break;
     }
 
-    // if (LED)
-    //     LED_OFF;
-    // else
-    //     LED_ON;
-    
     if (error_send_stop)
     {
         I2C1->CR1 |= I2C_CR1_STOP;

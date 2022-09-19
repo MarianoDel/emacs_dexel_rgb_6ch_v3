@@ -1,0 +1,1 @@
+../../emacs_dexel_rgb_6ch/src/master_slave_mode.h

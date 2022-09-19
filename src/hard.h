@@ -36,6 +36,13 @@
 //-------- PWM Conf ------------------------
 
 
+//-- Configuration for some Analog things ------
+//---- Voltage Sensor
+#define MIN_PWR_SUPPLY    VOLTS_20
+#define MAX_PWR_SUPPLY    VOLTS_50
+
+#define VOLTS_20    730
+#define VOLTS_50    1825
 
 //-------- End Of Defines For Configuration ------
 
@@ -62,6 +69,14 @@
 
 
 // Module Exported Constants ---------------------------------------------------
+typedef enum {
+    SW_NO = 0,
+    SW_MIN,
+    SW_HALF,
+    SW_FULL
+    
+} resp_sw_t;
+
 
 // Gpios Configuration ---------------------------------------------------------
 #ifdef HARDWARE_VERSION_3_0
@@ -145,6 +160,10 @@
 
 
 // Module Exported Functions ---------------------------------------------------
+void HARD_Timeouts (void);
+resp_sw_t CheckSET (void);
+void UpdateSwitches (void);
+void UpdateEncoder (void);
 
 
 #endif    /* _HARD_H_ */

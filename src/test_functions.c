@@ -15,8 +15,8 @@
 #include "stm32f10x.h"
 #include "tim.h"
 #include "dac.h"
-#include "pwm.h"
 #include "dac_mux.h"
+#include "pwm.h"
 #include "dmx_transceiver.h"
 #include "usart.h"
 #include "dsp.h"
@@ -34,6 +34,7 @@ extern volatile unsigned short timer_standby;
 
 extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
+extern volatile unsigned char DMX_packet_flag;
 
 
 // Globals ---------------------------------------------------------------------
@@ -798,7 +799,6 @@ void TF_Dmx_Input_Break_Detect (void)
 }
 
 
-extern volatile unsigned char DMX_packet_flag;
 void TF_Dmx_Input_Packet_Detect (void)
 {
     TIM7_Init();
@@ -918,12 +918,12 @@ void TF_Dmx_All_Channels (void)
 }
 
 
-ma16_u16_data_obj_t st_sp1;
-ma16_u16_data_obj_t st_sp2;
-ma16_u16_data_obj_t st_sp3;
-ma16_u16_data_obj_t st_sp4;
-ma16_u16_data_obj_t st_sp5;
-ma16_u16_data_obj_t st_sp6;
+extern ma16_u16_data_obj_t st_sp1;
+extern ma16_u16_data_obj_t st_sp2;
+extern ma16_u16_data_obj_t st_sp3;
+extern ma16_u16_data_obj_t st_sp4;
+extern ma16_u16_data_obj_t st_sp5;
+extern ma16_u16_data_obj_t st_sp6;
 void TF_Dmx_All_Channels_5ms_filter (void)
 {
     unsigned short dac_chnls [6] = { 0 };
