@@ -16,7 +16,11 @@
 // #include "stm32f10x.h"
 // #include "core_cm3.h"
 
+#include "filters_and_offsets.h"
+
 // linked modules
+#include "screen.h"
+#include "ssd1306_display.h"
 #include "parameters.h"
 #include "dmx1_mode.h"
 #include "dmx2_mode.h"
@@ -25,6 +29,8 @@
 #include "temperatures.h"
 #include "hardware_mode.h"
 #include "options_menu.h"
+#include "reset_mode.h"
+#include "main_menu.h"
 
 
 
@@ -75,8 +81,7 @@ unsigned char menu_selection_show = 0;
 volatile unsigned short menu_menu_timer = 0;
 options_menu_st mem_options;
 
-extern void DisableIrqs (void);
-extern void EnableIrqs (void);
+extern volatile unsigned short dac_chnls [];
 
 // Globals ---------------------------------------------------------------------
 manager_states_e mngr_state = INIT;
@@ -107,13 +112,12 @@ void Manager (parameters_typedef * pmem)
         DMX_Disable();
 
         // channels reset
-        // PWMChannelsReset();
-        Mngr_ChannelsReset();
+        FiltersAndOffsets_Channels_Reset();
 
         // start and clean filters
-        // FiltersAndOffsets_Filters_Reset();
-        Mngr_Filters_and_Offset_Reset();
+        FiltersAndOffsets_Filters_Reset();
 
+        
 #ifdef USART_DEBUG_MODE            
         sprintf(s_to_send, "prog type: %d\n", pmem->program_type);
         Usart2Send(s_to_send);
@@ -518,8 +522,7 @@ void Manager (parameters_typedef * pmem)
             
 #endif
         //reseteo canales
-        // PWMChannelsReset();
-        Mngr_ChannelsReset();
+        FiltersAndOffsets_Channels_Reset();
 
         MainMenuReset();
 
@@ -622,6 +625,9 @@ void Manager (parameters_typedef * pmem)
 
     // colors commands update from comms
     UpdateCommunications();
+
+    // now call it by tim6 on pwm_handler int
+    // DAC_MUX_Update(dac_chnls);
 
         
 #if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
@@ -762,13 +768,7 @@ sw_actions_t CheckActions (void)
 }
 
 
-void Mngr_ChannelsReset (void)
-{
-}
 
-void Mngr_Filters_and_Offset_Reset (void)
-{
-}
 
 void SendDMXPacket (unsigned char a)
 {

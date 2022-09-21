@@ -162,6 +162,8 @@ typedef enum {
 // Module Exported Functions ---------------------------------------------------
 void HARD_Timeouts (void);
 resp_sw_t CheckSET (void);
+unsigned char CheckCCW (void);
+unsigned char CheckCW (void);
 void UpdateSwitches (void);
 void UpdateEncoder (void);
 

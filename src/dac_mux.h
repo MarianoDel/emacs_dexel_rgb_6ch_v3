@@ -19,6 +19,7 @@
 
 // Exported Functions ----------------------------------------------------------
 void DAC_MUX_Update (unsigned short * values);
+void DAC_MUX_Update_by_Int (unsigned short * values);
 void DAC_MUX_Timeouts (void);
 
 

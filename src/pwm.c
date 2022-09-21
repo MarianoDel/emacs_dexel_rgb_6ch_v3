@@ -12,12 +12,13 @@
 #include "pwm.h"
 #include "hard.h"
 #include "tim.h"
+#include "dac_mux.h"
 
 // #include "stm32f10x.h"    //quitar luego de pruebas
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char pwm_chnls [];
-
+extern volatile unsigned short dac_chnls [];
 
 // Globals ---------------------------------------------------------------------
 
@@ -351,6 +352,8 @@ void PWM_Find_Least_Value_With_Mask (unsigned char *pwm,
     }
 }
 
+
+// call it at least at PWM_INT_MAX * PWM_TIMER_MULTIPLIER; //5110 -> 1KHz
 volatile unsigned short pwm_int_cnt = 0;
 void PWM_Timer_Handler (void)
 {
@@ -473,8 +476,12 @@ void PWM_Timer_Handler (void)
         
         PWM_Activate_Channels (activate);
 
+        // call Dac Mux here
+        DAC_MUX_Update_by_Int ((unsigned short *) dac_chnls);
+        
         pwm_int_cnt = least_next;
         PWM_Timer_Update(least_next * PWM_TIMER_MULTIPLIER);
+
     }
 }
 

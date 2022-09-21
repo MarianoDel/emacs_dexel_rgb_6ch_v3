@@ -202,8 +202,8 @@ void GpioInit (void)
     //PC6 TIM8_CH1 alternative push-pull 2MHz
     //PC7 TIM8_CH2 alternative input
     temp = GPIOC->CRL;
-    temp &= 0x00FF0FFF;
-    temp |= 0x4A002000;
+    temp &= 0x00FF0000;
+    temp |= 0x4A002444;
     GPIOC->CRL = temp;
 
     //--- GPIOC High Side -------------------//

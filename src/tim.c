@@ -381,7 +381,7 @@ void TIM6_Init(void)
 void TIM6_Update (unsigned short new_val)
 {
     TIM6->CNT = 0;
-    TIM6->ARR = new_val; //2550 -> 2KHz
+    TIM6->ARR = new_val;
 }
 
 
@@ -389,7 +389,7 @@ void TIM6_IRQHandler (void)
 {
     // avoid int reentrant
     TIM6->SR = 0;
-    TIM6->ARR = 2550;
+    TIM6->ARR = PWM_INT_MAX * PWM_TIMER_MULTIPLIER; //5110 -> 1KHz
     
     PWM_Timer_Handler();
     

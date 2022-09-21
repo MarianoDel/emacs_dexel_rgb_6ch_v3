@@ -111,7 +111,7 @@ int main (void)
 
     // DMX defaults
     Usart3Config ();
-    DMX_channel_selected = 1;
+    DMX_channel_selected = 1;    //TODO: check default mem config line 141
     DMX_channel_quantity = 6;
 
     // Start filters
@@ -138,6 +138,18 @@ int main (void)
     while (timer_standby)
         display_update_int_state_machine();
 
+    // Default mem config
+    mem_conf.max_power = 1530;
+    mem_conf.dmx_first_channel = 1;
+    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.max_current_channels[0] = 255;
+    mem_conf.max_current_channels[1] = 255;
+    mem_conf.max_current_channels[2] = 255;
+    mem_conf.max_current_channels[3] = 255;
+    mem_conf.max_current_channels[4] = 255;
+    mem_conf.max_current_channels[5] = 255;    
+
+
     // main program
     while (1)
     {
@@ -163,7 +175,7 @@ void TimingDelay_Decrement(void)
     if (ptFTT != NULL)
         ptFTT();
 
-    DAC_MUX_Timeouts();
+    // DAC_MUX_Timeouts();
 
     Dmx_Timeouts ();
 

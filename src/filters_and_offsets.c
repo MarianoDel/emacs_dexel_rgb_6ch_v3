@@ -22,8 +22,6 @@
 extern volatile unsigned short dac_chnls [];
 extern volatile unsigned char pwm_chnls[];
 
-extern void DisableIrqs (void);
-extern void EnableIrqs (void);
 // Globals ---------------------------------------------------------------------
 ma16_u16_data_obj_t st_sp1;
 ma16_u16_data_obj_t st_sp2;
@@ -43,14 +41,14 @@ unsigned char filters_enable_outputs = 0;
 void FiltersAndOffsets_Channels_to_Backup (unsigned char * channels)
 {
     // __disable_irq;
-    DisableIrqs();
+    // DisableIrqs();
     *(ch_dmx_val + 0) = *(channels + 0);
     *(ch_dmx_val + 1) = *(channels + 1);
     *(ch_dmx_val + 2) = *(channels + 2);
     *(ch_dmx_val + 3) = *(channels + 3);
     *(ch_dmx_val + 4) = *(channels + 4);
     *(ch_dmx_val + 5) = *(channels + 5);
-    EnableIrqs();
+    // EnableIrqs();
     // __enable_irq;        
 }
 
@@ -267,7 +265,13 @@ void FiltersAndOffsets_Filters_Reset (void)
 
 void FiltersAndOffsets_Channels_Reset (void)
 {
-    
+    for (int i = 0; i < 6; i++)
+    {
+        ch_dmx_val [i] = 0;
+        limit_output [i] = 0;
+        pwm_chnls [i] = 0;
+        dac_chnls [i] = 0;
+    }
 }
 
 
