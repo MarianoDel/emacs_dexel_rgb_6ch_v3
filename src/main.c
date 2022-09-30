@@ -19,7 +19,7 @@
 #include "gpio.h"
 #include "dma.h"
 #include "i2c.h"
-// #include "flash_program.h"
+#include "flash_program.h"
 #include "dac.h"
 #include "dac_mux.h"
 
@@ -34,6 +34,7 @@
 #include "screen.h"
 #include "ssd1306_display.h"
 
+#include "filters_and_offsets.h"
 
 #include <stdio.h>
 
@@ -63,8 +64,7 @@ void (* ptFTT ) (void) = NULL;
 
 
 // Globals ---------------------------------------------------------------------
-// parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
-
+parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
 parameters_typedef mem_conf;
 
 
@@ -176,6 +176,7 @@ void TimingDelay_Decrement(void)
         ptFTT();
 
     // DAC_MUX_Timeouts();
+    HARD_Timeouts ();
 
     Dmx_Timeouts ();
 
@@ -203,16 +204,5 @@ void SysTickError (void)
     }
 }
 
-
-void DisableIrqs (void)
-{
-    __disable_irq;
-}
-
-
-void EnableIrqs (void)
-{
-    __enable_irq;
-}
 
 //--- end of file ---//

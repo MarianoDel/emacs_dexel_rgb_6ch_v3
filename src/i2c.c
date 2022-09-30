@@ -108,6 +108,7 @@ void I2C1_SendByte (unsigned char addr, unsigned char data)
         if (I2C1->SR1 & I2C_SR1_ADDR)
         {
             dummy = I2C1->SR2;    //dummy read to clear ADDR
+            dummy++;
         }
             
         if ((I2C1->SR1 & I2C_SR1_AF) ||
@@ -191,6 +192,7 @@ void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned shor
         if (I2C1->SR1 & I2C_SR1_ADDR)
         {
             dummy = I2C1->SR2;    //dummy read to clear ADDR
+            dummy++;
             error = 0;
         }
             

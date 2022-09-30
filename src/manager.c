@@ -17,6 +17,7 @@
 // #include "core_cm3.h"
 
 #include "filters_and_offsets.h"
+#include "flash_program.h"
 
 // linked modules
 #include "screen.h"
@@ -703,11 +704,7 @@ void Manager (parameters_typedef * pmem)
     //grabado de memoria luego de configuracion
     if ((need_to_save) && (!need_to_save_timer))
     {
-        // __disable_irq();
-        DisableIrqs();
-        need_to_save = WriteConfigurations();
-        EnableIrqs();
-        // __enable_irq();
+        need_to_save = Flash_WriteConfigurations();
 
 #ifdef USART_DEBUG_MODE
         if (need_to_save)
@@ -775,10 +772,6 @@ void SendDMXPacket (unsigned char a)
 }
 
 void UpdateCommunications (void)
-{
-}
-
-void WriteConfigurations (void)
 {
 }
 

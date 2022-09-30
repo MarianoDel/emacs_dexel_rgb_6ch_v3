@@ -23,10 +23,14 @@
 #include "i2c.h"
 
 #include "screen.h"
+#include "ssd1306_display.h"
 #include "dmx_menu.h"
 
-#include <stdio.h>
+#include "parameters.h"
+#include "flash_program.h"
 
+#include <stdio.h>
+#include <string.h>
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char pwm_chnls[];
@@ -36,6 +40,8 @@ extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
 extern volatile unsigned char DMX_packet_flag;
 
+extern parameters_typedef * pmem;
+extern parameters_typedef mem_conf;
 
 // Globals ---------------------------------------------------------------------
 
@@ -45,6 +51,11 @@ extern volatile unsigned char DMX_packet_flag;
 
 // Module Private Functions ----------------------------------------------------
 void TF_Led_On_Ctrl_Fan (void);
+void TF_Encoder_Sw (void);
+void TF_Encoder_CheckSET (void);
+void TF_Encoder_CheckCW (void);
+void TF_Encoder_CheckCCW (void);
+
 void TF_Pwm_Channel_1 (void);
 void TF_Pwm_Channel_2 (void);
 void TF_Pwm_Channel_2_50_Percent (void);
@@ -70,7 +81,6 @@ void TF_All_Chain_For_Channel_1_With_Dac_Mux (void);
 
 void TF_Dmx_Input_Break_Detect (void);
 void TF_Dmx_Input_Packet_Detect (void);
-void TF_Dmx_Input_Usart3_To_Usart4 (void);
 void TF_Dmx_All_Channels (void);
 void TF_Dmx_All_Channels_5ms_filter (void);
 
@@ -80,10 +90,20 @@ void TF_Oled_Screen (void);
 void TF_Oled_Screen_Int (void);
 void TF_Dmx_All_Channels_5ms_filter_with_Oled (void);
 
+void TF_Uart4_Tx (void);
+void TF_Flash_Configurations (void);
+void TF_Flash_Configurations_With_Uart4 (void);
+
+
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
 {
     // TF_Led_On_Ctrl_Fan ();
+    // TF_Encoder_Sw ();
+    // TF_Encoder_CheckSET ();
+    // TF_Encoder_CheckCW ();
+    // TF_Encoder_CheckCCW ();
+
     // TF_Pwm_Channel_1 ();
     // TF_Pwm_Channel_2 ();
     // TF_Pwm_Channel_2_50_Percent ();
@@ -114,7 +134,11 @@ void TF_Hardware_Tests (void)
     // TF_Oled_Screen ();
     // TF_Oled_Screen_Int ();
     // TF_Oled_Screen_Int2 ();
-    TF_Dmx_All_Channels_5ms_filter_with_Oled ();
+    // TF_Dmx_All_Channels_5ms_filter_with_Oled ();
+
+    // TF_Uart4_Tx ();
+    TF_Flash_Configurations ();
+    // TF_Flash_Configurations_With_Uart4 ();
     
 }
 
@@ -129,6 +153,66 @@ void TF_Led_On_Ctrl_Fan (void)
             CTRL_FAN_ON;
 
         Wait_ms(1000);
+    }
+}
+
+
+void TF_Encoder_Sw (void)
+{
+    while (1)
+    {
+        if (EN_SW)
+            LED_ON;
+        else
+            LED_OFF;
+    }
+}
+
+
+void TF_Encoder_CheckSET (void)
+{
+    while (1)
+    {
+        if (CheckSET() > SW_NO)
+            LED_ON;
+        else
+            LED_OFF;
+
+        UpdateSwitches();
+    }
+}
+
+
+void TF_Encoder_CheckCW (void)
+{
+    while (1)
+    {
+        if (CheckCW())
+            timer_standby = 50;
+
+        if (timer_standby)
+            LED_ON;
+        else
+            LED_OFF;
+
+        UpdateEncoder ();
+    }
+}
+
+
+void TF_Encoder_CheckCCW (void)
+{
+    while (1)
+    {
+        if (CheckCCW())
+            timer_standby = 50;
+
+        if (timer_standby)
+            LED_ON;
+        else
+            LED_OFF;
+
+        UpdateEncoder ();
     }
 }
 
@@ -828,14 +912,6 @@ void TF_Dmx_Input_Packet_Detect (void)
 }
 
 
-void TF_Dmx_Input_Usart3_To_Usart4 (void)
-{
-    TIM7_Init();
-
-    
-    
-}
-
 extern volatile unsigned char data11[];
 void TF_Dmx_All_Channels (void)
 {
@@ -1394,4 +1470,145 @@ void TF_Dmx_All_Channels_5ms_filter_with_Oled (void)
     }
 }
 
+
+void TF_Uart4_Tx (void)
+{
+    Uart4Config ();
+    Wait_ms (100);
+
+    while (1)
+    {
+        Uart4Send("Test Uart4 at 9600bps\n");
+        Wait_ms(2000);
+        
+    }
+    
+}
+
+
+void TF_Flash_Configurations (void)
+{
+    memset(&mem_conf, 0, sizeof(mem_conf));
+    
+    mem_conf.max_power = 1530;
+    mem_conf.dmx_first_channel = 1;
+    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.max_current_channels[0] = 128;
+    mem_conf.max_current_channels[1] = 128;
+    mem_conf.max_current_channels[2] = 128;
+    mem_conf.max_current_channels[3] = 128;
+    mem_conf.max_current_channels[4] = 128;
+    mem_conf.max_current_channels[5] = 128;
+
+    Flash_WriteConfigurations();
+
+    int error = 0;
+    int error_cnt = 0;    
+    unsigned char * p_orig = (unsigned char *) &mem_conf;
+    unsigned char * p_dest = (unsigned char *) pmem;
+    for (int i = 0; i < sizeof(mem_conf); i++)
+    {
+        if (*(p_orig + i) != *(p_dest + i))
+        {
+            error = 1;            
+            break;
+        }
+        error_cnt++;
+    }
+
+    while (1)
+    {
+        if (LED)
+            LED_OFF;
+        else
+            LED_ON;
+
+        if (error)
+            Wait_ms(500);
+        else
+            Wait_ms(50);        
+
+        // // check good bytes
+        // for (int i = 0; i < error_cnt; i++)
+        // {
+        //     LED_ON;
+        //     Wait_ms(100);
+        //     LED_OFF;
+        //     Wait_ms(100);
+        // }
+
+        // Wait_ms(2000);
+    }
+}
+
+
+void TF_Flash_Configurations_With_Uart4 (void)
+{
+    char buff [100];
+
+    Uart4Config ();
+    Wait_ms (100);
+
+    memset(&mem_conf, 0, sizeof(mem_conf));
+    
+    mem_conf.max_power = 1530;
+    mem_conf.dmx_first_channel = 1;
+    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.max_current_channels[0] = 128;
+    mem_conf.max_current_channels[1] = 128;
+    mem_conf.max_current_channels[2] = 128;
+    mem_conf.max_current_channels[3] = 128;
+    mem_conf.max_current_channels[4] = 128;
+    mem_conf.max_current_channels[5] = 128;
+
+    Flash_WriteConfigurations();
+
+    int error = 0;
+    int error_cnt = 0;    
+    unsigned char * p_orig = (unsigned char *) &mem_conf;
+    unsigned char * p_dest = (unsigned char *) pmem;
+    for (int i = 0; i < sizeof(mem_conf); i++)
+    {
+        if (*(p_orig + i) != *(p_dest + i))
+        {
+            error = 1;            
+            break;
+        }
+        error_cnt++;
+    }
+
+    sprintf(buff, "error: %d error_cnt: %d sizeof(mem): %d\n",
+            error,
+            error_cnt,
+            sizeof(mem_conf));
+    Uart4Send(buff);
+    Wait_ms(100);
+
+    int end_of_line = 0;
+    for (int i = 0; i < sizeof(mem_conf); i++)
+    {
+        if (!(i % 8))
+        {
+            sprintf(buff, "i: %d ", i);
+            Uart4Send(buff);
+        }
+
+        sprintf(buff, "0x%02x ", *(p_orig + i));
+        Uart4Send(buff);
+
+        if (end_of_line == 7)
+        {
+            end_of_line = 0;
+            Uart4Send("\n");
+        }
+        else
+            end_of_line++;
+
+        Wait_ms(10);
+        
+    }
+
+    Uart4Send("\nend of buffer\n");
+    while (1);
+}
 //--- end of file ---//

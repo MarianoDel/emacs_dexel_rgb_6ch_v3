@@ -138,19 +138,19 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 *(limit_output + 0) << 3,
                 (unsigned char *)&pwm_chnls[0],
-                &dac_chnls[0]);            
+                (unsigned short *)&dac_chnls[0]);            
 
             // channel 2
             PWM_Map_Post_Filter (
                 *(limit_output + 1) << 3,
                 (unsigned char *)&pwm_chnls[1],
-                &dac_chnls[1]);
+                (unsigned short *)&dac_chnls[1]);
 
             // channel 3
             PWM_Map_Post_Filter (
                 *(limit_output + 2) << 3,
                 (unsigned char *)&pwm_chnls[2],
-                &dac_chnls[2]);
+                (unsigned short *)&dac_chnls[2]);
             
         }
         else
@@ -164,7 +164,7 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 ch_filter,
                 (unsigned char *)&pwm_chnls[0],
-                &dac_chnls[0]);            
+                (unsigned short *)&dac_chnls[0]);
 
             // channel 2
             ch_filter = MA16_U16Circular (
@@ -173,7 +173,7 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 ch_filter,
                 (unsigned char *)&pwm_chnls[1],
-                &dac_chnls[1]);
+                (unsigned short *)&dac_chnls[1]);
 
             // channel 3
             ch_filter = MA16_U16Circular (
@@ -182,7 +182,7 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 ch_filter,
                 (unsigned char *)&pwm_chnls[2],
-                &dac_chnls[2]);            
+                (unsigned short *)&dac_chnls[2]);
         }
 
         filters_sm++;
@@ -196,19 +196,19 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 *(limit_output + 3) << 3,
                 (unsigned char *)&pwm_chnls[3],
-                &dac_chnls[3]);
+                (unsigned short *)&dac_chnls[3]);
 
             // channel 5
             PWM_Map_Post_Filter (
                 *(limit_output + 4) << 3,
                 (unsigned char *)&pwm_chnls[4],
-                &dac_chnls[4]);
+                (unsigned short *)&dac_chnls[4]);
 
             // channel 6
             PWM_Map_Post_Filter (
                 *(limit_output + 5) << 3,
                 (unsigned char *)&pwm_chnls[5],
-                &dac_chnls[5]);
+                (unsigned short *)&dac_chnls[5]);
         }
         else
         {
@@ -221,7 +221,7 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 ch_filter,
                 (unsigned char *)&pwm_chnls[3],
-                &dac_chnls[3]);
+                (unsigned short *)&dac_chnls[3]);
 
             // channel 5
             ch_filter = MA16_U16Circular (
@@ -230,7 +230,7 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 ch_filter,
                 (unsigned char *)&pwm_chnls[4],
-                &dac_chnls[4]);
+                (unsigned short *)&dac_chnls[4]);
 
             // channel 6
             ch_filter = MA16_U16Circular (
@@ -239,7 +239,7 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
             PWM_Map_Post_Filter (
                 ch_filter,
                 (unsigned char *)&pwm_chnls[5],
-                &dac_chnls[5]);
+                (unsigned short *)&dac_chnls[5]);
         }
 
         filters_sm = FILTERS_BKP_CHANNELS;
