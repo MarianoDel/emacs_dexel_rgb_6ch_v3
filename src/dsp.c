@@ -302,11 +302,6 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
     min_value = DSP_Vector_Get_Min_Value(samples, samples_size);
     max_value = DSP_Vector_Get_Max_Value(samples, samples_size);
 
-    // sprintf(s_to_send, "min_value: %d, max_value: %d\n",
-    //         min_value,
-    //         max_value);
-    // Usart2Send(s_to_send);       
-
     range = max_value - min_value;
     width = range / (ranges_size - 1);
     

@@ -21,6 +21,8 @@
 #include "usart.h"
 #include "dsp.h"
 #include "i2c.h"
+#include "adc.h"
+#include "dma.h"
 
 #include "screen.h"
 #include "ssd1306_display.h"
@@ -42,6 +44,8 @@ extern volatile unsigned char DMX_packet_flag;
 
 extern parameters_typedef * pmem;
 extern parameters_typedef mem_conf;
+
+extern volatile unsigned short adc_ch [];
 
 // Globals ---------------------------------------------------------------------
 
@@ -94,6 +98,8 @@ void TF_Uart4_Tx (void);
 void TF_Flash_Configurations (void);
 void TF_Flash_Configurations_With_Uart4 (void);
 
+void TF_Uart4_Adc_Dma (void);
+
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
@@ -137,9 +143,10 @@ void TF_Hardware_Tests (void)
     // TF_Dmx_All_Channels_5ms_filter_with_Oled ();
 
     // TF_Uart4_Tx ();
-    TF_Flash_Configurations ();
+    // TF_Flash_Configurations ();
     // TF_Flash_Configurations_With_Uart4 ();
-    
+
+    TF_Uart4_Adc_Dma ();
 }
 
 
@@ -381,6 +388,7 @@ void TF_Pwm_All_Channels_50_Percent (void)
         Wait_ms(1000);
     }    
 }
+
 
 void TF_Pwm_All_Channels_Up_Down (void)
 {
@@ -1611,4 +1619,54 @@ void TF_Flash_Configurations_With_Uart4 (void)
     Uart4Send("\nend of buffer\n");
     while (1);
 }
+
+
+void TF_Uart4_Adc_Dma (void)
+{
+    char buff [100];
+
+    Uart4Config ();
+    Wait_ms (100);
+
+    //-- ADC config
+    AdcConfig ();
+    
+    //-- DMA configuration.
+    DMAConfig();
+    DMA1_Channel1->CCR |= DMA_CCR1_EN;
+        
+    ADC1->CR1 |= ADC_CR1_SCAN;    //convertir toda la secuencia de canales
+    ADC1->CR2 |= ADC_CR2_CONT;    //convertir en forma continua
+        
+    //activo primera conversion por las dudas        
+    if (ADC1->CR2 & ADC_CR2_ADON)
+    {
+        Uart4Send("Adon is on\n");
+        //activo una primera conversion
+        ADC1->CR2 |= ADC_CR2_SWSTART | ADC_CR2_EXTTRIG;
+    }
+
+    int seq_cnt = 0;
+    while (1)
+    {
+        // Wait_ms(1000);
+        // sprintf(buff, "V_Sense_48V: %d, Temp_Channel: %d\n", V_Sense_48V, Temp_Channel);
+        // Uart4Send(buff);
+
+        if (sequence_ready)
+        {
+            sequence_ready_reset;
+            seq_cnt++;
+
+            if (seq_cnt > 10000)
+            {
+                sprintf(buff, "V_Sense_48V: %d, Temp_Channel: %d\n", V_Sense_48V, Temp_Channel);
+                Uart4Send(buff);
+                seq_cnt = 0;
+            }
+        }
+    }
+}
+
+
 //--- end of file ---//

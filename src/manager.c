@@ -12,9 +12,10 @@
 #include "manager.h"
 #include "dmx_transceiver.h"
 #include "adc.h"
+#include "usart.h"
+#include "tim.h"
 
-// #include "stm32f10x.h"
-// #include "core_cm3.h"
+#include "stm32f10x.h"
 
 #include "filters_and_offsets.h"
 #include "flash_program.h"
@@ -34,7 +35,7 @@
 #include "main_menu.h"
 
 
-
+#include <stdio.h>
 #include <string.h>
 // Module Private Types & Macros -----------------------------------------------
 typedef enum {
@@ -83,6 +84,7 @@ volatile unsigned short menu_menu_timer = 0;
 options_menu_st mem_options;
 
 extern volatile unsigned short dac_chnls [];
+extern volatile unsigned char pwm_chnls[];
 
 // Globals ---------------------------------------------------------------------
 manager_states_e mngr_state = INIT;
@@ -94,10 +96,15 @@ unsigned char need_to_save = 0;
 volatile unsigned short need_to_save_timer = 0;
 volatile unsigned short timer_mngr = 0;
 
+#if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
+volatile unsigned char protections_sample_timer = 0;
+#endif
+
 
 // Module Private Functions ----------------------------------------------------
 unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_prot);
 sw_actions_t CheckActions (void);
+void DisconnectByVoltage (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -113,15 +120,15 @@ void Manager (parameters_typedef * pmem)
         DMX_Disable();
 
         // channels reset
-        FiltersAndOffsets_Channels_Reset();
-
-        // start and clean filters
         FiltersAndOffsets_Filters_Reset();
 
+        // start and clean filters
+        FiltersAndOffsets_Channels_Reset();
+        FiltersAndOffsets_Disable_Outputs ();
         
 #ifdef USART_DEBUG_MODE            
         sprintf(s_to_send, "prog type: %d\n", pmem->program_type);
-        Usart2Send(s_to_send);
+        UsartDebug(s_to_send);
         Wait_ms(100);
 #endif
 
@@ -279,16 +286,25 @@ void Manager (parameters_typedef * pmem)
                     *(ch_values + 3),
                     *(ch_values + 4),
                     *(ch_values + 5));
-            Usart2Send(s_to_send);
-                
+            UsartDebug(s_to_send);
+
             sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
-                    ch1_pwm,
-                    ch2_pwm,
-                    ch3_pwm,
-                    ch4_pwm,
-                    ch5_pwm,
-                    ch6_pwm);
-            Usart2Send(s_to_send);                
+                    dac_chnls[0],
+                    dac_chnls[1],
+                    dac_chnls[2],
+                    dac_chnls[3],
+                    dac_chnls[4],
+                    dac_chnls[5]);
+            UsartDebug(s_to_send);
+
+            sprintf(s_to_send, "p1: %d, p2: %d, p3: %d, p4: %d, p5: %d, p6: %d\n",
+                    pwm_chnls[0],
+                    pwm_chnls[1],
+                    pwm_chnls[2],
+                    pwm_chnls[3],
+                    pwm_chnls[4],
+                    pwm_chnls[5]);
+            UsartDebug(s_to_send);
         }
 #endif
             
@@ -329,16 +345,26 @@ void Manager (parameters_typedef * pmem)
                     *(ch_values + 3),
                     *(ch_values + 4),
                     *(ch_values + 5));
-            Usart2Send(s_to_send);
-                
+            UsartDebug(s_to_send);
+
             sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
-                    ch1_pwm,
-                    ch2_pwm,
-                    ch3_pwm,
-                    ch4_pwm,
-                    ch5_pwm,
-                    ch6_pwm);
-            Usart2Send(s_to_send);                
+                    dac_chnls[0],
+                    dac_chnls[1],
+                    dac_chnls[2],
+                    dac_chnls[3],
+                    dac_chnls[4],
+                    dac_chnls[5]);
+            UsartDebug(s_to_send);
+
+            sprintf(s_to_send, "p1: %d, p2: %d, p3: %d, p4: %d, p5: %d, p6: %d\n",
+                    pwm_chnls[0],
+                    pwm_chnls[1],
+                    pwm_chnls[2],
+                    pwm_chnls[3],
+                    pwm_chnls[4],
+                    pwm_chnls[5]);
+            UsartDebug(s_to_send);
+            
         }
 #endif
             
@@ -459,7 +485,7 @@ void Manager (parameters_typedef * pmem)
 
 #ifdef USART_DEBUG_MODE
         sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
-        Usart2Send(s_to_send);
+        UsartDebug(s_to_send);
 #endif
 
         mngr_state = MNGR_OVERTEMP_B;
@@ -483,7 +509,7 @@ void Manager (parameters_typedef * pmem)
 
 #ifdef USART_DEBUG_MODE
         sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
-        Usart2Send(s_to_send);
+        UsartDebug(s_to_send);
 #endif
         mngr_state = MNGR_VOLTAGE_PROTECTION;
         break;
@@ -498,7 +524,7 @@ void Manager (parameters_typedef * pmem)
 
 #ifdef USART_DEBUG_MODE
         sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
-        Usart2Send(s_to_send);
+        UsartDebug(s_to_send);
 #endif
         mngr_state = MNGR_VOLTAGE_PROTECTION;
         break;
@@ -515,15 +541,10 @@ void Manager (parameters_typedef * pmem)
     case MNGR_ENTERING_MAIN_MENU:
         //deshabilitar salidas hardware
         DMX_Disable();
-
-#ifdef CHECK_FILTERS_BY_INT
-        enable_outputs_by_int = 0;
-        for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-            channels_values_int[n] = 0;
             
-#endif
         //reseteo canales
         FiltersAndOffsets_Channels_Reset();
+        FiltersAndOffsets_Disable_Outputs();
 
         MainMenuReset();
 
@@ -708,9 +729,9 @@ void Manager (parameters_typedef * pmem)
 
 #ifdef USART_DEBUG_MODE
         if (need_to_save)
-            Usart2Send((char *) "Memory Saved OK!\n");
+            UsartDebug((char *) "Memory Saved OK!\n");
         else
-            Usart2Send((char *) "Memory problems\n");
+            UsartDebug((char *) "Memory problems\n");
 #endif
 
         need_to_save = 0;
@@ -727,6 +748,10 @@ void Manager_Timeouts (void)
     if (timer_mngr)
         timer_mngr--;    
     
+#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
+    if (protections_sample_timer)
+        protections_sample_timer--;
+#endif
 
 }
 
@@ -765,6 +790,13 @@ sw_actions_t CheckActions (void)
 }
 
 
+void DisconnectByVoltage (void)
+{
+    DMX_Disable();
+    FiltersAndOffsets_Channels_Reset ();
+    FiltersAndOffsets_Disable_Outputs ();
+    CTRL_FAN_OFF;
+}
 
 
 void SendDMXPacket (unsigned char a)

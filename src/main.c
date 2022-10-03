@@ -37,6 +37,7 @@
 #include "filters_and_offsets.h"
 
 #include <stdio.h>
+#include <string.h>
 
 // Externals -------------------------------------------------------------------
 // -- for the adc
@@ -114,9 +115,18 @@ int main (void)
     DMX_channel_selected = 1;    //TODO: check default mem config line 141
     DMX_channel_quantity = 6;
 
+    // Debug or Colors change from CTRL BUTTON
+    Uart4Config ();
+
     // Start filters
     FiltersAndOffsets_Filters_Reset ();
 
+    //-- ADC and DMA configuration
+    AdcConfig ();
+    DMAConfig();
+    DMA1_Channel1->CCR |= DMA_CCR1_EN;
+    AdcStart ();
+    
     // OLED Init
     Wait_ms(500);    //for supply stability
     I2C1_Init();
@@ -138,17 +148,33 @@ int main (void)
     while (timer_standby)
         display_update_int_state_machine();
 
-    // Default mem config
-    mem_conf.max_power = 1530;
-    mem_conf.dmx_first_channel = 1;
-    mem_conf.dmx_channel_quantity = 6;
-    mem_conf.max_current_channels[0] = 255;
-    mem_conf.max_current_channels[1] = 255;
-    mem_conf.max_current_channels[2] = 255;
-    mem_conf.max_current_channels[3] = 255;
-    mem_conf.max_current_channels[4] = 255;
-    mem_conf.max_current_channels[5] = 255;    
+    // get saved config or create one for default
+    if (pmem->program_type != 0xff)
+    {
+        //memory with valid data
+        memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+    }
+    else
+    {
+        // Default mem config
+        mem_conf.program_type = DMX1_MODE;
+        mem_conf.master_send_dmx_enable = 0;
+        mem_conf.program_inner_type = MANUAL_NO_INNER_MODE;
+        mem_conf.program_inner_type_speed = 0;
 
+        mem_conf.max_power = 1530;
+        mem_conf.dmx_first_channel = 1;
+        mem_conf.dmx_channel_quantity = 6;
+        mem_conf.max_current_channels[0] = 255;
+        mem_conf.max_current_channels[1] = 255;
+        mem_conf.max_current_channels[2] = 255;
+        mem_conf.max_current_channels[3] = 255;
+        mem_conf.max_current_channels[4] = 255;
+        mem_conf.max_current_channels[5] = 255;
+        
+        mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
+
+    }
 
     // main program
     while (1)

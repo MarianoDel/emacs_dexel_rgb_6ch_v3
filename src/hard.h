@@ -13,25 +13,36 @@
 
 
 // Defines For Configuration ---------------------------------------------------
+//---- Configuration for Hardware Versions -------
+#include "version.h"
 
 //----- Board Configuration -------------------//
-//--- Hardware ------------------//
-#define HARDWARE_VERSION_3_0        // first version of new board
+//---- Features Configuration ----------------
+// #define WITH_BIDIRECTIONAL
 
-//--- Software ------------------//
-// #define SOFTWARE_VERSION_1_2		
-// #define SOFTWARE_VERSION_1_1	     //habla contra pc o rpi con nuevo protocolo camilla
-#define SOFTWARE_VERSION_1_0        //habla contra rpi con programa magneto y traduce a micros potencia
+//--- Check the temp sensor ---//
+#define USE_OVERTEMP_PROT
 
-//-------- Type of Program (depending on software version) ----------------
+//--- if applies check for ntc connection ---//
+#define USE_NTC_DETECTION
 
-//-------- Type of Program and Features ----------------
+//--- Check the voltage sensor ---//
+#define USE_VOLTAGE_PROT
 
-//-------- Kind of Reports Sended ----------------
+//--- Uses of CTRL_FAN Ouput as FAN or signaling ---//
+#define USE_CTRL_FAN_FOR_TEMP_CTRL
 
-//-------- Others Configurations depending on the formers ------------
+// --- Encoder Motion Direction --- //
+// #define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
+#define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
 
-//-------- Hysteresis Conf ------------------------
+//------ Configuration for Firmware-Channels -----
+#define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
+//#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
+
+// --- UsartDebug Configs --- //
+#define USART_DEBUG_MODE
+#define UsartDebug    Uart4Send    //use uart4 as debug seriel console
 
 //-------- PWM Conf ------------------------
 
@@ -43,28 +54,25 @@
 
 #define VOLTS_20    730
 #define VOLTS_50    1825
+//---- LM335 or NTC1K measurement Temperatures
+#include "temperatures.h"
 
 //-------- End Of Defines For Configuration ------
 
 
+//-- Sanity Checks ----------------------------------
+#if (!defined HARDWARE_VERSION_3_0)
+#error "Not HARD version selected on version.h"
+#endif
+
+#if (!defined TEMP_SENSOR_LM335) && \
+    (!defined TEMP_SENSOR_NTC1K)
+#error "Not Temp Sensor selected on temperatures.h"
+#endif
+
+//-- End of Sanity Checks ---------------------------
 
 
-//--- Hardware & Software Messages ------------------//
-#ifdef HARDWARE_VERSION_3_0
-#define HARD "Hardware Version: 3.0\r\n"
-#endif
-#ifdef SOFTWARE_VERSION_2_2
-#define SOFT "Software Version: 2.2\r\n"
-#endif
-#ifdef SOFTWARE_VERSION_1_0
-#define SOFT "Software Version: 1.0\r\n"
-#endif
-#ifdef SOFTWARE_VERSION_1_1
-#define SOFT "Software Version: 1.1\r\n"
-#endif
-//--- Type of Program Announcement ----------------
-
-//--- End of Hardware & Software Messages ------------------//
 
 
 

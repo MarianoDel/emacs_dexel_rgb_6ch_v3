@@ -76,13 +76,13 @@ void PWM_Find_Least_Value_With_Mask (unsigned char *pwm,
 // }
 
 
-void PWM_Set_PwrCtrl_512 (unsigned short * ch_dmx_val, unsigned char chnls_qtty, unsigned short max_power)
+void PWM_Set_PwrCtrl_512 (unsigned short * p_ch_val, unsigned char chnls_qtty, unsigned short max_power)
 {
     unsigned short total_dmx = 0;
 
     // how many in total
     for (unsigned char i = 0; i < chnls_qtty; i++)
-        total_dmx += *(ch_dmx_val + i);
+        total_dmx += *(p_ch_val + i);
 
     if (total_dmx > (max_power << 1))
     {
@@ -90,16 +90,16 @@ void PWM_Set_PwrCtrl_512 (unsigned short * ch_dmx_val, unsigned char chnls_qtty,
         for (unsigned char i = 0; i < chnls_qtty; i++)
         {
             // if its something on the channel
-            if (*(ch_dmx_val + i))
+            if (*(p_ch_val + i))
             {
-                new = *(ch_dmx_val + i) * max_power;
+                new = *(p_ch_val + i) * (max_power << 1);
                 new = new / total_dmx;
 
                 // no dejo que se apaguen los canales
                 if (new)
-                    *(ch_dmx_val + i) = (unsigned short) new;
+                    *(p_ch_val + i) = (unsigned short) new;
                 else
-                    *(ch_dmx_val + i) = 1;
+                    *(p_ch_val + i) = 1;
                 
             }
         }
@@ -107,13 +107,13 @@ void PWM_Set_PwrCtrl_512 (unsigned short * ch_dmx_val, unsigned char chnls_qtty,
 }
 
 
-void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty, unsigned short max_power)
+void PWM_Set_PwrCtrl (unsigned char * p_ch_val, unsigned char chnls_qtty, unsigned short max_power)
 {
     unsigned short total_dmx = 0;
 
     // how many in total
     for (unsigned char i = 0; i < chnls_qtty; i++)
-        total_dmx += *(ch_dmx_val + i);
+        total_dmx += *(p_ch_val + i);
 
     if (total_dmx > max_power)
     {
@@ -121,16 +121,16 @@ void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty, unsi
         for (unsigned char i = 0; i < chnls_qtty; i++)
         {
             // if its something on the channel
-            if (*(ch_dmx_val + i))
+            if (*(p_ch_val + i))
             {
-                new = *(ch_dmx_val + i) * max_power;
+                new = *(p_ch_val + i) * max_power;
                 new = new / total_dmx;
 
                 // no dejo que se apaguen los canales
                 if (new)
-                    *(ch_dmx_val + i) = (unsigned char) new;
+                    *(p_ch_val + i) = (unsigned char) new;
                 else
-                    *(ch_dmx_val + i) = 1;
+                    *(p_ch_val + i) = 1;
                 
             }
         }

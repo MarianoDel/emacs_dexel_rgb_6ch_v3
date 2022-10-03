@@ -32,10 +32,8 @@
 
 
 // Externals -------------------------------------------------------------------
-// extern ma32_u16_data_obj_t st_sp1;
-// extern ma32_u16_data_obj_t st_sp2;
-// extern ma32_u16_data_obj_t st_ena1;
-// extern ma32_u16_data_obj_t st_ena2;
+volatile unsigned char pwm_chnls [6];
+volatile unsigned short dac_chnls [6];
 
 
 
@@ -53,6 +51,7 @@ unsigned short pwm_output_ch2 [VECTOR_LENGTH] = { 0 };
 
 // Tests Functions -------------------------------------------------------------
 void Test_PWM_Post_Mapping (void);
+void Test_PWM_Power_Ctrl (void);
 void Test_Dmx_Post_Step (void);
 void Test_Dmx_Post_Step_Dowm (void);
 void Test_Dmx_Post_Ramp_Ch1 (void);
@@ -62,12 +61,8 @@ void Test_Dmx_Post_Ramp_Ch1 (void);
 
 
 // Module Mocked Functions -----------------------------------------------------
-
-// void Update_TIM3_CH1 (unsigned short new_pwm);
-// void Update_TIM3_CH2 (unsigned short new_pwm);
-// void Update_PWM_Counters (void);
-
-// void UpdateFiltersTest_Reset (void);
+void TIM6_Update (void);
+void DAC_MUX_Update_by_Int (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -75,8 +70,8 @@ int main (int argc, char *argv[])
 {
     printf("Start of DMX simulations...\n");
 
+    // Test_PWM_Power_Ctrl ();
     Test_PWM_Post_Mapping ();
-    // Test_Dmx_Post_Step ();
     // Test_Dmx_Post_Step_Dowm ();    
     // Test_Dmx_Post_Ramp_Ch1 ();        
 
@@ -84,23 +79,131 @@ int main (int argc, char *argv[])
 }
 
 
+void Test_PWM_Power_Ctrl (void)
+{
+    printf("\nTest pwm power control\n");
+
+    unsigned short chnls [6] = { 0 };
+    
+    unsigned short vch1_orig [512] = { 0 };
+    unsigned short vch2_orig [512] = { 0 };
+    unsigned short vch3_orig [512] = { 0 };
+    unsigned short vch4_orig [512] = { 0 };
+    unsigned short vch5_orig [512] = { 0 };
+    unsigned short vch6_orig [512] = { 0 };
+
+    unsigned short vch1_roof [512] = { 0 };
+    unsigned short vch2_roof [512] = { 0 };
+    unsigned short vch3_roof [512] = { 0 };
+    unsigned short vch4_roof [512] = { 0 };
+    unsigned short vch5_roof [512] = { 0 };
+    unsigned short vch6_roof [512] = { 0 };
+    
+    for (int i = 0; i < 512; i++)
+    {
+        chnls[0] = i;
+        chnls[1] = i;
+        chnls[2] = i;
+        chnls[3] = i;
+        chnls[4] = i;
+        chnls[5] = i;
+
+        vch1_orig [i] = chnls[0];
+        vch2_orig [i] = chnls[1];
+        vch3_orig [i] = chnls[2];
+        vch4_orig [i] = chnls[3];
+        vch5_orig [i] = chnls[4];
+        vch6_orig [i] = chnls[5];        
+        
+        // PWM_Set_PwrCtrl_512 (chnls, 6, 255);
+        PWM_Set_PwrCtrl_512 (chnls, 6, 1530);
+        // PWM_Set_PwrCtrl_512 (chnls, 6, 765);
+        // PWM_Set_PwrCtrl (chnls, 6, 255);        
+
+        vch1_roof [i] = chnls[0];
+        vch2_roof [i] = chnls[1];
+        vch3_roof [i] = chnls[2];
+        vch4_roof [i] = chnls[3];
+        vch5_roof [i] = chnls[4];
+        vch6_roof [i] = chnls[5];        
+    }
+    
+    ///////////////////////////
+    // Backup Data to a file //
+    ///////////////////////////
+    FILE * file = fopen("data.txt", "w");
+
+    if (file == NULL)
+    {
+        printf("data file not created!\n");
+        return;
+    }
+
+    Vector_UShort_To_File (file, "ch1_root", vch1_roof, 512);
+    Vector_UShort_To_File (file, "ch1_orig", vch1_orig, 512);
+    Vector_UShort_To_File (file, "ch2", vch2_roof, 512);
+    Vector_UShort_To_File (file, "ch3", vch3_roof, 512);    
+    Vector_UShort_To_File (file, "ch4", vch4_roof, 512);
+    Vector_UShort_To_File (file, "ch5", vch5_roof, 512);
+    Vector_UShort_To_File (file, "ch6", vch6_roof, 512);
+    printf("\nRun by hand python3 simul_outputs.py\n");
+
+
+
+}
 
 void Test_PWM_Post_Mapping (void)
 {
-    printf("\nTest pwm post-mapping\n from 0 to 4095");
+    unsigned short chnls [6] = { 0 };
 
-    unsigned short to_map [4096] = { 0 };
-    unsigned short vena [4096] = { 0 };
-    unsigned short vdac [4096] = { 0 };    
-    unsigned short ena_pwm = 0;
-    unsigned short dac = 0;
-    
-    for (int i = 0; i < 4096; i++)
+    printf("\nTest pwm post-mapping\n from 0 to 511");
+
+    unsigned short vch1_orig [512] = { 0 };
+    unsigned short vch2_orig [512] = { 0 };
+    unsigned short vch3_orig [512] = { 0 };
+    unsigned short vch4_orig [512] = { 0 };
+    unsigned short vch5_orig [512] = { 0 };
+    unsigned short vch6_orig [512] = { 0 };
+
+    unsigned short ch1_pwm [512] = { 0 };
+    unsigned short ch2_pwm [512] = { 0 };
+    unsigned short ch3_pwm [512] = { 0 };
+    unsigned short ch4_pwm [512] = { 0 };
+    unsigned short ch5_pwm [512] = { 0 };
+    unsigned short ch6_pwm [512] = { 0 };
+
+    unsigned short ch1_dac [512] = { 0 };
+    unsigned short ch2_dac [512] = { 0 };
+    unsigned short ch3_dac [512] = { 0 };
+    unsigned short ch4_dac [512] = { 0 };
+    unsigned short ch5_dac [512] = { 0 };
+    unsigned short ch6_dac [512] = { 0 };
+
+    unsigned short pwm_ch;
+    unsigned short dac_ch;
+    for (int i = 0; i < 512; i++)
     {
-        to_map[i] = i;
-        PWM_Map_Post_Filter(to_map[i], &ena_pwm, &dac);
-        vena [i] = ena_pwm;
-        vdac [i] = dac;
+        chnls[0] = i;
+        chnls[1] = i;
+        chnls[2] = i;
+        chnls[3] = i;
+        chnls[4] = i;
+        chnls[5] = i;
+
+        vch1_orig[i] = i;
+        vch2_orig[i] = i;
+        vch3_orig[i] = i;
+        vch4_orig[i] = i;
+        vch5_orig[i] = i;
+        vch6_orig[i] = i;
+        
+        PWM_Map_Post_Filter(
+            *(chnls + 0) << 3,
+            &pwm_ch,
+            &dac_ch);
+        
+        ch1_pwm [i] = pwm_ch;
+        ch1_dac [i] = dac_ch;
     }
 
     // ShowVectorUShort("\nVector data input:\n", to_map, 600);
@@ -118,9 +221,9 @@ void Test_PWM_Post_Mapping (void)
         return;
     }
 
-    Vector_UShort_To_File (file, "data_in", to_map, 4096);
-    Vector_UShort_To_File (file, "ena_pwm", vena, 4096);    
-    Vector_UShort_To_File (file, "dac_ch", vdac, 4096);
+    Vector_UShort_To_File (file, "ch1_data", vch1_orig, 512);
+    Vector_UShort_To_File (file, "ch1_pwm", ch1_pwm, 512);    
+    Vector_UShort_To_File (file, "ch1_dac", ch1_dac, 512);
 
     printf("\nRun by hand python3 simul_pwm_pre_data.py\n");
 
@@ -394,6 +497,14 @@ void TIM_Activate_Channels (unsigned char act_chnls)
     printf("activate: 0x%02x\n", act_chnls);
 }
 
+void TIM6_Update (void)
+{
+}
+
+
+void DAC_MUX_Update_by_Int (void)
+{
+}
 
 //--- end of file ---//
 

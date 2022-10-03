@@ -43,7 +43,7 @@ colors_list = ['o', 'y', 'g', 'c', 'r', 'b']
 def get_new_color_vector ():
     global last_color
     
-    if last_color < len(colors_list):
+    if last_color < (len(colors_list) - 1):
         last_color += 1
     else:
         last_color = 0

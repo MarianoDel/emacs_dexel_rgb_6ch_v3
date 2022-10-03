@@ -40,16 +40,14 @@ unsigned char filters_enable_outputs = 0;
 // Module Functions ------------------------------------------------------------
 void FiltersAndOffsets_Channels_to_Backup (unsigned char * channels)
 {
-    // __disable_irq;
-    // DisableIrqs();
+    // __disable_irq();
     *(ch_dmx_val + 0) = *(channels + 0);
     *(ch_dmx_val + 1) = *(channels + 1);
     *(ch_dmx_val + 2) = *(channels + 2);
     *(ch_dmx_val + 3) = *(channels + 3);
     *(ch_dmx_val + 4) = *(channels + 4);
     *(ch_dmx_val + 5) = *(channels + 5);
-    // EnableIrqs();
-    // __enable_irq;        
+    // __enable_irq();
 }
 
 
@@ -78,7 +76,7 @@ typedef enum {
 filters_and_offsets_e filters_sm = FILTERS_BKP_CHANNELS;
 void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
 {
-    unsigned short calc = 0;    
+    unsigned int calc = 0;    
 
     if (!filters_enable_outputs)
         return;
@@ -98,27 +96,27 @@ void FiltersAndOffsets_Calc_SM (parameters_typedef * pmem)
     case FILTERS_LIMIT_EACH_CHANNEL:
         calc = limit_output[0] * pmem->max_current_channels[0];
         calc >>= 7;
-        limit_output[0] = (unsigned char) calc;
+        limit_output[0] = (unsigned short) calc;
 
         calc = limit_output[1] * pmem->max_current_channels[1];
         calc >>= 7;
-        limit_output[1] = (unsigned char) calc;
+        limit_output[1] = (unsigned short) calc;
 
         calc = limit_output[2] * pmem->max_current_channels[2];
         calc >>= 7;
-        limit_output[2] = (unsigned char) calc;
+        limit_output[2] = (unsigned short) calc;
 
         calc = limit_output[3] * pmem->max_current_channels[3];
         calc >>= 7;
-        limit_output[3] = (unsigned char) calc;
+        limit_output[3] = (unsigned short) calc;
 
         calc = limit_output[4] * pmem->max_current_channels[4];
         calc >>= 7;
-        limit_output[4] = (unsigned char) calc;
+        limit_output[4] = (unsigned short) calc;
 
         calc = limit_output[5] * pmem->max_current_channels[5];
         calc >>= 7;
-        limit_output[5] = (unsigned char) calc;
+        limit_output[5] = (unsigned short) calc;
 
         filters_sm++;
         break;

@@ -197,12 +197,12 @@ void GpioInit (void)
     //PC1 EN_DT
     //PC2 EN_CLK
     //PC3 CTRL_FAN
-    //PC4 
-    //PC5 
+    //PC4 ADC input V_Sense_48V
+    //PC5 ADC input Temp_Channel
     //PC6 TIM8_CH1 alternative push-pull 2MHz
     //PC7 TIM8_CH2 alternative input
     temp = GPIOC->CRL;
-    temp &= 0x00FF0000;
+    temp &= 0x00000000;
     temp |= 0x4A002444;
     GPIOC->CRL = temp;
 

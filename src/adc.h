@@ -23,12 +23,17 @@
 #endif
 //----------- End of ADC Configurations --------------//
 
+// ---- Channels Configs. ----//
 #define V_Sense_48V    adc_ch[0]
 #define Temp_Channel    adc_ch[1]
 #define ADC_CHANNEL_QUANTITY         2
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
+#define ADC_SQR1_Channels_Qtty    ADC_Channels_Qtty_2
 
-#define RCC_ADC_CLK 		(RCC->APB2ENR & 0x00000200)
+
+// ---- End of Channels Configs. ----//
+
+#define RCC_ADC_CLK    (RCC->APB2ENR & 0x00000200)
 #define RCC_ADC_CLK_ON    (RCC->APB2ENR |= 0x00000200)
 #define RCC_ADC_CLK_OFF    (RCC->APB2ENR &= ~0x00000200)
 
@@ -37,9 +42,6 @@
 #define RCC_ADC_PRESCALER_DIV_6    (RCC->CFGR |= RCC_CFGR_ADCPRE_1)
 #define RCC_ADC_PRESCALER_DIV_8    (RCC->CFGR |= RCC_CFGR_ADCPRE_1 | RCC_CFGR_ADCPRE_0)
 
-/** @defgroup ADC_channels 
-  * @{
-  */
 #define ADC_Channel_0                               ((uint8_t)0x00)
 #define ADC_Channel_1                               ((uint8_t)0x01)
 #define ADC_Channel_2                               ((uint8_t)0x02)
@@ -90,9 +92,9 @@
 
 
 
-//--- Exported Module Functions ------------
+// Module Exported Functions ---------------------------------------------------
 void AdcConfig (void);
-
+void AdcStart (void);
 void SetChannelSampleTime (unsigned char, unsigned char);
 void SetChannelSamplePosition (unsigned char, unsigned char);
 void SetChannelsQuantity (unsigned int);
@@ -106,4 +108,6 @@ unsigned short GetTemp (void);
 void FillTempBuffer (void);
 short ConvertTemp (unsigned short);
 #endif
+
+
 #endif /* _ADC_H_ */

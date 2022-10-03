@@ -41,7 +41,7 @@ void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned char * pwm_ena, 
 void PWMChannelsReset (void);
 unsigned short PWM_Map_From_Dmx (unsigned char);
 void PWM_Set_PwrCtrl (unsigned char *, unsigned char, unsigned short);
-void PWM_Set_PwrCtrl_512 (unsigned short * ch_limit, unsigned char qtty, unsigned short max_pwr);
+void PWM_Set_PwrCtrl_512 (unsigned short * p_ch_val, unsigned char qtty, unsigned short max_pwr);
 void PWM_Map_Pre_Filter (unsigned char dmx_data, unsigned short * pwm_ena, unsigned short * pwm_ch);
 
 void PWM_Timer_Handler (void);

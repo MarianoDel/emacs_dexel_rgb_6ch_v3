@@ -8,13 +8,13 @@
 // #### ADC.C #################################
 //---------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
+// Includes --------------------------------------------------------------------
 #include "adc.h"
 #include "stm32f10x.h"
 #include "hard.h"
 
 
-/* Externals ------------------------------------------------------------------*/
+// Externals -------------------------------------------------------------------
 extern volatile unsigned short adc_ch [];
 
 
@@ -26,7 +26,7 @@ extern volatile unsigned char seq_ready;
 extern volatile unsigned short tt_take_temp_sample;
 #endif
 
-/* Globals ------------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 #ifdef ADC_WITH_INT
 volatile unsigned short * p_channel;
 #endif
@@ -56,44 +56,49 @@ unsigned char new_temp_sample = 0;
 
 void AdcConfig (void)
 {
-    // RCC_ADC_PRESCALER_DIV_8;    //72MHz / 8 = 9MHz
-    RCC_ADC_PRESCALER_DIV_6;    //72MHz / 6 = 12MHz    
-    
     if (!RCC_ADC_CLK)
         RCC_ADC_CLK_ON;
 
-    // preseteo los registros a default, la mayoria necesita tener ADC apagado
+    // default registers
     ADC1->CR1 = 0x00000000;
     ADC1->CR2 = 0x00000000;
     ADC1->SMPR1 = 0x00000000;
     ADC1->SMPR2 = 0x00000000;
     ADC1->SQR1 = 0x00000000;
     ADC1->SQR2 = 0x00000000;    
-    
+
+    // adc clk
+    RCC_ADC_PRESCALER_DIV_8;    //64MHz / 8 = 8MHz
+    // RCC_ADC_PRESCALER_DIV_6;    //64MHz / 6 = 10.66MHz    
+
     //set trigger & Continuos or Discontinuous
     // ADC1->CR1 |= ADC_CR1_SCAN;
     // ADC1->CR2 |= ADC_CR2_CONT | ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0;    //soft trigger continuos
     // ADC1->CR2 |= ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0;    //soft trigger discontinuos
     
     //set sampling time for each channel
-    ADC1->SMPR2 |= ADC_SMPR2_SMP4_2 | ADC_SMPR2_SMP4_1 | ADC_SMPR2_SMP4_0;    //sample time Channel 4
-    ADC1->SMPR2 |= ADC_SMPR2_SMP5_2 | ADC_SMPR2_SMP5_1 | ADC_SMPR2_SMP5_0;    //sample time Channel 5
-    ADC1->SMPR2 |= ADC_SMPR2_SMP6_2 | ADC_SMPR2_SMP6_1 | ADC_SMPR2_SMP6_0;    //sample time Channel 6
-    ADC1->SMPR2 |= ADC_SMPR2_SMP7_2 | ADC_SMPR2_SMP7_1 | ADC_SMPR2_SMP7_0;    //sample time Channel 7
+    // ADC1->SMPR2 |= ADC_SMPR2_SMP4_2 | ADC_SMPR2_SMP4_1 | ADC_SMPR2_SMP4_0;    //sample time Channel 4
+    // ADC1->SMPR2 |= ADC_SMPR2_SMP5_2 | ADC_SMPR2_SMP5_1 | ADC_SMPR2_SMP5_0;    //sample time Channel 5
+    // ADC1->SMPR2 |= ADC_SMPR2_SMP6_2 | ADC_SMPR2_SMP6_1 | ADC_SMPR2_SMP6_0;    //sample time Channel 6
+    // ADC1->SMPR2 |= ADC_SMPR2_SMP7_2 | ADC_SMPR2_SMP7_1 | ADC_SMPR2_SMP7_0;    //sample time Channel 7
     ADC1->SMPR1 |= ADC_SMPR1_SMP14_2 | ADC_SMPR1_SMP14_1 | ADC_SMPR1_SMP14_0;    //sample time Channel 14
     ADC1->SMPR1 |= ADC_SMPR1_SMP15_2 | ADC_SMPR1_SMP15_1 | ADC_SMPR1_SMP15_0;    //sample time Channel 15   
 
 
     //set regular channel selection
-    ADC1->SQR3 |= ADC_SQR3_SQ1_2;                     //Channel 4
-    ADC1->SQR3 |= ADC_SQR3_SQ2_2 | ADC_SQR3_SQ2_0;    //Channel 5
-    ADC1->SQR3 |= ADC_SQR3_SQ3_2 | ADC_SQR3_SQ3_1;    //Channel 6
-    ADC1->SQR3 |= ADC_SQR3_SQ4_2 | ADC_SQR3_SQ4_1 | ADC_SQR3_SQ4_0;    //Channel 7
-    ADC1->SQR3 |= ADC_SQR3_SQ5_3 | ADC_SQR3_SQ5_3 | ADC_SQR3_SQ5_1;    //Channel 14
-    ADC1->SQR3 |= ADC_SQR3_SQ6_3 | ADC_SQR3_SQ6_2 | ADC_SQR3_SQ6_1 | ADC_SQR3_SQ6_0;    //Channel 15   
+    ADC1->SQR3 |= ADC_SQR3_SQ1_3 | ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_1;    //Channel 14
+    ADC1->SQR3 |= ADC_SQR3_SQ2_3 | ADC_SQR3_SQ2_2 | ADC_SQR3_SQ2_1 | ADC_SQR3_SQ2_0;    //Channel 15
+    
+    // ADC1->SQR3 |= ADC_SQR3_SQ1_2;                     //Channel 4
+    // ADC1->SQR3 |= ADC_SQR3_SQ2_2 | ADC_SQR3_SQ2_0;    //Channel 5
+    // ADC1->SQR3 |= ADC_SQR3_SQ3_2 | ADC_SQR3_SQ3_1;    //Channel 6
+    // ADC1->SQR3 |= ADC_SQR3_SQ4_2 | ADC_SQR3_SQ4_1 | ADC_SQR3_SQ4_0;    //Channel 7
+    // ADC1->SQR3 |= ADC_SQR3_SQ5_3 | ADC_SQR3_SQ5_3 | ADC_SQR3_SQ5_1;    //Channel 14
+    // ADC1->SQR3 |= ADC_SQR3_SQ6_3 | ADC_SQR3_SQ6_2 | ADC_SQR3_SQ6_1 | ADC_SQR3_SQ6_0;    //Channel 15   
 
     //set the quantity of channels to convert
-    ADC1->SQR1 |= ADC_SQR1_L_2 | ADC_SQR1_L_1;    //convert 6 channels
+    // ADC1->SQR1 |= ADC_SQR1_L_2 | ADC_SQR1_L_1;    //convert 6 channels
+    ADC1->SQR1 |= ADC_SQR1_Channels_Qtty;    //convert the selected channels
     
 
 
@@ -129,6 +134,14 @@ void AdcConfig (void)
     ADC1->CR2 |= ADC_CR2_DMA;
 #endif
     
+}
+
+
+void AdcStart (void)
+{
+    ADC1->CR1 |= ADC_CR1_SCAN;    //convertir toda la secuencia de canales
+    ADC1->CR2 |= ADC_CR2_CONT;    //convertir en forma continua
+    ADC1->CR2 |= ADC_CR2_SWSTART | ADC_CR2_EXTTRIG;        //activo una primera conversion
 }
 
 #ifdef ADC_WITH_INT
