@@ -12,7 +12,7 @@
 #include "tim.h"
 #include "stm32f10x.h"
 #include "hard.h"
-
+#include "dmx_transceiver.h"
 #include "pwm.h"
 
 
@@ -71,74 +71,14 @@
 #define VALUE_FOR_CONSTANT_OFF    115    //1.8us tick 15.62ns
 
 // Externals -------------------------------------------------------------------
-//Wait_ms
-volatile unsigned short wait_ms_var;
 
 
 // Globals ---------------------------------------------------------------------
-// extern volatile unsigned char flagMuestreo;
+// -- Wait_ms
+volatile unsigned short wait_ms_var;
 
 
 // Module Functions ------------------------------------------------------------
-// void Update_TIM1_CH1 (unsigned short a)
-// {
-//     TIM1->CCR1 = a;
-// }
-
-// void Update_TIM1_CH4 (unsigned short a)
-// {
-//     TIM1->CCR4 = a;
-// }
-
-// void Update_TIM2_CH1 (unsigned short a)
-// {
-//     TIM2->CCR1 = a;
-// }
-
-// void Update_TIM2_CH2 (unsigned short a)
-// {
-//     TIM2->CCR2 = a;
-// }
-
-// void Update_TIM3_CH1 (unsigned short a)
-// {
-//     TIM3->CCR1 = a;
-// }
-
-// void Update_TIM3_CH2 (unsigned short a)
-// {
-//     TIM3->CCR2 = a;
-// }
-
-// void Update_TIM3_CH3 (unsigned short a)
-// {
-//     TIM3->CCR3 = a;
-// }
-
-// void Update_TIM3_CH4 (unsigned short a)
-// {
-//     TIM3->CCR4 = a;
-// }
-
-// void Update_TIM4_CH1 (unsigned short a)
-// {
-//     TIM4->CCR1 = a;
-// }
-
-// void Update_TIM4_CH2 (unsigned short a)
-// {
-//     TIM4->CCR2 = a;
-// }
-
-// void Update_TIM4_CH3 (unsigned short a)
-// {
-//     TIM4->CCR3 = a;
-// }
-
-// void Update_TIM4_CH4 (unsigned short a)
-// {
-//     TIM4->CCR4 = a;
-// }
 
 // Channel 1 -- out TIM_OUT_CH1 -> TIM1_CH1 @ PA8, in TIM1_CH2 @ PA9
 void TIM_1_Init (void)
@@ -413,24 +353,51 @@ void TIM7_Init (void)
     TIM7->EGR = TIM_EGR_UG; //update registers
 
     // Enable timer
-    // TIM7->DIER |= TIM_DIER_UIE;
+    // TIM7->DIER |= TIM_DIER_UIE;    //int on update
     TIM7->CR1 |= TIM_CR1_CEN;
 
     // NVIC Enable
     // Int for timer7.
-    // NVIC_EnableIRQ(TIM7_IRQn);
-    // NVIC_SetPriority(TIM7_IRQn, 10);    
+    NVIC_EnableIRQ(TIM7_IRQn);
+    NVIC_SetPriority(TIM7_IRQn, 10);    
 }
 
 
-void TIM7_IRQHandler (void)	//1mS
+void TIM7_IRQHandler (void)	// one shoot mode
 {
-    // avoid int reentrant
+    // avoid int reentrant, low flag
     TIM7->SR = 0;
-            
-    // low the flag
-    if (TIM7->SR & TIM_SR_UIF)
-        TIM7->SR &= ~(TIM_SR_UIF);    
+
+    SendDMXPacket(PCKT_UPDATE);
+}
+
+
+void TIM7_To_OneShoot (void)
+{
+    TIM7->CR1 &= ~(TIM_CR1_CEN);    // disable timer
+    TIM7->DIER |= TIM_DIER_UIE;
+    
+    TIM7->ARR = 0;    //leave it stand by
+    // enable timer with one pulse mode, int only on overflow
+    TIM7->CR1 |= TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_URS;    
+}
+
+
+void TIM7_To_FreeRunning (void)
+{
+    TIM7->CR1 &= ~(TIM_CR1_CEN | TIM_CR1_OPM);    // disable timer and one pulse
+    TIM7->DIER &= ~(TIM_DIER_UIE);    // disable int
+    
+    TIM7->ARR = 0xFFFF;    //set to free running
+    TIM7->CR1 |= TIM_CR1_CEN;    // enable timer
+}
+
+
+void TIM7_OneShoot (unsigned short a)
+{
+    TIM7->CNT = 0;
+    TIM7->ARR = a;
+    TIM7->CR1 |= TIM_CR1_CEN;
 }
 
 

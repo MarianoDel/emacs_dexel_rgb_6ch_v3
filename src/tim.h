@@ -33,6 +33,9 @@ void TIM6_Update (unsigned short new_val);
 
 void TIM7_Init(void);
 void TIM7_IRQHandler (void);
+void TIM7_To_OneShoot (void);
+void TIM7_To_FreeRunning (void);
+void TIM7_OneShoot (unsigned short a);
 
 void Wait_ms (unsigned short);
 

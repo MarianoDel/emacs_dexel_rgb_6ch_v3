@@ -20,6 +20,8 @@
 #include "filters_and_offsets.h"
 #include "flash_program.h"
 
+#include "comm.h"
+
 // linked modules
 #include "screen.h"
 #include "ssd1306_display.h"
@@ -123,8 +125,9 @@ void Manager (parameters_typedef * pmem)
         FiltersAndOffsets_Filters_Reset();
 
         // start and clean filters
-        FiltersAndOffsets_Channels_Reset();
         FiltersAndOffsets_Disable_Outputs ();
+        FiltersAndOffsets_Channels_Reset();
+
         
 #ifdef USART_DEBUG_MODE            
         sprintf(s_to_send, "prog type: %d\n", pmem->program_type);
@@ -543,8 +546,8 @@ void Manager (parameters_typedef * pmem)
         DMX_Disable();
             
         //reseteo canales
-        FiltersAndOffsets_Channels_Reset();
         FiltersAndOffsets_Disable_Outputs();
+        FiltersAndOffsets_Channels_Reset();        
 
         MainMenuReset();
 
@@ -793,8 +796,9 @@ sw_actions_t CheckActions (void)
 void DisconnectByVoltage (void)
 {
     DMX_Disable();
-    FiltersAndOffsets_Channels_Reset ();
     FiltersAndOffsets_Disable_Outputs ();
+    FiltersAndOffsets_Channels_Reset ();
+    TIM_Deactivate_Channels (0x3F);
     CTRL_FAN_OFF;
 }
 
@@ -803,9 +807,6 @@ void SendDMXPacket (unsigned char a)
 {
 }
 
-void UpdateCommunications (void)
-{
-}
 
 //--- end of file ---//
 

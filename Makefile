@@ -87,6 +87,7 @@ SRC += ./src/i2c.c
 
 SRC += ./src/manager.c
 SRC += ./src/filters_and_offsets.c
+SRC += ./src/comm.c
 
 # linked modules
 SRC += ./src/ssd1306_display.c

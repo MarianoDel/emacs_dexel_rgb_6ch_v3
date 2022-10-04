@@ -33,16 +33,16 @@
 #define USE_CTRL_FAN_FOR_TEMP_CTRL
 
 // --- Encoder Motion Direction --- //
-// #define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
-#define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
+#define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
+// #define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
 
 //------ Configuration for Firmware-Channels -----
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
 // --- UsartDebug Configs --- //
-#define USART_DEBUG_MODE
-#define UsartDebug    Uart4Send    //use uart4 as debug seriel console
+// #define USART_DEBUG_MODE
+#define UsartDebug    Uart4Send    //use uart4 as debug serial console
 
 //-------- PWM Conf ------------------------
 
