@@ -107,7 +107,7 @@ volatile unsigned char protections_sample_timer = 0;
 unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_prot);
 sw_actions_t CheckActions (void);
 void DisconnectByVoltage (void);
-
+void DisconnectChannels (void);
 
 // Module Functions ------------------------------------------------------------
 void Manager (parameters_typedef * pmem)
@@ -125,9 +125,7 @@ void Manager (parameters_typedef * pmem)
         FiltersAndOffsets_Filters_Reset();
 
         // start and clean filters
-        FiltersAndOffsets_Disable_Outputs ();
-        FiltersAndOffsets_Channels_Reset();
-
+        DisconnectChannels();
         
 #ifdef USART_DEBUG_MODE            
         sprintf(s_to_send, "prog type: %d\n", pmem->program_type);
@@ -546,8 +544,7 @@ void Manager (parameters_typedef * pmem)
         DMX_Disable();
             
         //reseteo canales
-        FiltersAndOffsets_Disable_Outputs();
-        FiltersAndOffsets_Channels_Reset();        
+        DisconnectChannels();
 
         MainMenuReset();
 
@@ -800,6 +797,14 @@ void DisconnectByVoltage (void)
     FiltersAndOffsets_Channels_Reset ();
     TIM_Deactivate_Channels (0x3F);
     CTRL_FAN_OFF;
+}
+
+
+void DisconnectChannels (void)
+{
+    FiltersAndOffsets_Disable_Outputs ();
+    FiltersAndOffsets_Channels_Reset ();
+    TIM_Deactivate_Channels (0x3F);
 }
 
 
