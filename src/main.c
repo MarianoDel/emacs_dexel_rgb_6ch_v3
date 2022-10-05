@@ -133,9 +133,7 @@ int main (void)
     Wait_ms(10);
 
     //primer pantalla
-    LED_ON;
     SCREEN_Init();
-    LED_OFF;
 
     SCREEN_ShowText2(
         "Kirno    ",
