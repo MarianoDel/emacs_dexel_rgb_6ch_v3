@@ -32,6 +32,8 @@ void Usart3Send (char *);
 void Usart3SendUnsigned (unsigned char *, unsigned char);
 unsigned char Usart3ReadBuffer (unsigned char *, unsigned short);
 void USART3_IRQHandler (void);
+void Usart3SendByte (unsigned char byte);
+void Usart3DisableTx (void);
 
 void Uart4Config (void);
 void Uart4Send (char *);

@@ -12,6 +12,7 @@
 #include "stm32f10x.h"
 #include "gpio.h"
 #include "tim.h"
+#include "usart.h"
 
 
 #ifdef WITH_RDM
@@ -19,9 +20,19 @@
 #endif
 
 // Module Configurations -------------------------------------------------------
+//TODO: despues poner esto en dmx_transceiver_conf.h y linkear dmx_transceiver.*
 #define TIM_DMX    TIM7
 #define USART_DMX    USART3
 
+#define DMX_TIM_OneShoot(X)    OneShootTIM7(X)
+#define DMX_TIM_To_Free_Running    TIM7_To_FreeRunning
+#define DMX_TIM_To_One_Shoot    TIM7_To_OneShoot
+
+#define DMX_PIN_To_PushPull    PB10_Pin_To_PushPull
+#define DMX_PIN_To_Alternative    PB10_Pin_To_Alternative
+
+#define DMX_Usart_Send(X)    Usart3SendByte(X)
+#define DMX_Usart_Disable    Usart3DisableTx
 
 // Module Private Types Constants and Macros -----------------------------------
 #define DMX_TIMEOUT	20
@@ -45,7 +56,7 @@ extern volatile unsigned char RDM_packet_flag;
 extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
 
-extern volatile unsigned char * pdmx;
+// extern volatile unsigned char * pdmx;
 
 
 // Globals ---------------------------------------------------------------------
@@ -56,11 +67,10 @@ volatile unsigned char dmx_timeout_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
-// extern inline void UsartSendDMX (void);
 #ifdef DMX_BIDIRECTIONAL
 inline void UsartSendDMX (void);
 #endif
-// void UsartSendDMX (void);
+
 
 
 //--- FUNCIONES DEL MODULO ---//
@@ -72,16 +82,24 @@ void DMX_EnableRx (void)
     EXTIOn ();
     //enable usart and Rx int
     USART_DMX->CR1 |= USART_CR1_RXNEIE | USART_CR1_UE;
+
+#ifdef DMX_BIDIRECTIONAL
+    // config the TIM for freerunning
+    DMX_TIM_To_Free_Running();
+#endif
 }
 
-
+#ifdef DMX_BIDIRECTIONAL
 void DMX_EnableTx (void)
 {
-    //enable driver in tx mode
+    // enable driver in tx mode
     SW_RX_TX_DE;
-    //enable usart
+    // enable usart
     USART_DMX->CR1 |= USART_CR1_UE;
+    // config the TIM for OneShoot
+    DMX_TIM_To_One_Shoot();
 }
+#endif
 
 
 void DMX_Disable (void)
@@ -255,6 +273,103 @@ void Dmx_Timeouts (void)
     
 }
 
+
+#if defined DMX_BIDIRECTIONAL
+typedef enum {
+    SEND_BREAK,
+    SEND_MARK,
+    SEND_DMX_DATA
+    
+} dmx_tx_state_e;
+
+
+void DmxInt_Serial_Handler_Transmitter (void)
+{
+    // -- begin new transmission
+    if (current_channel_index == 0)
+    {
+        // first byte to tx
+        DMX_Usart_Send (0);
+        data11_cnt = 1;
+    }
+    else if (current_channel_index < DMX_channel_selected)
+    {
+        // inner bytes
+        DMX_Usart_Send (0);        
+    }
+    else if (current_channel_index <= (DMX_channel_selected + (DMX_channel_quantity - 1)))
+    {
+        // packet bytes
+        DMX_Usart_Send (data11[data11_cnt]);
+        data11_cnt++;
+    }
+    else if (current_channel_index < 512)
+    {
+        // remaining bytes
+        DMX_Usart_Send (0);
+    }
+    else
+        DMX_Usart_Disable();
+    
+    current_channel_index++;            
+
+}
+
+//funcion para enviar el buffer data512[512] al DMX
+//recibe PCKT_INIT por el usuario
+//recibe PCKT_UPDATE desde su propia maquina de estados
+//una vez que la llama el usuario, se llama sola con OneShoot y USART hasta terminar
+volatile dmx_tx_state_e dmx_state = SEND_BREAK;
+void SendDMXPacket (unsigned char new_func)
+{
+    if (!(USART_DMX->CR1 & USART_CR1_UE))
+        return;
+    
+    if (new_func == PCKT_INIT)
+        dmx_state = SEND_BREAK;
+    
+    switch (dmx_state)
+    {
+    case SEND_BREAK:
+        SW_RX_TX_DE;
+        DMX_PIN_To_PushPull();
+        DMX_TX_PIN_OFF;
+        DMX_TIM_OneShoot(200);
+        dmx_state++;
+        break;
+
+    case SEND_MARK:
+        DMX_TX_PIN_ON;
+        DMX_TIM_OneShoot(8);        
+        dmx_state++;
+        break;
+
+    case SEND_DMX_DATA:
+        DMX_PIN_To_Alternative();
+        UsartSendDMX();
+        break;
+
+    default:
+        dmx_state = SEND_BREAK;
+        break;
+    }
+}
+// inline void foo (const char) __attribute__((always_inline));
+__attribute__((always_inline)) void UsartSendDMX (void)
+// inline void UsartSendDMX (void)
+// void UsartSendDMX (void)
+{
+    // pdmx = &data512[0];
+    current_channel_index = 0;
+    USART_DMX->CR1 |= USART_CR1_TXEIE;
+}
+
+#else //no DMX_BIDIRECTIONAL
+void DmxInt_Serial_Handler_Transmitter (void)
+{
+}
+#endif
+
 #ifdef DMX_WITH_RDM
 //revisa si existe paquete RDM y que hacer con el mismo
 //
@@ -277,83 +392,6 @@ void UpdateRDMResponder(void)
             LED_OFF;
         RDM_packet_flag = 0;
     }
-}
-#endif
-
-#if defined DMX_BIDIRECTIONAL
-typedef enum {
-    SEND_BREAK,
-    SEND_MARK,
-    SEND_DMX_DATA
-    
-} dmx_tx_state_e;
-
-//envio el paquete de DMX512 que se encuentra en el buffer data512[]
-//cuando termino aviso con dmx_transmitted
-//corto la int de TX y mando resp_ok
-void DmxInt_Serial_Handler_Transmitter (void)
-{
-    if (pdmx < &data512[512])
-    {
-        USART_DMX->TDR = *pdmx;
-        pdmx++;
-    }
-    else
-        USART_DMX->CR1 &= ~USART_CR1_TXEIE;
-
-}
-
-//funcion para enviar el buffer data512[512] al DMX
-//recibe PCKT_INIT por el usuario
-//recibe PCKT_UPDATE desde su propia maquina de estados
-//una vez que la llama el usuario, se llama sola con OneShoot y USARt1 hasta terminar
-volatile dmx_tx_state_e dmx_state = SEND_BREAK;
-void SendDMXPacket (unsigned char new_func)
-{
-    if (!(USART_DMX->CR1 & USART_CR1_UE))
-        return;
-    
-    if (new_func == PCKT_INIT)
-        dmx_state = SEND_BREAK;
-    
-    switch (dmx_state)
-    {
-    case SEND_BREAK:
-        SW_RX_TX_DE;
-        PB6_to_PushPull();
-        DMX_TX_PIN_OFF;
-        OneShootTIM16(200);
-        dmx_state++;
-        break;
-
-    case SEND_MARK:
-        DMX_TX_PIN_ON;
-        OneShootTIM16(8);        
-        dmx_state++;
-        break;
-
-    case SEND_DMX_DATA:
-        PB6_to_Alternative();
-        UsartSendDMX();
-        break;
-
-    default:
-        dmx_state = SEND_BREAK;
-        break;
-    }
-}
-// inline void foo (const char) __attribute__((always_inline));
-__attribute__((always_inline)) void UsartSendDMX (void)
-// inline void UsartSendDMX (void)
-// void UsartSendDMX (void)
-{
-    pdmx = &data512[0];
-    USART_DMX->CR1 |= USART_CR1_TXEIE;
-}
-
-#else //DMX_BIDIRECTIONAL
-void DmxInt_Serial_Handler_Transmitter (void)
-{
 }
 #endif
 

@@ -447,6 +447,18 @@ void Usart3Config(void)
     NVIC_SetPriority(USART3_IRQn, 5);
 }
 
+
+void Usart3SendByte (unsigned char byte)
+{
+    USART3->DR = byte;
+}
+
+
+void Usart3DisableTx (void)
+{
+    USART3->CR1 &= ~USART_CR1_TXEIE;
+}
+
 // void Usart3Send (char * send)
 // {
 //     unsigned char i;

@@ -315,6 +315,19 @@ tests_pwm:
 	# process coverage
 	gcov pwm.c -m
 
+tests_dmx_transceiver:
+	# first module objects to test and coverage
+	gcc -c --coverage src/dmx_transceiver.c -I. $(INCDIR) $(DDEFS)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	gcc -c src/tests_vector_utils.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc --coverage src/tests_dmx_transceiver.c dmx_transceiver.o tests_ok.o tests_vector_utils.o
+	# test execution
+	./a.out
+	# process coverage
+	gcov dmx_transceiver.c -m
+
 tests_pwm_post_map:
 	# first compile common modules (modules to test and dependencies)
 	gcc -c src/pwm.c -I. $(INCDIR)

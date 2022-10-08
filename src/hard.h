@@ -18,7 +18,7 @@
 
 //----- Board Configuration -------------------//
 //---- Features Configuration ----------------
-// #define WITH_BIDIRECTIONAL
+#define WITH_BIDIRECTIONAL
 
 //--- Check the temp sensor ---//
 #define USE_OVERTEMP_PROT
@@ -155,7 +155,10 @@ typedef enum {
 
 // PB8 
 
-// PB10, PB11 Alternative Usart 3 Tx Rx
+// PB10, PB11 Alternative Usart 3 Tx Rx (PB10 dmx tx pin)
+#define DMX_TX_PIN    ((GPIOB->ODR & 0x0400) != 0)
+#define DMX_TX_PIN_ON    (GPIOB->BSRR = 0x00000400)
+#define DMX_TX_PIN_OFF    (GPIOB->BSRR = 0x04000000)
     
 // PB15
 #define CTRL_C3    ((GPIOB->ODR & 0x8000) != 0)
