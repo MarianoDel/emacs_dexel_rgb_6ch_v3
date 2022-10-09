@@ -808,10 +808,5 @@ void DisconnectChannels (void)
 }
 
 
-void SendDMXPacket (unsigned char a)
-{
-}
-
-
 //--- end of file ---//
 

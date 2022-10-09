@@ -281,4 +281,25 @@ void EXTI1_IRQHandler (void)
 #endif
 
 
+void PB10_Pin_To_Alternative (void)
+{
+    unsigned int temp;
+
+    temp = GPIOB->CRH;
+    temp &= 0xFFFFF0FF;    //PB10 (alternative)
+    temp |= 0x00000900;
+    GPIOB->CRH = temp;
+}
+
+
+void PB10_Pin_To_PushPull (void)
+{
+    unsigned int temp;
+    
+    temp = GPIOB->CRH;
+    temp &= 0xFFFFF0FF;    //PB10 output push pull 10MHz
+    temp |= 0x00000100;
+    GPIOB->CRH = temp;
+}
+
 //--- end of file ---//

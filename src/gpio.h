@@ -11,14 +11,14 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
-//-- Exported Macros --------------------
-
-
 
 // Module Exported Functions ---------------------------------------------------
 void GpioInit(void);
 void EXTIOn (void);
 void EXTIOff (void);
+
+void PB10_Pin_To_Alternative (void);
+void PB10_Pin_To_PushPull (void);
 
 #endif    /* _GPIO_H_ */
 

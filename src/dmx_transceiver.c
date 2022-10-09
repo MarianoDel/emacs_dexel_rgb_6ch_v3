@@ -24,7 +24,7 @@
 #define TIM_DMX    TIM7
 #define USART_DMX    USART3
 
-#define DMX_TIM_OneShoot(X)    OneShootTIM7(X)
+#define DMX_TIM_OneShoot(X)    TIM7_OneShoot(X)
 #define DMX_TIM_To_Free_Running    TIM7_To_FreeRunning
 #define DMX_TIM_To_One_Shoot    TIM7_To_OneShoot
 
@@ -33,6 +33,7 @@
 
 #define DMX_Usart_Send(X)    Usart3SendByte(X)
 #define DMX_Usart_Disable    Usart3DisableTx
+
 
 // Module Private Types Constants and Macros -----------------------------------
 #define DMX_TIMEOUT	20
@@ -47,7 +48,6 @@ typedef enum {
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char RDM_packet_flag;
-// extern volatile unsigned char data512[];
 extern volatile unsigned char data11[];
 
 extern volatile unsigned char Packet_Detected_Flag;
@@ -55,8 +55,6 @@ extern volatile unsigned char DMX_packet_flag;
 extern volatile unsigned char RDM_packet_flag;
 extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
-
-// extern volatile unsigned char * pdmx;
 
 
 // Globals ---------------------------------------------------------------------
@@ -73,7 +71,7 @@ inline void UsartSendDMX (void);
 
 
 
-//--- FUNCIONES DEL MODULO ---//
+// Module Functions ------------------------------------------------------------
 void DMX_EnableRx (void)
 {
     //enable driver in rx mode
@@ -315,10 +313,12 @@ void DmxInt_Serial_Handler_Transmitter (void)
 
 }
 
-//funcion para enviar el buffer data512[512] al DMX
-//recibe PCKT_INIT por el usuario
-//recibe PCKT_UPDATE desde su propia maquina de estados
-//una vez que la llama el usuario, se llama sola con OneShoot y USART hasta terminar
+
+// Send a DMX packet
+// packet must be on data11
+// PCKT_INIT called by user, starts the state machine
+// PCKT_UPDATE state machine automation
+// one inited, it called itself by OneShoot and Usart
 volatile dmx_tx_state_e dmx_state = SEND_BREAK;
 void SendDMXPacket (unsigned char new_func)
 {
@@ -354,12 +354,10 @@ void SendDMXPacket (unsigned char new_func)
         break;
     }
 }
-// inline void foo (const char) __attribute__((always_inline));
+
+
 __attribute__((always_inline)) void UsartSendDMX (void)
-// inline void UsartSendDMX (void)
-// void UsartSendDMX (void)
 {
-    // pdmx = &data512[0];
     current_channel_index = 0;
     USART_DMX->CR1 |= USART_CR1_TXEIE;
 }
