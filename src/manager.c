@@ -21,6 +21,7 @@
 #include "flash_program.h"
 
 #include "comm.h"
+#include "dsp.h"
 
 // linked modules
 #include "screen.h"
@@ -48,11 +49,6 @@ typedef enum {
     MNGR_MASTER_SLAVE_MODE,
     MNGR_MANUAL_MODE,
     MNGR_RESET_MODE,
-    MNGR_OVERTEMP,
-    MNGR_OVERTEMP_B,
-    MNGR_OVERVOLTAGE,
-    MNGR_UNDERVOLTAGE,
-    MNGR_VOLTAGE_PROTECTION,
     MNGR_ENTERING_MAIN_MENU,
     MNGR_ENTERING_MAIN_MENU_WAIT_FREE,
     MNGR_IN_MAIN_MENU,
@@ -88,6 +84,10 @@ options_menu_st mem_options;
 extern volatile unsigned short dac_chnls [];
 extern volatile unsigned char pwm_chnls[];
 
+// -- for temp sense
+extern ma16_u16_data_obj_t temp_filter;
+
+
 // Globals ---------------------------------------------------------------------
 manager_states_e mngr_state = INIT;
 char s_to_send [100];
@@ -98,9 +98,15 @@ unsigned char need_to_save = 0;
 volatile unsigned short need_to_save_timer = 0;
 volatile unsigned short timer_mngr = 0;
 
-#if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
+#if (defined USE_OVERTEMP_PROT) || \
+    (defined USE_VOLTAGE_PROT) || \
+    (defined USE_NTC_DETECTION)
 volatile unsigned char protections_sample_timer = 0;
+// volatile unsigned short protections_sample_timer = 5000;    //start with this if initial overtemp fails exists
 #endif
+
+// -- for temp sense
+unsigned char check_ntc = 0;
 
 
 // Module Private Functions ----------------------------------------------------
@@ -475,69 +481,6 @@ void Manager (parameters_typedef * pmem)
         UpdateEncoder();
             
         break;
-            
-    case MNGR_OVERTEMP:
-        SCREEN_ShowText2(
-            "LEDs     ",
-            "Overtemp ",
-            "         ",
-            "         "
-            );
-
-#ifdef USART_DEBUG_MODE
-        sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
-        UsartDebug(s_to_send);
-#endif
-
-        mngr_state = MNGR_OVERTEMP_B;
-        break;
-
-    case MNGR_OVERTEMP_B:
-        if (CheckTempGreater (TEMP_RECONNECT, Temp_Channel))
-        {
-            //reconnect
-            mngr_state = INIT;
-        }
-        break;
-
-    case MNGR_OVERVOLTAGE:
-        SCREEN_ShowText2(
-            "Power    ",
-            "   Over  ",
-            " Voltage!",
-            "         "
-            );
-
-#ifdef USART_DEBUG_MODE
-        sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
-        UsartDebug(s_to_send);
-#endif
-        mngr_state = MNGR_VOLTAGE_PROTECTION;
-        break;
-
-    case MNGR_UNDERVOLTAGE:
-        SCREEN_ShowText2(
-            "Power    ",
-            " is Too  ",
-            "  Low!   ",
-            "         "
-            );
-
-#ifdef USART_DEBUG_MODE
-        sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
-        UsartDebug(s_to_send);
-#endif
-        mngr_state = MNGR_VOLTAGE_PROTECTION;
-        break;
-
-    case MNGR_VOLTAGE_PROTECTION:
-        if ((V_Sense_48V < MAX_PWR_SUPPLY) &&
-            (V_Sense_48V > MIN_PWR_SUPPLY))
-        {
-            //reconnect
-            mngr_state = INIT;
-        }
-        break;
 
     case MNGR_ENTERING_MAIN_MENU:
         //deshabilitar salidas hardware
@@ -651,78 +594,135 @@ void Manager (parameters_typedef * pmem)
     // now call it by tim6 on pwm_handler int
     // DAC_MUX_Update(dac_chnls);
 
-        
-#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
-    if (!protections_sample_timer)
-    {
-        protections_sample_timer = 10;    //samples time are 10ms
 
-#ifdef USE_VOLTAGE_PROT
-        if ((mngr_state != MNGR_OVERVOLTAGE) &&
-            (mngr_state != MNGR_UNDERVOLTAGE) &&
-            (mngr_state != MNGR_VOLTAGE_PROTECTION))
-        {
-            if (V_Sense_48V > MAX_PWR_SUPPLY)
-            {
-                DisconnectByVoltage();
-                mngr_state = MNGR_OVERVOLTAGE;
-            }
-            else if (V_Sense_48V < MIN_PWR_SUPPLY)
-            {
-                DisconnectByVoltage();
-                mngr_state = MNGR_UNDERVOLTAGE;
-            }
-        }
-#endif
-            
 #ifdef USE_OVERTEMP_PROT
-        if ((mngr_state != MNGR_OVERTEMP) &&
-            (mngr_state != MNGR_OVERTEMP_B))
+    if (check_ntc)    //NTC NOT SHORTED
+    {
+        if ((mngr_state < MNGR_ENTERING_MAIN_MENU) &&
+            (!protections_sample_timer))
         {
-            if (CheckTempGreater (Temp_Channel, pmem->temp_prot))
+            unsigned short temp_filtered = 0;
+            temp_filtered = MA16_U16Circular(&temp_filter, Temp_Channel);
+
+            if (CheckTempGreater (temp_filtered, pmem->temp_prot))
             {
                 //stop LEDs outputs
                 DisconnectByVoltage();
                 CTRL_FAN_ON;
-                mngr_state = MNGR_OVERTEMP;
+
+                SCREEN_ShowText2(
+                    "LEDs     ",
+                    "Overtemp ",
+                    "         ",
+                    "         "
+                    );
+
+#ifdef USART2_DEBUG_MODE
+                sprintf(s_to_send, "overtemp: %d\n", temp_filtered);
+                Usart2Send(s_to_send);
+#endif
+
+                do {
+                    display_update_int_state_machine();
+                } while (CheckTempGreater (Temp_Channel, TEMP_RECONNECT));
+                    
+                //reconnect
+                mngr_state = INIT;
             }
-#ifdef USE_CTRL_FAN_FOR_TEMP_CTRL
-            else if (CheckTempGreater (Temp_Channel, TEMP_IN_35))
+            else if (CheckTempGreater (temp_filtered, TEMP_IN_35))
+            {
                 CTRL_FAN_ON;
-            else if (CheckTempGreater (TEMP_IN_30, Temp_Channel))
+            }
+            else if (CheckTempGreater (TEMP_IN_30, temp_filtered))
+            {
                 CTRL_FAN_OFF;
-#endif    // USE_CTRL_FAN_FOR_TEMP_CTRL
-        }
+            }
+                
+
 #ifdef USE_NTC_DETECTION
-        // check for ntc and stop
-        if (Temp_Channel > NTC_DISCONNECTED)
-        {
-            //stop LEDs outputs
-            DisconnectByVoltage();
-            CTRL_FAN_ON;
+            // check for ntc and stop
+            if (temp_filtered > NTC_DISCONNECTED)
+            {
+                //stop LEDs outputs
+                DisconnectByVoltage();
+                CTRL_FAN_ON;
             
+                SCREEN_ShowText2(
+                    "         ",
+                    " No NTC  ",
+                    "Connected",
+                    "         "
+                    );
+
+                do {
+                    display_update_int_state_machine();                    
+                } while (Temp_Channel > NTC_DISCONNECTED);
+
+                //reconnect
+                mngr_state = INIT;
+            }
+#endif    // USE_NTC_DETECTION
+        }
+    }    // check_ntc
+#endif    // USE_OVERTEMP_PROT
+
+#ifdef USE_VOLTAGE_PROT
+    if ((mngr_state < MNGR_ENTERING_MAIN_MENU) &&
+        (!protections_sample_timer))
+    {
+        if (V_Sense_48V > MAX_PWR_SUPPLY)
+        {
+            DisconnectByVoltage();
+
             SCREEN_ShowText2(
-                "         ",
-                " No NTC  ",
-                "Connected",
+                "Power    ",
+                "   Over  ",
+                " Voltage!",
                 "         "
                 );
 
+#ifdef USART2_DEBUG_MODE
+            sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
+            Usart2Send(s_to_send);
+#endif
             do {
-                display_update_int_state_machine();                    
-            } while (Temp_Channel > NTC_DISCONNECTED);
+                display_update_int_state_machine();
+            } while (V_Sense_48V > MAX_PWR_SUPPLY_RECONNECT);
+
+            //reconnect
+            mngr_state = INIT;
+                
+        }
+        else if (V_Sense_48V < MIN_PWR_SUPPLY)
+        {
+            DisconnectByVoltage();
+
+            SCREEN_ShowText2(
+                "Power    ",
+                " is Too  ",
+                "  Low!   ",
+                "         "
+                );
+
+#ifdef USART2_DEBUG_MODE
+            sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
+            Usart2Send(s_to_send);
+#endif
+            do {
+                display_update_int_state_machine();
+            } while (V_Sense_48V < MIN_PWR_SUPPLY_RECONNECT);
 
             //reconnect
             mngr_state = INIT;
         }
-#endif    // USE_NTC_DETECTION
-            
-#endif    // USE_OVERTEMP_PROT
     }
-#endif    // USE_VOLTAGE_PROT or USE_OVERTEMP_PROT
+#endif    // USE_VOLTAGE_PROT
+
+    if (!protections_sample_timer)
+        protections_sample_timer = 10;
         
 
-    //grabado de memoria luego de configuracion
+    // save flash after configs
     if ((need_to_save) && (!need_to_save_timer))
     {
         need_to_save = Flash_WriteConfigurations();
@@ -740,6 +740,18 @@ void Manager (parameters_typedef * pmem)
 }
 
 
+void Manager_Ntc_Set (void)
+{
+    check_ntc = 1;
+}
+
+
+void Manager_Ntc_Reset (void)
+{
+    check_ntc = 0;
+}
+
+
 void Manager_Timeouts (void)
 {
     if (need_to_save_timer)
@@ -748,7 +760,9 @@ void Manager_Timeouts (void)
     if (timer_mngr)
         timer_mngr--;    
     
-#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
+#if (defined USE_VOLTAGE_PROT) || \
+    (defined USE_OVERTEMP_PROT) || \
+    (defined USE_NTC_DETECTION)
     if (protections_sample_timer)
         protections_sample_timer--;
 #endif

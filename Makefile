@@ -115,6 +115,8 @@ SRC += ./src/limits_menu.c
 SRC += ./src/channels_menu.c
 SRC += ./src/temp_menu.c
 SRC += ./src/version_menu.c
+SRC += ./src/encoder_menu.c
+SRC += ./src/temperatures.c
 
 
 
@@ -220,11 +222,17 @@ $(objects): %.o: %.c
 flash:
 	sudo openocd -f stm32f1_flash.cfg
 
+flash_geehy:
+	sudo openocd -f stm32f1_flash_geehy.cfg
+
 gdb:
 	sudo openocd -f stm32f1_gdb.cfg
 
 reset:
 	sudo openocd -f stm32f1_reset.cfg
+
+reset_geehy:
+	sudo openocd -f stm32f1_reset_geehy.cfg
 
 clean:
 	rm -f $(OBJS)
@@ -331,10 +339,12 @@ tests_dmx_transceiver:
 tests_pwm_post_map:
 	# first compile common modules (modules to test and dependencies)
 	gcc -c src/pwm.c -I. $(INCDIR)
+	gcc -c src/filters_and_offsets.c -I. $(INCDIR)
+	gcc -c src/dsp.c -I. $(INCDIR)
 	# second auxiliary helper modules
 	gcc -c src/tests_ok.c -I $(INCDIR)
 	gcc -c src/tests_vector_utils.c -I $(INCDIR)
-	gcc src/tests_pwm_post_map.c pwm.o tests_ok.o tests_vector_utils.o
+	gcc src/tests_pwm_post_map.c pwm.o filters_and_offsets.o dsp.o tests_ok.o tests_vector_utils.o
 	./a.out
 
 

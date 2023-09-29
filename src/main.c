@@ -68,6 +68,8 @@ void (* ptFTT ) (void) = NULL;
 parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
 parameters_typedef mem_conf;
 
+// -- for temp sense
+ma16_u16_data_obj_t temp_filter;
 
 
 // Private Functions -----------------------------------------------------------
@@ -101,7 +103,7 @@ int main (void)
     TIM_3_Init();    //ch4
     TIM_4_Init();    //ch5
     TIM_5_Init();    //ch6
-
+    
     // enable DAC dimmer
     DAC_Config();
     DAC_Output(0);
@@ -172,7 +174,34 @@ int main (void)
         
         mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
 
+#if (defined USE_ENCODER_DIRECT)
+        mem_conf.encoder_direction = 0;
+#elif (defined USE_ENCODER_INVERT)
+        mem_conf.encoder_direction = 1;
+#else
+#error "Please select default encoder direction on hard.h"
+#endif
+        
     }
+
+    // check NTC connection on init
+    unsigned short temp_filtered = 0;
+    MA16_U16Circular_Reset(&temp_filter);
+    for (int i = 0; i < 16; i++)
+    {
+        temp_filtered = MA16_U16Circular(&temp_filter, Temp_Channel);
+        Wait_ms(30);
+    }
+
+    if (temp_filtered < NTC_SHORTED)
+    {
+        CTRL_FAN_ON;
+        Manager_Ntc_Reset();
+    }
+    else
+        Manager_Ntc_Set();
+    // check NTC connection on init        
+    
 
     // main program
     while (1)

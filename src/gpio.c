@@ -137,11 +137,16 @@ void GpioInit (void)
     //PA5 analog I_Sense_2
     //PA6 TIM3_CH1 alternative push-pull 2MHz
     //PA7 TIM3_CH2 alternative input
-    temp = GPIOA->CRL;    
-    temp &= 0x00F00000;   
-    temp |= 0x4A00AA44;
-    GPIOA->CRL = temp;
+    // temp = GPIOA->CRL;    
+    // temp &= 0x00F00000;   
+    // temp |= 0x4A00AA44;
+    // GPIOA->CRL = temp;
 
+    temp = GPIOA->CRL;    
+    temp &= 0x0FF0FF00;    // PA6 PA3 PA2 no init
+    temp |= 0x40000044;
+    GPIOA->CRL = temp;
+    
     //--- GPIOA High Side ------------------//
     //PA8 TIM1_CH1 alternative push-pull 2MHz
     //PA9 TIM1_CH2 alternative input
@@ -151,9 +156,14 @@ void GpioInit (void)
     //PA13 NC
     //PA14 NC
     //PA15 NC
+    // temp = GPIOA->CRH; 
+    // temp &= 0xFFF00000;
+    // temp |= 0x0002224A;
+    // GPIOA->CRH = temp;
+    
     temp = GPIOA->CRH; 
-    temp &= 0xFFF00000;
-    temp |= 0x0002224A;
+    temp &= 0xFFF0000F;    // PA8 no init
+    temp |= 0x00022240;
     GPIOA->CRH = temp;
 
     //--- GPIOA Pull-Up Pull-Dwn ------------------//
@@ -173,11 +183,16 @@ void GpioInit (void)
     //PB5 NC
     //PB6 TIM4_CH1 alternative push-pull 2MHz
     //PB7 TIM4_CH2 alternative input
-    temp = GPIOB->CRL;    
-    temp &= 0x00FFF00F;
-    temp |= 0x4A000242;
-    GPIOB->CRL = temp;
+    // temp = GPIOB->CRL;    
+    // temp &= 0x00FFF00F;
+    // temp |= 0x4A000240;
+    // GPIOB->CRL = temp;
 
+    temp = GPIOB->CRL;    
+    temp &= 0x0FFFF00F;    // PB6 no init
+    temp |= 0x40000240;
+    GPIOB->CRL = temp;
+    
     //--- GPIOB High Side -------------------//
     //PB8 alternative I2C1 SCL
     //PB9 alternative I2C1 SDA
@@ -201,11 +216,16 @@ void GpioInit (void)
     //PC5 ADC input Temp_Channel
     //PC6 TIM8_CH1 alternative push-pull 2MHz
     //PC7 TIM8_CH2 alternative input
-    temp = GPIOC->CRL;
-    temp &= 0x00000000;
-    temp |= 0x4A002444;
-    GPIOC->CRL = temp;
+    // temp = GPIOC->CRL;
+    // temp &= 0x00000000;
+    // temp |= 0x4A002444;
+    // GPIOC->CRL = temp;
 
+    temp = GPIOC->CRL;
+    temp &= 0x0F000000;    // PC6 no init
+    temp |= 0x40002444;
+    GPIOC->CRL = temp;
+    
     //--- GPIOC High Side -------------------//
     //PC8 CTRL_C2
     //PC9 CTRL_C1

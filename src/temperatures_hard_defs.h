@@ -1,0 +1,1 @@
+../../emacs_dexel_rgb_6ch/src/temperatures_hard_defs.h

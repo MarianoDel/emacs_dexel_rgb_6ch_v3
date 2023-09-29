@@ -11,7 +11,7 @@
 #include "pwm.h"
 // #include "dsp.h"
 // #include "filters_and_offsets.h"
-// #include "parameters.h"
+#include "parameters.h"
 
 
 // Includes tests helper modules for the tests ---------------------------------
@@ -31,6 +31,10 @@
 // #define VECTOR_LENGTH    ((int)(SAMPLING_FREQ * SIMULATION_LENGTH))
 
 
+// Externals -- Globals on module to test --------------------------------------
+extern unsigned char filters_enable_outputs;
+
+
 // Externals -------------------------------------------------------------------
 volatile unsigned char pwm_chnls [6];
 volatile unsigned short dac_chnls [6];
@@ -47,7 +51,7 @@ unsigned short pwm_output_ch1 [VECTOR_LENGTH] = { 0 };
 unsigned short ena_output_ch2 [VECTOR_LENGTH] = { 0 };
 unsigned short pwm_output_ch2 [VECTOR_LENGTH] = { 0 };
 
-// parameters_typedef mem_conf;
+parameters_typedef mem_conf;
 
 // Tests Functions -------------------------------------------------------------
 void Test_PWM_Post_Mapping (void);
@@ -55,6 +59,8 @@ void Test_PWM_Power_Ctrl (void);
 void Test_Dmx_Post_Step (void);
 void Test_Dmx_Post_Step_Dowm (void);
 void Test_Dmx_Post_Ramp_Ch1 (void);
+void Test_Dmx_Post_Ramp_Inner_Ch1 (void);
+void Test_Dmx_Post_Filter (void);
 
 
 // Main Function to Test -------------------------------------------------------
@@ -68,14 +74,280 @@ void DAC_MUX_Update_by_Int (void);
 // Module Functions ------------------------------------------------------------
 int main (int argc, char *argv[])
 {
-    printf("Start of DMX simulations...\n");
+    // new tests
+    // Test_PWM_Post_Mapping ();
+    // Test_Dmx_Post_Ramp_Ch1 ();
+    // Test_Dmx_Post_Ramp_Inner_Ch1 ();
+    Test_Dmx_Post_Filter ();
 
+    // old tests
     // Test_PWM_Power_Ctrl ();
-    Test_PWM_Post_Mapping ();
     // Test_Dmx_Post_Step_Dowm ();    
-    // Test_Dmx_Post_Ramp_Ch1 ();        
 
     return 0;
+}
+
+
+void Test_PWM_Post_Mapping (void)
+{
+    unsigned short chnls [6] = { 0 };
+
+    printf("\nTest pwm post-mapping\n from 0 to 511");
+
+    unsigned short vch1_orig [512] = { 0 };
+    unsigned short ch1_pwm [512] = { 0 };
+    unsigned short ch1_dac [512] = { 0 };
+    unsigned short ch1_eq_pwm [512] = { 0 };    
+
+    unsigned short pwm_ch;
+    unsigned short dac_ch;
+    int calc = 0;
+    for (int i = 0; i < 512; i++)
+    {
+        chnls[0] = i;
+
+        vch1_orig[i] = i;
+        
+        PWM_Map_Post_Filter(
+            *(chnls + 0) << 3,
+            &pwm_ch,
+            &dac_ch);
+        
+        ch1_pwm [i] = pwm_ch;
+        ch1_dac [i] = dac_ch;
+        calc = pwm_ch * dac_ch;
+        ch1_eq_pwm [i] = calc >> 8;
+    }
+
+    // ShowVectorUShort("\nVector data input:\n", to_map, 600);
+    // ShowVectorUShort("\nVector ena pwm:\n", vena, 600);    
+    // ShowVectorUShort("\nVector dac out:\n", vdac, 600);
+
+    ///////////////////////////
+    // Backup Data to a file //
+    ///////////////////////////
+    FILE * file = fopen("data.txt", "w");
+
+    if (file == NULL)
+    {
+        printf("data file not created!\n");
+        return;
+    }
+
+    Vector_UShort_To_File (file, "ch1_data", vch1_orig, 512);
+    Vector_UShort_To_File (file, "ch1_pwm", ch1_pwm, 512);    
+    Vector_UShort_To_File (file, "ch1_dac", ch1_dac, 512);
+    Vector_UShort_To_File (file, "ch1_eq_pwm", ch1_eq_pwm, 512);    
+
+    printf("\nRun by hand python3 simul_outputs.py\n");
+
+}
+
+
+void Test_Dmx_Post_Ramp_Ch1 (void)
+{
+    unsigned char chnls [6] = { 0 };
+    unsigned char dmx_data_ch1 [VECTOR_LENGTH] = { 0 };
+
+    printf("\nTest dmx Ramp with post-mapping\n");
+    
+    filters_enable_outputs = 1;
+
+    mem_conf.max_current_channels[0] = 255;
+    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.max_power = 255 * 6;
+    mem_conf.program_inner_type = MANUAL_INNER_FIXED_MODE;    //anyone except DMX2_INNER_STROBE_MODE
+    
+    // ramp 0 to 255
+    for (int i = 0; i < VECTOR_LENGTH; i++)
+    {
+        if ((i % 5) == 0)
+        {
+            // new value
+        }
+        if (i <= 255)
+            dmx_data_ch1 [i] = i;
+        else
+            dmx_data_ch1 [i] = 255;
+    }
+
+    FiltersAndOffsets_Filters_Reset ();
+
+    for (int i = 0; i < VECTOR_LENGTH; i++)
+    {
+        if ((i % 5) == 0)
+            FiltersAndOffsets_Channels_to_Backup ();
+    
+
+        FiltersAndOffsets_Calc_SM (&mem_conf);
+    }
+
+    ShowVectorUShort("\nVector dmx data ch1:\n", dmx_data_ch1, 100);
+    ShowVectorUShort("\nVector dmx data ch2:\n", dmx_data_ch2, 100);    
+    ShowVectorUShort("\nVector ena outp ch1:\n", ena_output_ch1, 100);
+    ShowVectorUShort("\nVector pwm outp ch1:\n", pwm_output_ch1, 100);    
+    ShowVectorUShort("\nVector ena outp ch2:\n", ena_output_ch2, 100);
+    ShowVectorUShort("\nVector pwm outp ch2:\n", pwm_output_ch2, 100);    
+
+    ///////////////////////////
+    // Backup Data to a file //
+    ///////////////////////////
+    FILE * file = fopen("data.txt", "w");
+
+    if (file == NULL)
+    {
+        printf("data file not created!\n");
+        return;
+    }
+
+    Vector_UShort_To_File (file, "dmx_ch1", dmx_data_ch1, VECTOR_LENGTH);
+    Vector_UShort_To_File (file, "dmx_ch2", dmx_data_ch2, VECTOR_LENGTH);    
+    Vector_UShort_To_File (file, "ena_ch1", ena_output_ch1, VECTOR_LENGTH);
+    Vector_UShort_To_File (file, "pwm_ch1", pwm_output_ch1, VECTOR_LENGTH);    
+    Vector_UShort_To_File (file, "ena_ch2", ena_output_ch2, VECTOR_LENGTH);
+    Vector_UShort_To_File (file, "pwm_ch2", pwm_output_ch2, VECTOR_LENGTH);    
+
+    printf("\nRun by hand python3 simul_outputs.py\n");
+
+}
+
+
+void Test_Dmx_Post_Ramp_Inner_Ch1 (void)
+{
+    unsigned char chnls [6] = { 0 };
+    unsigned short limit_output [6] = { 0 };    
+    unsigned char pwm_chnls [6] = { 0 };
+    unsigned short dac_chnls [6] = { 0 };
+    unsigned char dmx_data_ch1 [255] = { 0 };
+    
+    unsigned short v_dmx_ch1 [255] = { 0 };
+    unsigned short v_pwm_ch1 [255] = { 0 };
+    unsigned short v_dac_ch1 [255] = { 0 };
+    unsigned short v_pwm_eq_ch1 [255] = { 0 };    
+    
+    int calc = 0;
+
+    printf("\nTest dmx Filters_and_Offsets Internals with post-mapping\n");
+    
+    filters_enable_outputs = 1;
+
+    mem_conf.max_current_channels[0] = 255;
+    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.max_power = 255 * 6;
+    mem_conf.program_inner_type = MANUAL_INNER_FIXED_MODE;    //anyone except DMX2_INNER_STROBE_MODE
+    
+    // ramp 0 to 255
+    for (int i = 0; i < 256; i++)
+    {
+        dmx_data_ch1 [i] = i;
+    }
+
+    for (int i = 0; i < 256; i++)
+    {
+        //case FILTERS_LIMIT_EACH_CHANNEL:
+        calc = dmx_data_ch1[i] * mem_conf.max_current_channels[0];
+        calc >>= 7;
+        limit_output[0] = (unsigned short) calc;
+
+        // case FILTERS_LIMIT_ALL_CHANNELS:    // 0 to 511
+        PWM_Set_PwrCtrl_512 (limit_output,
+                             mem_conf.dmx_channel_quantity,
+                             mem_conf.max_power);
+
+        // case FILTERS_OUTPUTS_CH1_CH3:
+        PWM_Map_Post_Filter (
+            *(limit_output + 0) << 3,
+            (unsigned char *)&pwm_chnls[0],
+            (unsigned short *)&dac_chnls[0]);
+
+        v_dmx_ch1[i] = dmx_data_ch1[i];
+        v_pwm_ch1[i] = pwm_chnls[0];
+        v_dac_ch1[i] = dac_chnls[0];
+
+        calc = pwm_chnls[0] * dac_chnls[0];
+        calc = calc >> 8;
+        v_pwm_eq_ch1[i] = (unsigned short) calc;
+    }
+
+    ShowVectorUShort("\nVector v_dmx_ch1:\n", v_dmx_ch1, 255);
+    ShowVectorUShort("\nVector v_pwm_ch1:\n", v_pwm_ch1, 255);
+    ShowVectorUShort("\nVector v_dac_ch1:\n", v_dac_ch1, 255);
+    ShowVectorUShort("\nVector v_pwm_eq_ch1:\n", v_pwm_eq_ch1, 255);
+
+    ///////////////////////////
+    // Backup Data to a file //
+    ///////////////////////////
+    FILE * file = fopen("data.txt", "w");
+
+    if (file == NULL)
+    {
+        printf("data file not created!\n");
+        return;
+    }
+
+    Vector_UShort_To_File (file, "dmx_ch1", v_dmx_ch1, 255);
+    Vector_UShort_To_File (file, "pwm_ch1", v_pwm_ch1, 255);    
+    Vector_UShort_To_File (file, "dac_ch1", v_dac_ch1, 255);
+    Vector_UShort_To_File (file, "pwm_eq_ch1", v_pwm_eq_ch1, 255);    
+
+    printf("\nRun by hand python3 simul_outputs.py\n");
+
+}
+
+
+void Test_Dmx_Post_Filter (void)
+{
+    unsigned short v_dmx_ch1 [255] = { 0 };
+    unsigned short v_pwm_ch1 [255] = { 0 };
+    unsigned short v_dac_ch1 [255] = { 0 };
+    unsigned short v_pwm_eq_ch1 [255] = { 0 };    
+    
+    int calc = 0;
+
+    printf("\nTest PWM_Map_Post_Filter from Dmx data\n");
+    
+    filters_enable_outputs = 1;
+
+    for (int i = 0; i < 256; i++)
+    {
+        calc = i * 16;
+        PWM_Map_Post_Filter (
+            (unsigned short) calc,
+            (unsigned char *)&pwm_chnls[0],
+            (unsigned short *)&dac_chnls[0]);
+
+        v_dmx_ch1[i] = i;
+        v_pwm_ch1[i] = pwm_chnls[0];
+        v_dac_ch1[i] = dac_chnls[0];
+
+        calc = pwm_chnls[0] * dac_chnls[0];
+        calc = calc >> 8;
+        v_pwm_eq_ch1[i] = (unsigned short) calc;
+    }
+
+    ShowVectorUShort("\nVector v_dmx_ch1:\n", v_dmx_ch1, 255);
+    ShowVectorUShort("\nVector v_pwm_ch1:\n", v_pwm_ch1, 255);
+    ShowVectorUShort("\nVector v_dac_ch1:\n", v_dac_ch1, 255);
+    ShowVectorUShort("\nVector v_pwm_eq_ch1:\n", v_pwm_eq_ch1, 255);
+
+    ///////////////////////////
+    // Backup Data to a file //
+    ///////////////////////////
+    FILE * file = fopen("data.txt", "w");
+
+    if (file == NULL)
+    {
+        printf("data file not created!\n");
+        return;
+    }
+
+    Vector_UShort_To_File (file, "dmx_ch1", v_dmx_ch1, 255);
+    Vector_UShort_To_File (file, "pwm_ch1", v_pwm_ch1, 255);    
+    Vector_UShort_To_File (file, "dac_ch1", v_dac_ch1, 255);
+    Vector_UShort_To_File (file, "pwm_eq_ch1", v_pwm_eq_ch1, 255);    
+
+    printf("\nRun by hand python3 simul_outputs.py\n");
+
 }
 
 
@@ -147,343 +419,9 @@ void Test_PWM_Power_Ctrl (void)
     Vector_UShort_To_File (file, "ch5", vch5_roof, 512);
     Vector_UShort_To_File (file, "ch6", vch6_roof, 512);
     printf("\nRun by hand python3 simul_outputs.py\n");
-
-
-
+    
 }
 
-void Test_PWM_Post_Mapping (void)
-{
-    unsigned short chnls [6] = { 0 };
-
-    printf("\nTest pwm post-mapping\n from 0 to 511");
-
-    unsigned short vch1_orig [512] = { 0 };
-    unsigned short vch2_orig [512] = { 0 };
-    unsigned short vch3_orig [512] = { 0 };
-    unsigned short vch4_orig [512] = { 0 };
-    unsigned short vch5_orig [512] = { 0 };
-    unsigned short vch6_orig [512] = { 0 };
-
-    unsigned short ch1_pwm [512] = { 0 };
-    unsigned short ch2_pwm [512] = { 0 };
-    unsigned short ch3_pwm [512] = { 0 };
-    unsigned short ch4_pwm [512] = { 0 };
-    unsigned short ch5_pwm [512] = { 0 };
-    unsigned short ch6_pwm [512] = { 0 };
-
-    unsigned short ch1_dac [512] = { 0 };
-    unsigned short ch2_dac [512] = { 0 };
-    unsigned short ch3_dac [512] = { 0 };
-    unsigned short ch4_dac [512] = { 0 };
-    unsigned short ch5_dac [512] = { 0 };
-    unsigned short ch6_dac [512] = { 0 };
-
-    unsigned short pwm_ch;
-    unsigned short dac_ch;
-    for (int i = 0; i < 512; i++)
-    {
-        chnls[0] = i;
-        chnls[1] = i;
-        chnls[2] = i;
-        chnls[3] = i;
-        chnls[4] = i;
-        chnls[5] = i;
-
-        vch1_orig[i] = i;
-        vch2_orig[i] = i;
-        vch3_orig[i] = i;
-        vch4_orig[i] = i;
-        vch5_orig[i] = i;
-        vch6_orig[i] = i;
-        
-        PWM_Map_Post_Filter(
-            *(chnls + 0) << 3,
-            &pwm_ch,
-            &dac_ch);
-        
-        ch1_pwm [i] = pwm_ch;
-        ch1_dac [i] = dac_ch;
-    }
-
-    // ShowVectorUShort("\nVector data input:\n", to_map, 600);
-    // ShowVectorUShort("\nVector ena pwm:\n", vena, 600);    
-    // ShowVectorUShort("\nVector dac out:\n", vdac, 600);
-
-    ///////////////////////////
-    // Backup Data to a file //
-    ///////////////////////////
-    FILE * file = fopen("data.txt", "w");
-
-    if (file == NULL)
-    {
-        printf("data file not created!\n");
-        return;
-    }
-
-    Vector_UShort_To_File (file, "ch1_data", vch1_orig, 512);
-    Vector_UShort_To_File (file, "ch1_pwm", ch1_pwm, 512);    
-    Vector_UShort_To_File (file, "ch1_dac", ch1_dac, 512);
-
-    printf("\nRun by hand python3 simul_pwm_pre_data.py\n");
-
-}
-
-
-// void Test_Dmx_Post_Step (void)
-// {
-//     printf("\nTest dmx Step with post-mapping\n");
-    
-//     mem_conf.channels_operation_mode = CCT1_MODE;
-//     mem_conf.max_current_channels[0] = 255;
-//     mem_conf.max_current_channels[1] = 255;
-    
-//     // step 255
-//     for (int i = 0; i < VECTOR_LENGTH; i++)
-//     {
-//         dmx_data_ch1 [i] = 255;
-//         dmx_data_ch2 [i] = 0;
-//     }
-    
-//     UpdateFiltersTest_Reset ();
-//     for (int i = 0; i < VECTOR_LENGTH; i++)
-//     {
-//         unsigned char ch_dmx_val [2];
-//         ch_dmx_val[0] = dmx_data_ch1[i];
-//         ch_dmx_val[1] = dmx_data_ch2[i];
-
-//         FiltersAndOffsets_Post_Mapping_SM (ch_dmx_val);
-//         Update_PWM_Counters();
-//     }
-
-//     ShowVectorUShort("\nVector dmx data ch1:\n", dmx_data_ch1, 100);
-//     ShowVectorUShort("\nVector dmx data ch2:\n", dmx_data_ch2, 100);    
-//     ShowVectorUShort("\nVector ena outp ch1:\n", ena_output_ch1, 100);
-//     ShowVectorUShort("\nVector pwm outp ch1:\n", pwm_output_ch1, 100);    
-//     ShowVectorUShort("\nVector ena outp ch2:\n", ena_output_ch2, 100);
-//     ShowVectorUShort("\nVector pwm outp ch2:\n", pwm_output_ch2, 100);    
-
-//     ///////////////////////////
-//     // Backup Data to a file //
-//     ///////////////////////////
-//     FILE * file = fopen("data.txt", "w");
-
-//     if (file == NULL)
-//     {
-//         printf("data file not created!\n");
-//         return;
-//     }
-
-//     Vector_UShort_To_File (file, "dmx_ch1", dmx_data_ch1, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "dmx_ch2", dmx_data_ch2, VECTOR_LENGTH);    
-//     Vector_UShort_To_File (file, "ena_ch1", ena_output_ch1, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "pwm_ch1", pwm_output_ch1, VECTOR_LENGTH);    
-//     Vector_UShort_To_File (file, "ena_ch2", ena_output_ch2, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "pwm_ch2", pwm_output_ch2, VECTOR_LENGTH);    
-
-//     printf("\nRun by hand python3 simul_pwm_pre_data.py\n");
-
-// }
-
-
-
-
-// void Test_Dmx_Post_Step_Dowm (void)
-// {
-//     printf("\nTest dmx Step Down with post-mapping\n");
-    
-//     mem_conf.channels_operation_mode = CCT1_MODE;
-//     mem_conf.max_current_channels[0] = 255;
-//     mem_conf.max_current_channels[1] = 255;
-    
-//     // step up 255
-//     for (int i = 0; i < (VECTOR_LENGTH/2); i++)
-//     {
-//         dmx_data_ch1 [i] = 255;
-//         dmx_data_ch2 [i] = 0;
-//     }
-
-//     // step down 0
-//     for (int i = (VECTOR_LENGTH/2); i < VECTOR_LENGTH; i++)
-//     {
-//         dmx_data_ch1 [i] = 0;
-//         dmx_data_ch2 [i] = 0;
-//     }
-    
-//     UpdateFiltersTest_Reset ();
-//     for (int i = 0; i < VECTOR_LENGTH; i++)
-//     {
-//         unsigned char ch_dmx_val [2];
-//         ch_dmx_val[0] = dmx_data_ch1[i];
-//         ch_dmx_val[1] = dmx_data_ch2[i];
-
-//         FiltersAndOffsets_Post_Mapping_SM (ch_dmx_val);
-//         Update_PWM_Counters();
-//     }
-
-//     ShowVectorUShort("\nVector dmx data ch1:\n", dmx_data_ch1, 100);
-//     ShowVectorUShort("\nVector dmx data ch2:\n", dmx_data_ch2, 100);    
-//     ShowVectorUShort("\nVector ena outp ch1:\n", ena_output_ch1, 100);
-//     ShowVectorUShort("\nVector pwm outp ch1:\n", pwm_output_ch1, 100);    
-//     ShowVectorUShort("\nVector ena outp ch2:\n", ena_output_ch2, 100);
-//     ShowVectorUShort("\nVector pwm outp ch2:\n", pwm_output_ch2, 100);    
-
-//     ///////////////////////////
-//     // Backup Data to a file //
-//     ///////////////////////////
-//     FILE * file = fopen("data.txt", "w");
-
-//     if (file == NULL)
-//     {
-//         printf("data file not created!\n");
-//         return;
-//     }
-
-//     Vector_UShort_To_File (file, "dmx_ch1", dmx_data_ch1, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "dmx_ch2", dmx_data_ch2, VECTOR_LENGTH);    
-//     Vector_UShort_To_File (file, "ena_ch1", ena_output_ch1, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "pwm_ch1", pwm_output_ch1, VECTOR_LENGTH);    
-//     Vector_UShort_To_File (file, "ena_ch2", ena_output_ch2, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "pwm_ch2", pwm_output_ch2, VECTOR_LENGTH);    
-
-//     printf("\nRun by hand python3 simul_pwm_pre_data.py\n");
-
-// }
-
-
-// void Test_Dmx_Post_Ramp_Ch1 (void)
-// {
-//     printf("\nTest dmx Ramp with post-mapping\n");
-    
-//     mem_conf.channels_operation_mode = CCT1_MODE;
-//     mem_conf.max_current_channels[0] = 255;
-//     mem_conf.max_current_channels[1] = 255;
-    
-//     // ramp 255
-//     for (int i = 0; i < VECTOR_LENGTH; i++)
-//     {
-//         if (i <= 255)
-//         {
-//             dmx_data_ch1 [i] = i;
-//             dmx_data_ch2 [i] = 0;
-//         }
-//         else
-//         {
-//             dmx_data_ch1 [i] = 255;
-//             dmx_data_ch2 [i] = 0;
-//         }
-//     }
-    
-//     UpdateFiltersTest_Reset ();
-//     for (int i = 0; i < VECTOR_LENGTH; i++)
-//     {
-//         unsigned char ch_dmx_val [2];
-//         ch_dmx_val[0] = dmx_data_ch1[i];
-//         ch_dmx_val[1] = dmx_data_ch2[i];
-
-//         FiltersAndOffsets_Post_Mapping_SM (ch_dmx_val);
-//         Update_PWM_Counters();
-//     }
-
-//     ShowVectorUShort("\nVector dmx data ch1:\n", dmx_data_ch1, 100);
-//     ShowVectorUShort("\nVector dmx data ch2:\n", dmx_data_ch2, 100);    
-//     ShowVectorUShort("\nVector ena outp ch1:\n", ena_output_ch1, 100);
-//     ShowVectorUShort("\nVector pwm outp ch1:\n", pwm_output_ch1, 100);    
-//     ShowVectorUShort("\nVector ena outp ch2:\n", ena_output_ch2, 100);
-//     ShowVectorUShort("\nVector pwm outp ch2:\n", pwm_output_ch2, 100);    
-
-//     ///////////////////////////
-//     // Backup Data to a file //
-//     ///////////////////////////
-//     FILE * file = fopen("data.txt", "w");
-
-//     if (file == NULL)
-//     {
-//         printf("data file not created!\n");
-//         return;
-//     }
-
-//     Vector_UShort_To_File (file, "dmx_ch1", dmx_data_ch1, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "dmx_ch2", dmx_data_ch2, VECTOR_LENGTH);    
-//     Vector_UShort_To_File (file, "ena_ch1", ena_output_ch1, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "pwm_ch1", pwm_output_ch1, VECTOR_LENGTH);    
-//     Vector_UShort_To_File (file, "ena_ch2", ena_output_ch2, VECTOR_LENGTH);
-//     Vector_UShort_To_File (file, "pwm_ch2", pwm_output_ch2, VECTOR_LENGTH);    
-
-//     printf("\nRun by hand python3 simul_pwm_pre_data.py\n");
-
-// }
-
-
-// void UpdateFiltersTest_Reset (void)
-// {
-//     MA32_U16Circular_Reset(&st_sp1);
-//     MA32_U16Circular_Reset(&st_sp2);
-//     MA32_U16Circular_Reset(&st_ena1);
-//     MA32_U16Circular_Reset(&st_ena2);    
-// }
-
-
-// int pwm_cntr = 0;
-// int ch1_update = 0;
-// int ch2_update = 0;
-// int ena1_update = 0;
-// int ena2_update = 0;
-// void Update_PWM_Counters (void)
-// {
-//     if (pwm_cntr)
-//     {
-//         if (!ch1_update)
-//             pwm_output_ch1[pwm_cntr] = pwm_output_ch1[pwm_cntr - 1];
-//         else
-//             ch1_update = 0;
-
-//         if (!ch2_update)        
-//             pwm_output_ch2[pwm_cntr] = pwm_output_ch2[pwm_cntr - 1];
-//         else
-//             ch2_update = 0;
-
-//         if (!ena1_update)        
-//             ena_output_ch1[pwm_cntr] = ena_output_ch1[pwm_cntr - 1];
-//         else
-//             ena1_update = 0;
-        
-//         if (!ena2_update)        
-//             ena_output_ch2[pwm_cntr] = ena_output_ch2[pwm_cntr - 1];
-//         else
-//             ena2_update = 0;
-        
-//     }
-//     pwm_cntr++;
-// }
-
-
-// void Update_TIM3_CH1 (unsigned short new_pwm)
-// {
-//     pwm_output_ch1[pwm_cntr] = new_pwm;
-//     ch1_update = 1;
-// }
-
-
-// void Update_TIM3_CH2 (unsigned short new_pwm)
-// {
-//     pwm_output_ch2[pwm_cntr] = new_pwm;
-//     ch2_update = 1;    
-// }
-
-
-// void Update_TIM1_CH2 (unsigned short new_pwm)
-// {
-//     ena_output_ch1[pwm_cntr] = new_pwm;
-//     ena1_update = 1;    
-// }
-
-
-// void Update_TIM1_CH4 (unsigned short new_pwm)
-// {
-//     ena_output_ch2[pwm_cntr] = new_pwm;
-//     ena2_update = 1;    
-// }
 
 // Module Mocked Functions -----------------------------------------------------
 void TIM_Deactivate_Channels (unsigned char deact_chnls)

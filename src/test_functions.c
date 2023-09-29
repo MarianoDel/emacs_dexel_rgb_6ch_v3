@@ -105,7 +105,7 @@ void TF_Uart4_Adc_Dma (void);
 void TF_Hardware_Tests (void)
 {
     // TF_Led_On_Ctrl_Fan ();
-    // TF_Encoder_Sw ();
+    TF_Encoder_Sw ();
     // TF_Encoder_CheckSET ();
     // TF_Encoder_CheckCW ();
     // TF_Encoder_CheckCCW ();
@@ -146,7 +146,7 @@ void TF_Hardware_Tests (void)
     // TF_Flash_Configurations ();
     // TF_Flash_Configurations_With_Uart4 ();
 
-    TF_Uart4_Adc_Dma ();
+    // TF_Uart4_Adc_Dma ();
 }
 
 

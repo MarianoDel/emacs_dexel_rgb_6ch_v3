@@ -15,6 +15,8 @@
 // #define I2C_ADDRESS_SLV    0x3D    //para 64?
 #define I2C_ADDRESS_MSK    0x7F
 
+#define I2C_USE_I2C1
+// #define I2C_USE_I2C2
 #define I2C_WITH_INTS
 
 // Common Defines --------------------------------------------------------------

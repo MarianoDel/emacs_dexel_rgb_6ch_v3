@@ -14,9 +14,9 @@
 
 
 // Private Types Constants and Macros ------------------------------------------
-#define I2C_USE_I2C1
+// #define I2C_USE_I2C1
 // #define I2C_USE_I2C2
-#define I2C_WITH_INTS
+// #define I2C_WITH_INTS
 
 
 #define RCC_I2C1_CLK    (RCC->APB1ENR & 0x00200000)

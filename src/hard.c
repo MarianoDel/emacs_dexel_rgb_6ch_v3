@@ -8,7 +8,7 @@
 //----------------------------------------------------------------------
 #include "hard.h"
 #include "stm32f10x.h"
-
+#include "parameters.h"
 
 
 #define SWITCHES_TIMER_RELOAD    5
@@ -117,6 +117,7 @@ void UpdateEncoderFilters (void)
 unsigned char last_clk = 0;
 unsigned char encoder_ccw = 0;
 unsigned char encoder_cw = 0;
+extern parameters_typedef mem_conf;
 void UpdateEncoder (void)
 {
     unsigned char current_clk = 0;
@@ -132,27 +133,33 @@ void UpdateEncoder (void)
         //have a new clock edge
         if (enc_dt_cntr > ENCODER_COUNTER_THRESHOLD)
         {
-#ifdef USE_ENCODER_DIRECT
-            //CW
-            if (encoder_cw < 1)
-                encoder_cw++;
-#else
-            //CCW
-            if (encoder_ccw < 1)
-                encoder_ccw++;
-#endif
+            if(mem_conf.encoder_direction == 0)    // USE_ENCODER_DIRECT
+            {
+                //CW
+                if (encoder_cw < 1)
+                    encoder_cw++;
+            }
+            else
+            {
+                //CCW
+                if (encoder_ccw < 1)
+                    encoder_ccw++;
+            }
         }
         else
         {
-#ifdef USE_ENCODER_DIRECT
-            //CCW
-            if (encoder_ccw < 1)
-                encoder_ccw++;
-#else
-            //CW
-            if (encoder_cw < 1)
-                encoder_cw++;
-#endif
+            if(mem_conf.encoder_direction == 0)    // USE_ENCODER_DIRECT
+            {
+                //CCW
+                if (encoder_ccw < 1)
+                    encoder_ccw++;
+            }
+            else
+            {
+                //CW
+                if (encoder_cw < 1)
+                    encoder_cw++;
+            }
         }
     }
 

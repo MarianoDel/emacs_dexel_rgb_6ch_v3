@@ -139,6 +139,8 @@ void PWM_Set_PwrCtrl (unsigned char * p_ch_val, unsigned char chnls_qtty, unsign
 
 
 
+// #define OLD_DAC_OFFSET
+#define NEW_DAC_OFFSET
 // get dmx_filtered from 0 to 4095
 // answer pwm_ena 0 to 255
 // answer dac_ch 0 to 4095
@@ -146,7 +148,8 @@ void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned char * pwm_ena, 
 {
     unsigned short dmx_ena = 0;
     unsigned int dmx_ch = 0;
-    
+
+#if (defined OLD_DAC_OFFSET)
     if (dmx_filtered > 511)
     {
         dmx_ena = 511;
@@ -162,6 +165,31 @@ void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned char * pwm_ena, 
     
     dmx_ch = dmx_ch * 114;
     dmx_ch = dmx_ch / 100;
+    
+#elif (defined NEW_DAC_OFFSET)
+    if (dmx_filtered > 511)
+    {
+        dmx_ena = 511;
+        dmx_ch = dmx_filtered;        
+    }
+    else
+    {
+        dmx_ena = dmx_filtered;
+        dmx_ch = 511;        
+    }
+
+    *pwm_ena = dmx_ena >> 1;
+
+#ifdef HARDWARE_VERSION_3_2
+    // for ver 3.2 Toff = 1.8us Rsense = 0.1 mux = 74hc4051 (20% reduction)
+    dmx_ch = dmx_ch * 206;
+    dmx_ch >>= 8;
+    // end of for ver 3.2 Toff = 1.8us Rsense = 0.1 mux = 74hc4051
+#endif
+    
+#else
+#error "Define DAC_OFFSET on pwm.c"
+#endif
 
     // rooftop
     if (dmx_ch > 4095)

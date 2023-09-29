@@ -33,8 +33,8 @@
 #define USE_CTRL_FAN_FOR_TEMP_CTRL
 
 // --- Encoder Motion Direction --- //
-#define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
-// #define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
+// #define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
+#define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
 
 //------ Configuration for Firmware-Channels -----
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
@@ -50,10 +50,16 @@
 //-- Configuration for some Analog things ------
 //---- Voltage Sensor
 #define MIN_PWR_SUPPLY    VOLTS_20
-#define MAX_PWR_SUPPLY    VOLTS_50
+#define MAX_PWR_SUPPLY    VOLTS_55
+
+#define MIN_PWR_SUPPLY_RECONNECT    VOLTS_24
+#define MAX_PWR_SUPPLY_RECONNECT    VOLTS_50
 
 #define VOLTS_20    730
+#define VOLTS_24    876
 #define VOLTS_50    1825
+#define VOLTS_55    2007
+
 //---- LM335 or NTC1K measurement Temperatures
 #include "temperatures.h"
 
@@ -61,7 +67,9 @@
 
 
 //-- Sanity Checks ----------------------------------
-#if (!defined HARDWARE_VERSION_3_0)
+#if (!defined HARDWARE_VERSION_3_2) && \
+    (!defined HARDWARE_VERSION_3_1) && \
+    (!defined HARDWARE_VERSION_3_0)
 #error "Not HARD version selected on version.h"
 #endif
 
@@ -87,7 +95,82 @@ typedef enum {
 
 
 // Gpios Configuration ---------------------------------------------------------
-#ifdef HARDWARE_VERSION_3_0
+#if (defined HARDWARE_VERSION_3_2)
+
+//--- Port C ---//
+// PC0
+#define EN_SW    ((GPIOC->IDR & 0x0001) == 0)
+
+// PC1
+#define EN_DT    ((GPIOC->IDR & 0x0002) == 0)
+
+// PC2
+#define EN_CLK    ((GPIOC->IDR & 0x0004) == 0)
+
+// PC3
+#define CTRL_FAN    ((GPIOC->ODR & 0x0008) != 0)
+#define CTRL_FAN_ON    (GPIOC->BSRR = 0x00000008)
+#define CTRL_FAN_OFF    (GPIOC->BSRR = 0x00080000)
+#define LED    CTRL_FAN    
+#define LED_ON    CTRL_FAN_ON 
+#define LED_OFF    CTRL_FAN_OFF
+
+// // PC8
+// #define CTRL_C2    ((GPIOC->ODR & 0x0100) != 0)
+// #define CTRL_C2_ON    (GPIOC->BSRR = 0x00000100)
+// #define CTRL_C2_OFF    (GPIOC->BSRR = 0x01000000)
+
+// // PC9
+// #define CTRL_C1    ((GPIOC->ODR & 0x0200) != 0)
+// #define CTRL_C1_ON    (GPIOC->BSRR = 0x00000200)
+// #define CTRL_C1_OFF    (GPIOC->BSRR = 0x02000000)
+
+//--- Port A ---//
+// PA4 DAC_OUT1
+
+// PA8 Alternative TIM1_CH1
+#define SW ((GPIOA->ODR & 0x0100) != 0)
+#define SW_ON (GPIOA->BSRR = 0x00000100)
+#define SW_OFF (GPIOA->BSRR = 0x01000000)
+
+// PA10
+#define CTRL_C1    ((GPIOA->ODR & 0x0400) != 0)
+#define CTRL_C1_ON    (GPIOA->BSRR = 0x00000400)
+#define CTRL_C1_OFF    (GPIOA->BSRR = 0x04000000)
+
+// PA11
+#define CTRL_C2    ((GPIOA->ODR & 0x0800) != 0)
+#define CTRL_C2_ON    (GPIOA->BSRR = 0x00000800)
+#define CTRL_C2_OFF    (GPIOA->BSRR = 0x08000000)
+
+// PA12
+#define CTRL_C3    ((GPIOA->ODR & 0x1000) != 0)
+#define CTRL_C3_ON    (GPIOA->BSRR = 0x00001000)
+#define CTRL_C3_OFF    (GPIOA->BSRR = 0x10000000)
+
+
+//--- Port B ---//
+// PB1 
+#define DMX_INPUT    ((GPIOB->IDR & 0x0002) != 0)
+
+// PB2
+#define SW_RX_TX    ((GPIOB->ODR & 0x0004) != 0)
+#define SW_RX_TX_DE    (GPIOB->BSRR = 0x00000004)
+#define SW_RX_TX_RE_NEG    (GPIOB->BSRR = 0x00040000)
+
+// PB8 
+
+// PB10, PB11 Alternative Usart 3 Tx Rx (PB10 dmx tx pin)
+#define DMX_TX_PIN    ((GPIOB->ODR & 0x0400) != 0)
+#define DMX_TX_PIN_ON    (GPIOB->BSRR = 0x00000400)
+#define DMX_TX_PIN_OFF    (GPIOB->BSRR = 0x04000000)
+    
+
+#endif //HARDWARE_VERSION_3_2
+
+
+#if (defined HARDWARE_VERSION_3_1) || \
+    (defined HARDWARE_VERSION_3_0)
 
 //--- Port C ---//
 // PC0
@@ -165,9 +248,7 @@ typedef enum {
 #define CTRL_C3_ON    (GPIOB->BSRR = 0x00008000)
 #define CTRL_C3_OFF    (GPIOB->BSRR = 0x80000000)
 
-
-
-#endif //HARDWARE_VERSION_3_0
+#endif //HARDWARE_VERSION_3_1 or HARDWARE_VERSION_3_0
 
 
 // Module Exported Functions ---------------------------------------------------

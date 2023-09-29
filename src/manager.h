@@ -17,6 +17,8 @@
 // Exported Types Constants and Macros -----------------------------------------
 void Manager (parameters_typedef * pmem);
 void Manager_Timeouts (void);
+void Manager_Ntc_Set (void);
+void Manager_Ntc_Reset (void);
 
 
 // Exported Functions ----------------------------------------------------------
