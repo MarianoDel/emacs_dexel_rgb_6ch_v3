@@ -248,21 +248,8 @@ clean:
 	rm -f *.gcov
 	rm -f *.gcda
 	rm -f *.gcno
+	rm -f tests_gtk
 
-
-
-tests_comms_channels:
-	# first compile common modules (modules to test and dependencies)
-	gcc -c src/utils.c -I. $(INCDIR)
-	gcc -c src/comms_channels.c -I. $(INCDIR)
-	gcc src/tests_comms_channels.c comms_channels.o utils.o
-	./a.out
-
-tests_antennas:
-	# first compile common modules (modules to test and dependencies)
-	gcc -c src/antennas.c -I. $(INCDIR)
-	gcc src/tests_antennas.c antennas.o
-	./a.out
 
 tests_comm:
 	# first module objects to test
@@ -276,40 +263,6 @@ tests_comm:
 	# process coverage
 	gcov comm.c -m
 
-tests_battery:
-	# first module objects to test
-	gcc -c src/battery.c -I. $(INCDIR) $(DDEFS)
-	gcc -c src/dsp.c -I. $(INCDIR) $(DDEFS)
-	# second auxiliary helper modules
-	gcc -c src/tests_ok.c
-	gcc -c src/tests_utils.c
-	gcc src/tests_battery.c battery.o dsp.o tests_ok.o tests_utils.o -I $(INCDIR) $(DDEFS)
-	./a.out
-
-tests_errors_str:
-	# first compile common modules (modules to test and dependencies)
-	gcc -c src/errors.c -I. $(INCDIR)
-	# second auxiliary helper modules
-	gcc -c src/tests_ok.c -I $(INCDIR)
-	gcc -c src/tests_errors_str.c -I $(INCDIR)
-	gcc src/tests_errors_str.c errors.o tests_ok.o
-	./a.out
-
-tests_signals_parameters:
-	# first compile common modules (modules to test and dependencies)
-	gcc -c src/GTK_Signal.c -I. $(INCDIR) $(DDEFS)
-	# second auxiliary helper modules
-	gcc -c src/tests_ok.c -I $(INCDIR)
-	gcc src/tests_signals_parameters.c GTK_Signal.o tests_ok.o -lm
-	./a.out
-
-tests_first_pulse:
-	# first compile common modules (modules to test and dependencies)
-	gcc -c src/first_pulse.c -I. $(INCDIR)
-	# second auxiliary helper modules
-	gcc -c src/tests_ok.c -I $(INCDIR)
-	gcc src/tests_first_pulse.c first_pulse.o tests_ok.o
-	./a.out
 
 tests_pwm:
 	# first module objects to test and coverage
@@ -322,6 +275,7 @@ tests_pwm:
 	./a.out
 	# process coverage
 	gcov pwm.c -m
+
 
 tests_dmx_transceiver:
 	# first module objects to test and coverage
@@ -336,6 +290,7 @@ tests_dmx_transceiver:
 	# process coverage
 	gcov dmx_transceiver.c -m
 
+
 tests_pwm_post_map:
 	# first compile common modules (modules to test and dependencies)
 	gcc -c src/pwm.c -I. $(INCDIR)
@@ -347,6 +302,42 @@ tests_pwm_post_map:
 	gcc src/tests_pwm_post_map.c pwm.o filters_and_offsets.o dsp.o tests_ok.o tests_vector_utils.o
 	./a.out
 
+
+tests_oled_screen:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_app.c -o tests_oled_app.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_app.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
+
+
+tests_oled_manual_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c src/manual_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_manual_menu.c -o tests_oled_manual_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_manual_menu.o manual_menu.o options_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
 
 
 
