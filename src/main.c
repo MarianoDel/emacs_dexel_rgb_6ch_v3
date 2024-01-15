@@ -184,7 +184,7 @@ int main (void)
         
     }
 
-    // check NTC connection on init
+    //-- check NTC connection on init --
     unsigned short temp_filtered = 0;
     MA16_U16Circular_Reset(&temp_filter);
     for (int i = 0; i < 16; i++)
@@ -200,7 +200,8 @@ int main (void)
     }
     else
         Manager_Ntc_Set();
-    // check NTC connection on init        
+
+    // -- end of check NTC connection on init --
     
 
     // main program
