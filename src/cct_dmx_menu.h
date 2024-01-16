@@ -5,12 +5,12 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### DMX_CCT_MENU.C ############################
+// #### CCT_DMX_MENU.C ############################
 //-------------------------------------------------
 
 // Prevent recursive inclusion -------------------------------------------------
-#ifndef _DMX_CCT_MENU_H_
-#define _DMX_CCT_MENU_H_
+#ifndef _CCT_DMX_MENU_H_
+#define _CCT_DMX_MENU_H_
 
 //-- includes to help configurations --//
 #include "switches_answers.h"
@@ -38,12 +38,12 @@ typedef struct {
 
 
 // Module Exported Functions ---------------------------------------------------
-void DMX_CCT_MenuReset (void);
-resp_t DMX_CCT_Menu (dmx_menu_data_t *);
+void CCT_DMX_MenuReset (void);
+resp_t CCT_DMX_Menu (dmx_menu_data_t *);
 void DMXModeMenu_ChangeAddressReset (void);
 resp_t DMXModeMenu_ChangeAddress (dmx_menu_address_data_t *);
 
 
-#endif    /* _DMX_CCT_MENU_H_ */
+#endif    /* _CCT_DMX_MENU_H_ */
 
 //--- end of file ---//

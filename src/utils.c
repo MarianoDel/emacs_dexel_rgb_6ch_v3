@@ -12,12 +12,8 @@
 
 #include <stdlib.h>
 
-//--- VARIABLES EXTERNAS ---//
 
-//--- VARIABLES GLOBALES ---//
-
-
-//--- FUNCIONES DEL MODULO ---//
+// Module Functions ------------------------------------------------------------
 //devuelve los numeros de un string, en la posicion number
 //devuele la cantidad de cifras leidas
 unsigned char StringIsANumber (char * pn, unsigned short * number)
@@ -97,4 +93,7 @@ unsigned char StringCheckNumbers (char * str, unsigned char len)
 
     return qtty;
 }
+
+
+
 //--- end of file ---//

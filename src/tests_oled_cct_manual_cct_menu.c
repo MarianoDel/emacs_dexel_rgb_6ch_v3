@@ -11,9 +11,8 @@
 #include "screen.h"
 #include "parameters.h"
 #include "switches_answers.h"
-// #include "options_menu.h"
 
-#include "dmx_menu.h"
+#include "cct_manual_cct_menu.h"
 
 
 // Module Types Constants and Macros -------------------------------------------
@@ -26,11 +25,17 @@
 
 
 // Globals -- Externals for the tested Module ----------------------------------
-// parameters_typedef mem_conf;
-dmx_menu_data_t dmx_data;
+parameters_typedef mem_conf;
+// dmx_menu_data_t dmx_data;
 sw_actions_t encoder_actions;
 unsigned short dmx_channel = 1;
 unsigned char dmx_channel_data [9] = { 0 };
+// -- Externals for the menues
+unsigned char menu_state = 0;
+unsigned char menu_selected = 0;
+unsigned char menu_need_display_update = 0;
+unsigned char menu_selection_show = 0;
+volatile unsigned short menu_menu_timer = 0;
 
 
 // Globals ---------------------------------------------------------------------
@@ -39,7 +44,7 @@ unsigned int timer_standby = 0;
 
 
 // Teting Functions ------------------------------------------------------------
-void Test_DMX_CCT_Always_Increment (void);
+void Test_CCT_DMX_Always_Increment (void);
 
 
 
@@ -47,7 +52,7 @@ void Test_DMX_CCT_Always_Increment (void);
 gboolean Test_Main_Loop (gpointer user_data)
 {
     
-    Test_DMX_CCT_Always_Increment ();
+    Test_CCT_DMX_Always_Increment ();
     
     return TRUE;
 }
@@ -98,7 +103,7 @@ void set_button_function (void)
 
 // Module Testing functions ----------------------------------------------------
 int setup_done = 0;
-void Test_DMX_CCT_Always_Increment (void)
+void Test_CCT_DMX_Always_Increment (void)
 {
     static unsigned char channel_data = 0;
 
@@ -109,13 +114,13 @@ void Test_DMX_CCT_Always_Increment (void)
 
         SCREEN_Init();
 
-        DMX_CCT_MenuReset ();
+        CCT_Manual_Cct_Menu_Reset ();
 
-        dmx_data.dmx_first_chnl = &dmx_channel;
-        dmx_data.pchannels = (const unsigned char *) &dmx_channel_data;
-        dmx_data.chnls_qtty = 9;
-        dmx_data.show_addres = 1;
-        dmx_data.mode = DMX1_MODE;        
+        // dmx_data.dmx_first_chnl = &dmx_channel;
+        // dmx_data.pchannels = (const unsigned char *) &dmx_channel_data;
+        // dmx_data.chnls_qtty = 9;
+        // dmx_data.show_addres = 1;
+        // dmx_data.mode = DMX1_MODE;        
             
         display_update_int_state_machine ();
     }
@@ -124,8 +129,7 @@ void Test_DMX_CCT_Always_Increment (void)
     {
         resp_t resp = resp_continue;
 
-        resp = DMX_CCT_Menu (&dmx_data);        
-        // resp = ManualMenu (&mem_conf, encoder_actions);
+        resp = CCT_Manual_Cct_Menu (&mem_conf, encoder_actions);
         encoder_actions = do_nothing;
 
         if (resp != resp_continue)

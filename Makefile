@@ -360,20 +360,39 @@ tests_oled_dmx_menu:
 	# ./tests_gtk
 
 
-tests_oled_dmx_cct_menu:
+tests_oled_cct_dmx_menu:
 	# first compile common modules (modules to test and dependencies)
 	gcc -c src/screen.c -I. $(INCDIR)
 	gcc -c src/ssd1306_display.c -I. $(INCDIR)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc -c src/dmx_cct_menu.c -I. $(INCDIR)
-	# gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/cct_dmx_menu.c -I. $(INCDIR)
 	gcc -c src/display_utils.c -I. $(INCDIR)
 	# the module that implements tests_lcd_application.h functions
-	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_dmx_cct_menu.c -o tests_oled_dmx_cct_menu.o
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_dmx_menu.c -o tests_oled_cct_dmx_menu.o
 	# then the gtk lib modules
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
 	# link everything
-	gcc tests_glade_oled.o tests_oled_dmx_cct_menu.o dmx_cct_menu.o options_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	gcc tests_glade_oled.o tests_oled_cct_dmx_menu.o cct_dmx_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
+
+
+tests_oled_cct_manual_cct_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c src/cct_utils.c -I. $(INCDIR)
+	gcc -c src/cct_manual_cct_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_manual_cct_menu.c -o tests_oled_cct_manual_cct_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_cct_manual_cct_menu.o cct_utils.o cct_manual_cct_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
 	# run global tags
 	gtags -q
 	# run the simulation

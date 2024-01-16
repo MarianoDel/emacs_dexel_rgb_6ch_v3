@@ -5,11 +5,11 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### DMX_MENU.C ################################
+// #### CCT_DMX_MENU.C ############################
 //-------------------------------------------------
 
 // Includes --------------------------------------------------------------------
-#include "dmx_menu.h"
+#include "cct_dmx_menu.h"
 #include "display_utils.h"
 #include "parameters.h"
 #include "ssd1306_gfx.h"
@@ -20,44 +20,44 @@
 
 // Private Types Constants and Macros ------------------------------------------
 typedef enum {
-    DMX_CCT_MENU_INIT = 0,
-    DMX_CCT_MENU_CH1_CH6,
-    DMX_CCT_MENU_CH2_CH7,
-    DMX_CCT_MENU_CH3_CH8,
-    DMX_CCT_MENU_CH4_CH9,
-    DMX_CCT_MENU_CH5,    
-    DMX_CCT_MENU_UPDATE_DISPLAY
+    CCT_DMX_MENU_INIT = 0,
+    CCT_DMX_MENU_CH1_CH6,
+    CCT_DMX_MENU_CH2_CH7,
+    CCT_DMX_MENU_CH3_CH8,
+    CCT_DMX_MENU_CH4_CH9,
+    CCT_DMX_MENU_CH5,    
+    CCT_DMX_MENU_UPDATE_DISPLAY
 
-} dmx_cct_menu_e;
+} cct_dmx_menu_e;
 
 
 // Externals -------------------------------------------------------------------
 
 
 // Globals ---------------------------------------------------------------------
-static dmx_cct_menu_e dmx_cct_menu_state = DMX_CCT_MENU_INIT;
+static cct_dmx_menu_e cct_dmx_menu_state = CCT_DMX_MENU_INIT;
 
 
 // Module Private Functions ----------------------------------------------------
 
 
 // Module Functions ------------------------------------------------------------
-void DMX_CCT_MenuReset (void)
+void CCT_DMX_MenuReset (void)
 {
-    dmx_cct_menu_state = DMX_CCT_MENU_INIT;
+    cct_dmx_menu_state = CCT_DMX_MENU_INIT;
 }
 
 
 extern unsigned char display_is_free (void);
 extern void display_update (void);
-resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
+resp_t CCT_DMX_Menu (dmx_menu_data_t * pmenu_data)
 {
     resp_t resp = resp_continue;
     char s_temp[21];    //20 caracteres por linea + '\0'
 
-    switch (dmx_cct_menu_state)
+    switch (cct_dmx_menu_state)
     {
-    case DMX_CCT_MENU_INIT:
+    case CCT_DMX_MENU_INIT:
         
         if (!display_is_free())
             break;
@@ -72,10 +72,10 @@ resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
         
         Display_SetLine1(s_temp);
         Display_SetLine8("             DMX CCT");
-        dmx_cct_menu_state++;
+        cct_dmx_menu_state++;
         break;
 
-    case DMX_CCT_MENU_CH1_CH6:
+    case CCT_DMX_MENU_CH1_CH6:
         memset(s_temp, 0, sizeof(s_temp));
 
         sprintf(s_temp, "RED: %3d     CCT: %3d",
@@ -84,10 +84,10 @@ resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
         
         Display_BlankLine3();
         Display_SetLine3(s_temp);            
-        dmx_cct_menu_state++;
+        cct_dmx_menu_state++;
         break;
 
-    case DMX_CCT_MENU_CH2_CH7:
+    case CCT_DMX_MENU_CH2_CH7:
         memset(s_temp, 0, sizeof(s_temp));
 
         sprintf(s_temp, "BLU: %3d     STB: %3d",        
@@ -96,10 +96,10 @@ resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
 
         Display_BlankLine4();
         Display_SetLine4(s_temp);                    
-        dmx_cct_menu_state++;
+        cct_dmx_menu_state++;
         break;
 
-    case DMX_CCT_MENU_CH3_CH8:
+    case CCT_DMX_MENU_CH3_CH8:
         memset(s_temp, 0, sizeof(s_temp));
 
         sprintf(s_temp, "GRN: %3d     CLR: %3d",        
@@ -108,10 +108,10 @@ resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
         
         Display_BlankLine5();
         Display_SetLine5(s_temp);            
-        dmx_cct_menu_state++;
+        cct_dmx_menu_state++;
         break;
 
-    case DMX_CCT_MENU_CH4_CH9:
+    case CCT_DMX_MENU_CH4_CH9:
         memset(s_temp, 0, sizeof(s_temp));
 
         sprintf(s_temp, " WW: %3d     DIM: %3d",        
@@ -120,10 +120,10 @@ resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
         
         Display_BlankLine6();
         Display_SetLine6(s_temp);            
-        dmx_cct_menu_state++;
+        cct_dmx_menu_state++;
         break;
 
-    case DMX_CCT_MENU_CH5:
+    case CCT_DMX_MENU_CH5:
         memset(s_temp, 0, sizeof(s_temp));
 
         sprintf(s_temp, " CW: %3d             ",
@@ -131,17 +131,17 @@ resp_t DMX_CCT_Menu (dmx_menu_data_t * pmenu_data)
         
         Display_BlankLine7();
         Display_SetLine7(s_temp);            
-        dmx_cct_menu_state++;
+        cct_dmx_menu_state++;
         break;
         
-    case DMX_CCT_MENU_UPDATE_DISPLAY:
+    case CCT_DMX_MENU_UPDATE_DISPLAY:
         display_update();
-        dmx_cct_menu_state = DMX_CCT_MENU_INIT;
+        cct_dmx_menu_state = CCT_DMX_MENU_INIT;
         resp = resp_finish;
         break;
         
     default:
-        dmx_cct_menu_state = DMX_CCT_MENU_INIT;
+        cct_dmx_menu_state = CCT_DMX_MENU_INIT;
         break;
     }
 
