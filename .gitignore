@@ -15,4 +15,5 @@ GTAGS
 *.gcov
 *.gcda
 *.gcno
+tests_gtk
 

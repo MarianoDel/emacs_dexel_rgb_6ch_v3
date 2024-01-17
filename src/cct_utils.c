@@ -27,6 +27,48 @@
 
 
 // Module Functions ------------------------------------------------------------
+// change values from actions with update flagged
+resp_t CCT_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * value)
+{
+    resp_t resp = resp_continue;
+    
+    if (actions == selection_dwn_fast)
+    {
+        if (*value >= 10)
+            *value -= 10;
+        else
+            *value = 0;
+
+        resp = resp_change;
+    }
+    else if (actions == selection_dwn)
+    {
+        if (*value)
+            *value -= 1;
+
+        resp = resp_change;        
+    }
+    else if (actions == selection_up_fast)
+    {
+        if (*value <= 245)
+            *value += 10;
+        else
+            *value = 255;
+
+        resp = resp_change;        
+    }
+    else if (actions == selection_up)
+    {
+        if (*value <= 254)
+            *value += 1;
+
+        resp = resp_change;        
+    }
+
+    return resp;
+}
+
+
 // get the percentage from 0 - 255 values
 void GetPercentage (unsigned char dmx_value, unsigned char * val_int, unsigned char * val_dec)
 {

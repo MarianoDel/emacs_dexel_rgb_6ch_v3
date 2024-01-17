@@ -28,8 +28,8 @@ typedef enum {
     
 } cct_manual_cct_menu_state_e;
 
-#define TT_SHOW    400
-#define TT_NOT_SHOW    600
+#define TT_SHOW    500
+// #define TT_NOT_SHOW    600
 
 // variable re-use
 #define cct_selected    menu_selected
@@ -51,7 +51,6 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Module Private Functions ----------------------------------------------------
-void CCT_Manual_Update_Actions_Values (sw_actions_t actions, unsigned char * value);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -121,7 +120,7 @@ resp_t CCT_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
         
     case CCT_MANUAL_CCT_MENU_SELECT_LINE1:        
-        CCT_Manual_Update_Actions_Values (actions, &mem->fixed_channels[0]);
+        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
 
         if (actions == selection_enter)
         {
@@ -148,13 +147,13 @@ resp_t CCT_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
                 Display_SetLine1(s_temp);
             }
             
-            cct_manual_cct_menu_timer = 500;
+            cct_manual_cct_menu_timer = TT_SHOW;
             cct_need_display_update = 1;
         }
         break;
 
     case CCT_MANUAL_CCT_MENU_SELECT_LINE2:
-        CCT_Manual_Update_Actions_Values (actions, &mem->fixed_channels[1]);
+        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
 
         if (actions == selection_enter)
         {
@@ -181,13 +180,13 @@ resp_t CCT_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
                 Display_SetLine2(s_temp);
             }
             
-            cct_manual_cct_menu_timer = 500;
+            cct_manual_cct_menu_timer = TT_SHOW;
             cct_need_display_update = 1;
         }
         break;
 
     case CCT_MANUAL_CCT_MENU_SELECT_LINE3:
-        CCT_Manual_Update_Actions_Values (actions, &mem->fixed_channels[2]);
+        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[2]);
 
         if (actions == selection_enter)
         {
@@ -213,7 +212,7 @@ resp_t CCT_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
                 Display_SetLine3(s_temp);
             }
             
-            cct_manual_cct_menu_timer = 500;
+            cct_manual_cct_menu_timer = TT_SHOW;
             cct_need_display_update = 1;
         }
         break;
@@ -232,35 +231,6 @@ resp_t CCT_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
 
     return resp;
     
-}
-
-
-void CCT_Manual_Update_Actions_Values (sw_actions_t actions, unsigned char * value)
-{
-    if (actions == selection_dwn_fast)
-    {
-        if (*value >= 10)
-            *value -= 10;
-        else
-            *value = 0;
-    }
-    else if (actions == selection_dwn)
-    {
-        if (*value)
-            *value -= 1;
-    }
-    else if (actions == selection_up_fast)
-    {
-        if (*value <= 245)
-            *value += 10;
-        else
-            *value = 255;
-    }
-    else if (actions == selection_up)
-    {
-        if (*value <= 254)
-            *value += 1;
-    }    
 }
 
 

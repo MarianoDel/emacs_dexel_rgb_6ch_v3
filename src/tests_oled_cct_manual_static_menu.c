@@ -12,7 +12,7 @@
 #include "parameters.h"
 #include "switches_answers.h"
 
-#include "cct_manual_cct_menu.h"
+#include "cct_manual_static_menu.h"
 
 
 // Module Types Constants and Macros -------------------------------------------
@@ -44,7 +44,7 @@ unsigned int timer_standby = 0;
 
 
 // Teting Functions ------------------------------------------------------------
-void Test_CCT_Manual_Cct (void);
+void Test_CCT_Manual_Static (void);
 
 
 
@@ -52,7 +52,7 @@ void Test_CCT_Manual_Cct (void);
 gboolean Test_Main_Loop (gpointer user_data)
 {
     
-    Test_CCT_Manual_Cct ();
+    Test_CCT_Manual_Static ();
     
     return TRUE;
 }
@@ -63,7 +63,7 @@ gboolean Test_Timeouts_Loop_1ms (gpointer user_data)
     if (timer_standby)
         timer_standby--;
 
-    CCT_Manual_Cct_Menu_UpdateTimer();
+    CCT_Manual_Static_Menu_UpdateTimer ();
     
     return TRUE;
 }
@@ -104,7 +104,7 @@ void set_button_function (void)
 
 // Module Testing functions ----------------------------------------------------
 int setup_done = 0;
-void Test_CCT_Manual_Cct (void)
+void Test_CCT_Manual_Static (void)
 {
     static unsigned char channel_data = 0;
 
@@ -115,7 +115,7 @@ void Test_CCT_Manual_Cct (void)
 
         SCREEN_Init();
 
-        CCT_Manual_Cct_Menu_Reset ();
+        CCT_Manual_Static_Menu_Reset ();
 
         display_update_int_state_machine ();
     }
@@ -124,7 +124,7 @@ void Test_CCT_Manual_Cct (void)
     {
         resp_t resp = resp_continue;
 
-        resp = CCT_Manual_Cct_Menu (&mem_conf, encoder_actions);
+        resp = CCT_Manual_Static_Menu (&mem_conf, encoder_actions);
         encoder_actions = do_nothing;
 
         if (resp != resp_continue)

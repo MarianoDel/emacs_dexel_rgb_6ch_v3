@@ -12,7 +12,7 @@
 #ifndef __CCT_UTILS_H_
 #define __CCT_UTILS_H_
 
-
+#include "switches_answers.h"
 
 // Exported Types Constants and Macros -----------------------------------------
 #define CCT_MODE_2700_6500    0
@@ -22,6 +22,7 @@
 // Exported Functions ----------------------------------------------------------
 void GetPercentage (unsigned char dmx_value, unsigned char * val_int, unsigned char * val_dec);
 unsigned short GetCct (unsigned char value, unsigned char cct_mode);
+resp_t CCT_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * values);
 
 
 
