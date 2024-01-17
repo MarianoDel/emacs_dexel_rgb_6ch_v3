@@ -62,10 +62,9 @@ gboolean Test_Timeouts_Loop_1ms (gpointer user_data)
 {
     if (timer_standby)
         timer_standby--;
-    // //timeout lcd_utils internal
-    // if (show_select_timer)
-    //     show_select_timer--;
 
+    CCT_Manual_Cct_Menu_UpdateTimer();
+    
     return TRUE;
 }
 
@@ -80,7 +79,8 @@ gboolean Test_Timeouts_Loop_1000ms (gpointer user_data)
 void cw_button_function (void)
 {
     g_mutex_lock (&mutex);
-    encoder_actions = selection_dwn;
+    // encoder_actions = selection_dwn;
+    encoder_actions = selection_dwn_fast;    
     g_mutex_unlock (&mutex);
 }
 
@@ -88,7 +88,8 @@ void cw_button_function (void)
 void ccw_button_function (void)
 {
     g_mutex_lock (&mutex);
-    encoder_actions = selection_up;
+    // encoder_actions = selection_up;
+    encoder_actions = selection_up_fast;    
     g_mutex_unlock (&mutex);
 }
 
