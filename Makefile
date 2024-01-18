@@ -419,5 +419,65 @@ tests_oled_cct_manual_static_menu:
 	# ./tests_gtk
 
 
+tests_oled_cct_manual_colors_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c src/cct_utils.c -I. $(INCDIR)
+	gcc -c src/cct_manual_colors_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_manual_colors_menu.c -o tests_oled_cct_manual_colors_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_cct_manual_colors_menu.o cct_utils.o cct_manual_colors_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
+
+
+tests_oled_cct_main_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c src/cct_utils.c -I. $(INCDIR)
+	gcc -c src/cct_main_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_main_menu.c -o tests_oled_cct_main_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_cct_main_menu.o cct_utils.o cct_main_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
+
+
+tests_oled_cct_master_slave_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c src/cct_utils.c -I. $(INCDIR)
+	gcc -c src/cct_master_slave_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_master_slave_menu.c -o tests_oled_cct_master_slave_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_cct_master_slave_menu.o cct_utils.o cct_master_slave_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
+
+
 
 # *** EOF ***
