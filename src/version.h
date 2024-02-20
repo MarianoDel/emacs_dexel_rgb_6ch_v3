@@ -23,7 +23,8 @@
 // #define HARDWARE_VERSION_1_0    // 2018 prototypes 4 units
 
 
-#define SOFTWARE_VERSION_1_4    // ntc detection, encoder direction, current temp
+#define SOFTWARE_VERSION_2_0    // CCT mode and DMX mode
+// #define SOFTWARE_VERSION_1_4    // ntc detection, encoder direction, current temp
 // #define SOFTWARE_VERSION_1_3    // abstraction layer on manager.c
 // #define SOFTWARE_VERSION_1_2    // temp meas with ntc 1k
 // #define SOFTWARE_VERSION_1_1    //changes on pwm frequency 4KHz -> 8KHz 12-2021
@@ -45,6 +46,10 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_0
+#define SOFT "Software Version: 2.0\n"
+#define SOFT_VER "2.0"
+#endif
 #ifdef SOFTWARE_VERSION_1_4
 #define SOFT "Software Version: 1.4\n"
 #define SOFT_VER "1.4"

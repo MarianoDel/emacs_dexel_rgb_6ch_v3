@@ -32,11 +32,16 @@
 #include "master_slave_mode.h"
 #include "manual_mode.h"
 #include "temperatures.h"
-#include "hardware_mode.h"
 #include "options_menu.h"
 #include "reset_mode.h"
 #include "main_menu.h"
 
+#ifdef DMX_ONLY_MODE
+#include "hardware_mode.h"
+#endif
+#ifdef DMX_AND_CCT_MODE
+#include "cct_hardware_mode.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -537,11 +542,19 @@ void Manager (parameters_typedef * pmem)
         break;
 
     case MNGR_ENTERING_HARDWARE_MENU:
+#if (defined DMX_ONLY_MODE)
         HardwareModeReset();
 
         //Mode Timeout enable
         ptFTT = &HardwareMode_UpdateTimers;
-            
+#elif (defined DMX_AND_CCT_MODE)
+        Cct_HardwareModeReset ();
+
+        //Mode Timeout enable
+        ptFTT = &Cct_HardwareMode_UpdateTimers;
+#else
+#error "No mode selected on hard.h"    
+#endif                    
 
         SCREEN_ShowText2(
             "Entering ",
@@ -564,7 +577,17 @@ void Manager (parameters_typedef * pmem)
         // Check encoder first
         action = CheckActions();
 
+#if (defined DMX_ONLY_MODE)
+
         resp = HardwareMode(pmem, action);
+
+#elif (defined DMX_AND_CCT_MODE)
+
+        resp = Cct_HardwareMode (pmem, action);
+
+#else
+#error "No mode selected on hard.h"    
+#endif
 
         if ((resp == resp_need_to_save) ||
             (resp == resp_finish))

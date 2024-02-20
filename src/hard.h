@@ -40,6 +40,13 @@
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
+//------ Configuration for CCT-Mode -----
+#ifdef SOFTWARE_VERSION_2_0
+#define DMX_AND_CCT_MODE
+// #define DMX_ONLY_MODE
+#else
+#define DMX_ONLY_MODE
+#endif
 // --- UsartDebug Configs --- //
 // #define USART_DEBUG_MODE
 #define UsartDebug    Uart4Send    //use uart4 as debug serial console

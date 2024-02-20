@@ -101,7 +101,6 @@ SRC += ./src/master_slave_mode.c
 SRC += ./src/manual_mode.c
 SRC += ./src/reset_mode.c
 SRC += ./src/main_menu.c
-SRC += ./src/hardware_mode.c
 SRC += ./src/colors_functions.c
 SRC += ./src/fixed_menu.c
 SRC += ./src/colors_menu.c
@@ -118,6 +117,10 @@ SRC += ./src/version_menu.c
 SRC += ./src/encoder_menu.c
 SRC += ./src/temperatures.c
 
+SRC += ./src/hardware_mode.c
+SRC += ./src/cct_hardware_mode.c
+SRC += ./src/cct_enc_dir_mode_menu.c
+SRC += ./src/cct_manager.c
 
 
 
@@ -473,6 +476,27 @@ tests_oled_cct_master_slave_menu:
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
 	# link everything
 	gcc tests_glade_oled.o tests_oled_cct_master_slave_menu.o cct_utils.o cct_master_slave_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	# ./tests_gtk
+
+
+tests_oled_cct_enc_dir_mode_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c src/cct_utils.c -I. $(INCDIR)
+	gcc -c src/cct_enc_dir_mode_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	# the module that implements tests_lcd_application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_enc_dir_mode_menu.c -o tests_oled_cct_enc_dir_mode_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_cct_enc_dir_mode_menu.o cct_utils.o cct_enc_dir_mode_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o options_menu.o `pkg-config --libs gtk+-3.0` -o tests_gtk
 	# run global tags
 	gtags -q
 	# run the simulation

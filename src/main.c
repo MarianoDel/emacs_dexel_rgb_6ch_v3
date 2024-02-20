@@ -27,14 +27,16 @@
 #include "test_functions.h"
 #include "dmx_transceiver.h"
 
-#include "manager.h"
-
 // linked modules
 #include "parameters.h"
 #include "screen.h"
 #include "ssd1306_display.h"
 
 #include "filters_and_offsets.h"
+#include "manager.h"
+#include "cct_manager.h"
+
+
 
 #include <stdio.h>
 #include <string.h>
@@ -203,13 +205,20 @@ int main (void)
 
     // -- end of check NTC connection on init --
     
-
+    
     // main program
     while (1)
     {
-        Manager(&mem_conf);
+        if ((mem_conf.program_type == CCT1_MODE) ||
+            (mem_conf.program_type == CCT2_MODE))
+        {
+            Cct_Manager (&mem_conf);
+        }
+        else
+        {
+            Manager(&mem_conf);
+        }
     }
-
 }
 
 //--- End of Main ---//
