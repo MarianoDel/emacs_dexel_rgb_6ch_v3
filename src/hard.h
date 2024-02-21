@@ -44,7 +44,7 @@
 #ifdef SOFTWARE_VERSION_2_0
 #define DMX_AND_CCT_MODE
 // #define DMX_ONLY_MODE
-#else
+#else    // for versions from 1.4 to 1.0
 #define DMX_ONLY_MODE
 #endif
 // --- UsartDebug Configs --- //

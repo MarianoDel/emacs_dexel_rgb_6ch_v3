@@ -19,9 +19,9 @@
     
 
 // Module Exported Functions ---------------------------------------------------
-void CCT_Manual_Static_Menu_UpdateTimer (void);
-void CCT_Manual_Static_Menu_Reset (void);
-resp_t CCT_Manual_Static_Menu (parameters_typedef *, sw_actions_t);
+void Cct_Manual_Static_Menu_UpdateTimer (void);
+void Cct_Manual_Static_Menu_Reset (void);
+resp_t Cct_Manual_Static_Menu (parameters_typedef *, sw_actions_t);
 
 
 #endif    /* _CCT_MANUAL_STATIC_MENU_H_ */

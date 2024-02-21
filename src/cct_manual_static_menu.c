@@ -58,21 +58,21 @@ unsigned char static_strobe = 0;
 
 
 // Module Funtions -------------------------------------------------------------
-void CCT_Manual_Static_Menu_UpdateTimer (void)
+void Cct_Manual_Static_Menu_UpdateTimer (void)
 {
     if (cct_manual_static_menu_timer)
         cct_manual_static_menu_timer--;
 }
 
 
-void CCT_Manual_Static_Menu_Reset (void)
+void Cct_Manual_Static_Menu_Reset (void)
 {
     cct_state = CCT_MANUAL_STATIC_MENU_INIT;
 }
 
 
 extern void display_update (void);
-resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
+resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
     static unsigned char showing = 0;
     resp_t resp = resp_continue;
@@ -135,7 +135,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
         
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT1:
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
 
         if (actions == selection_enter)
         {
@@ -167,7 +167,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT2:
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
 
         if (actions == selection_enter)
         {
@@ -199,7 +199,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT3:
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[2]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[2]);
 
         if (actions == selection_enter)
         {
@@ -231,7 +231,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT4:
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[3]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[3]);
 
         if (actions == selection_enter)
         {
@@ -263,7 +263,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT5:
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[4]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[4]);
 
         if (actions == selection_enter)
         {
@@ -295,7 +295,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT6:
-        resp = CCT_Utils_Update_Actions_Values (actions, &static_strobe);
+        resp = Cct_Utils_Update_Actions_Values (actions, &static_strobe);
 
         if (actions == selection_enter)
         {
@@ -327,7 +327,7 @@ resp_t CCT_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT7:
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[5]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[5]);
 
         if (actions == selection_enter)
         {

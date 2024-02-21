@@ -22,7 +22,7 @@
 // Exported Functions ----------------------------------------------------------
 void GetPercentage (unsigned char dmx_value, unsigned char * val_int, unsigned char * val_dec);
 unsigned short GetCct (unsigned char value, unsigned char cct_mode);
-resp_t CCT_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * values);
+resp_t Cct_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * values);
 
 
 

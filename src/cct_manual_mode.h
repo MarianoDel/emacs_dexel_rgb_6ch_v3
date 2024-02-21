@@ -5,12 +5,12 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### CCT_MANUAL_COLORS_MENU.H ##########################
+// #### CCT_MANUAL_MODE.H #########################
 //-------------------------------------------------
 
 // Prevent recursive inclusion -------------------------------------------------
-#ifndef _CCT_MANUAL_COLORS_MENU_H_
-#define _CCT_MANUAL_COLORS_MENU_H_
+#ifndef _CCT_MANUAL_MODE_H_
+#define _CCT_MANUAL_MODE_H_
 
 //-- includes to help configurations --//
 #include "switches_answers.h"
@@ -19,12 +19,11 @@
     
 
 // Module Exported Functions ---------------------------------------------------
-void Cct_Manual_Colors_Menu_UpdateTimer (void);
-void Cct_Manual_Colors_Menu_Reset (void);
-resp_t Cct_Manual_Colors_Menu (parameters_typedef *, sw_actions_t);
+resp_t Cct_ManualMode (parameters_typedef *, sw_actions_t);
+void Cct_ManualModeReset (void);
+void Cct_ManualMode_UpdateTimers (void);
 
-
-#endif    /* _CCT_MANUAL_COLORS_MENU_H_ */
+#endif    /* _CCT_MANUAL_MODE_H_ */
 
 //--- end of file ---//
 

@@ -28,7 +28,7 @@
 
 // Module Functions ------------------------------------------------------------
 // change values from actions with update flagged
-resp_t CCT_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * value)
+resp_t Cct_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * value)
 {
     resp_t resp = resp_continue;
     

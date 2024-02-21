@@ -74,21 +74,21 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Module Funtions -------------------------------------------------------------
-void CCT_Manual_Colors_Menu_UpdateTimer (void)
+void Cct_Manual_Colors_Menu_UpdateTimer (void)
 {
     if (cct_manual_colors_menu_timer)
         cct_manual_colors_menu_timer--;
 }
 
 
-void CCT_Manual_Colors_Menu_Reset (void)
+void Cct_Manual_Colors_Menu_Reset (void)
 {
     cct_state = CCT_MANUAL_COLORS_MENU_INIT;
 }
 
 
 extern void display_update (void);
-resp_t CCT_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
+resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
     static unsigned char showing = 0;
     resp_t resp = resp_continue;
@@ -137,7 +137,7 @@ resp_t CCT_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
         
     case CCT_MANUAL_COLORS_MENU_SELECT_LINE1:        
-        resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
 
         if (actions == selection_enter)
         {

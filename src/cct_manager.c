@@ -19,25 +19,26 @@
 
 #include "filters_and_offsets.h"
 #include "flash_program.h"
-
 #include "comm.h"
-#include "dsp.h"
 
 // linked modules
 #include "screen.h"
 #include "ssd1306_display.h"
 #include "parameters.h"
-#include "dmx1_mode.h"
-#include "dmx2_mode.h"
-#include "master_slave_mode.h"
-#include "manual_mode.h"
-#include "temperatures.h"
+// #include "dmx1_mode.h"
+// #include "dmx2_mode.h"
+
 // #include "hardware_mode.h"
-#include "options_menu.h"
-#include "reset_mode.h"
-#include "main_menu.h"
+// #include "options_menu.h"
+// #include "reset_mode.h"
+// #include "main_menu.h"
+
+#include "dsp.h"
+#include "temperatures.h"
 
 #include "cct_hardware_mode.h"
+#include "cct_manual_mode.h"
+#include "master_slave_mode.h"
 
 
 #include <stdio.h>
@@ -46,8 +47,7 @@
 typedef enum {
     INIT,
     GET_CONF,
-    CCT_MNGR_DMX1_MODE,
-    CCT_MNGR_DMX2_MODE,
+    CCT_MNGR_DMX_MODE,
     CCT_MNGR_MASTER_SLAVE_MODE,
     CCT_MNGR_MANUAL_MODE,
     CCT_MNGR_RESET_MODE,
@@ -150,152 +150,92 @@ void Cct_Manager (parameters_typedef * pmem)
             );
         timer_mngr = 500;
 
-        while (1);
-    
         while (timer_mngr)
             display_update_int_state_machine();
 
         cct_mngr_state++;            
         break;
 
-//     case GET_CONF:
+    case GET_CONF:
 
-//         if (pmem->program_type == DMX1_MODE)
-//         {
-//             //reception variables
-//             Packet_Detected_Flag = 0;
-//             DMX_channel_selected = pmem->dmx_first_channel;
-//             DMX_channel_quantity = pmem->dmx_channel_quantity;
+        if (pmem->program_inner_type == CCT_MASTER_SLAVE_MODE)
+        {
+            //reception variables for slave mode
+            Packet_Detected_Flag = 0;
+            DMX_channel_selected = pmem->dmx_first_channel;
+            DMX_channel_quantity = pmem->dmx_channel_quantity;
 
-//             //Mode Timeout enable
-//             ptFTT = &DMX1Mode_UpdateTimers;
+            //enable int outputs
+            FiltersAndOffsets_Enable_Outputs();            
 
-//             //packet reception enable
-//             DMX_EnableRx();
-
-//             //enable int outputs
-//             FiltersAndOffsets_Enable_Outputs();
+            //Mode Timeout enable
+            ptFTT = &MasterSlaveMode_UpdateTimers;
                 
-//             DMX1ModeReset();
-//             cct_mngr_state = CCT_MNGR_DMX1_MODE;
-//         }
-
-//         if (pmem->program_type == DMX2_MODE)
-//         {
-//             //reception variables
-//             Packet_Detected_Flag = 0;
-//             DMX_channel_selected = pmem->dmx_first_channel;
-//             DMX_channel_quantity = 4 + pmem->dmx_channel_quantity;
-
-//             //Mode Timeout enable
-//             ptFTT = &DMX2Mode_UpdateTimers;
-
-//             //packet reception enable
-//             DMX_EnableRx();
-
-//             //enable int outputs
-//             FiltersAndOffsets_Enable_Outputs();            
+            MasterSlaveModeReset();
                 
-//             DMX2ModeReset();
-//             cct_mngr_state = CCT_MNGR_DMX2_MODE;
-//         }
+            cct_mngr_state = CCT_MNGR_MASTER_SLAVE_MODE;
+        }
+
+        else if ((pmem->program_inner_type == CCT_MANUAL_CCT_MODE) ||
+                 (pmem->program_inner_type == CCT_MANUAL_STATIC_MODE) ||
+                 (pmem->program_inner_type == CCT_MANUAL_PRESET_MODE))
+        {
+            //enable int outputs
+            FiltersAndOffsets_Enable_Outputs();
+
+            //Mode Timeout enable
+            ptFTT = &Cct_ManualMode_UpdateTimers;
+                
+            Cct_ManualModeReset();
+                
+            cct_mngr_state = CCT_MNGR_MANUAL_MODE;
+        }
+        else    // default to CCT_DMX_MODE
+        {
+            pmem->program_inner_type = CCT_DMX_MODE;
+
+            // //reception variables
+            // Packet_Detected_Flag = 0;
+            // DMX_channel_selected = pmem->dmx_first_channel;
+            // DMX_channel_quantity = pmem->dmx_channel_quantity;
+
+            // //Mode Timeout enable
+            // ptFTT = &DMX1Mode_UpdateTimers;
+
+            // //packet reception enable
+            // DMX_EnableRx();
+
+            // //enable int outputs
+            // FiltersAndOffsets_Enable_Outputs();
+                
+            // DMX1ModeReset();
+            // cct_mngr_state = CCT_MNGR_DMX_MODE;
+        }
+        break;
+
+    case CCT_MNGR_DMX_MODE:
+        // Check encoder first
+        action = CheckActions();
             
-//         if (pmem->program_type == MASTER_SLAVE_MODE)
-//         {
-//             //reception variables for slave mode
-//             Packet_Detected_Flag = 0;
-//             DMX_channel_selected = pmem->dmx_first_channel;
-//             DMX_channel_quantity = pmem->dmx_channel_quantity;
+        // resp = DMX1Mode (ch_values, action);
 
-//             //enable int outputs
-//             FiltersAndOffsets_Enable_Outputs();            
+        // if (resp == resp_change)
+        // {
+        //     FiltersAndOffsets_Channels_to_Backup(ch_values);
+        // }
 
-//             //Mode Timeout enable
-//             ptFTT = &MasterSlaveMode_UpdateTimers;
-                
-//             MasterSlaveModeReset();
-                
-//             cct_mngr_state = CCT_MNGR_MASTER_SLAVE_MODE;
-//         }
+        // if (resp == resp_need_to_save)
+        // {
+        //     need_to_save_timer = 10000;
+        //     need_to_save = 1;
+        // }
 
-//         if (pmem->program_type == MANUAL_MODE)
-//         {
-//             //enable int outputs
-//             FiltersAndOffsets_Enable_Outputs();
-
-//             //Mode Timeout enable
-//             ptFTT = &ManualMode_UpdateTimers;
-                
-//             ManualModeReset();
-                
-//             cct_mngr_state = CCT_MNGR_MANUAL_MODE;
-//         }
-
-//         if (pmem->program_type == RESET_MODE)
-//         {                
-//             ResetModeReset();                
-//             cct_mngr_state = CCT_MNGR_RESET_MODE;
-//         }
-//         break;
-
-//     case CCT_MNGR_DMX1_MODE:
-//         // Check encoder first
-//         action = CheckActions();
+        // if (CheckSET() > SW_MIN)
+        //     cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
             
-//         resp = DMX1Mode (ch_values, action);
-
-//         if (resp == resp_change)
-//         {
-//             FiltersAndOffsets_Channels_to_Backup(ch_values);
-//         }
-
-//         if (resp == resp_need_to_save)
-//         {
-//             need_to_save_timer = 10000;
-//             need_to_save = 1;
-//         }
-
-//         if (CheckSET() > SW_MIN)
-//             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
-            
-//         UpdateEncoder();
-
-            
-// #ifdef USART_DEBUG_MODE
-//         if (!timer_mngr)
-//         {
-//             timer_mngr = 1000;
-
-//             sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-//                     *(ch_values + 0),
-//                     *(ch_values + 1),
-//                     *(ch_values + 2),
-//                     *(ch_values + 3),
-//                     *(ch_values + 4),
-//                     *(ch_values + 5));
-//             UsartDebug(s_to_send);
-
-//             sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
-//                     dac_chnls[0],
-//                     dac_chnls[1],
-//                     dac_chnls[2],
-//                     dac_chnls[3],
-//                     dac_chnls[4],
-//                     dac_chnls[5]);
-//             UsartDebug(s_to_send);
-
-//             sprintf(s_to_send, "p1: %d, p2: %d, p3: %d, p4: %d, p5: %d, p6: %d\n",
-//                     pwm_chnls[0],
-//                     pwm_chnls[1],
-//                     pwm_chnls[2],
-//                     pwm_chnls[3],
-//                     pwm_chnls[4],
-//                     pwm_chnls[5]);
-//             UsartDebug(s_to_send);
-//         }
-// #endif
-            
-//         break;
+        // UpdateEncoder();
+                       
+        break;
 
 //     case CCT_MNGR_DMX2_MODE:
 //         // Check encoder first
@@ -404,36 +344,36 @@ void Cct_Manager (parameters_typedef * pmem)
             
 //         break;
 
-//     case CCT_MNGR_MANUAL_MODE:
-//         // Check encoder first
-//         action = CheckActions();
+    case CCT_MNGR_MANUAL_MODE:
+        // Check encoder first
+        action = CheckActions();
 
-//         resp = ManualMode (pmem, action);
+        resp = Cct_ManualMode (pmem, action);
 
-//         if ((resp == resp_change) ||
-//             (resp == resp_change_all_up))    //fixed mode save and change
-//         {
-//             for (unsigned char n = 0; n < sizeof(ch_values); n++)
-//                 ch_values[n] = pmem->fixed_channels[n];
+        if ((resp == resp_change) ||
+            (resp == resp_change_all_up))    //fixed mode save and change
+        {
+            for (unsigned char n = 0; n < 6; n++)
+                ch_values[n] = pmem->fixed_channels[n];
 
-//             FiltersAndOffsets_Channels_to_Backup (ch_values);
+            FiltersAndOffsets_Channels_to_Backup (ch_values);
             
-//             if (resp == resp_change_all_up)
-//                 resp = resp_need_to_save;
-//         }
+            if (resp == resp_change_all_up)
+                resp = resp_need_to_save;
+        }
 
-//         if (resp == resp_need_to_save)
-//         {
-//             need_to_save_timer = 10000;
-//             need_to_save = 1;
-//         }
+        if (resp == resp_need_to_save)
+        {
+            need_to_save_timer = 10000;
+            need_to_save = 1;
+        }
 
-//         if (CheckSET() > SW_MIN)
-//             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
+        if (CheckSET() > SW_MIN)
+            cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
 
-//         UpdateEncoder();
+        UpdateEncoder();
             
-//         break;
+        break;
 
 
 //     case CCT_MNGR_RESET_MODE:
@@ -705,7 +645,9 @@ void Cct_Manager (parameters_typedef * pmem)
     // save flash after configs
     if ((need_to_save) && (!need_to_save_timer))
     {
+        __disable_irq();
         need_to_save = Flash_WriteConfigurations();
+        __enable_irq();
 
 #ifdef USART_DEBUG_MODE
         if (need_to_save)
