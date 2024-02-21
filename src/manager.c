@@ -584,7 +584,17 @@ void Manager (parameters_typedef * pmem)
 #elif (defined DMX_AND_CCT_MODE)
 
         resp = Cct_HardwareMode (pmem, action);
-
+        if ((resp == resp_need_to_save) &&
+            ((pmem->program_type == CCT1_MODE) || (pmem->program_type == CCT2_MODE)))                
+        {
+            // save inmediatly and reboot
+            __disable_irq();
+            Flash_WriteConfigurations();
+            __enable_irq();
+            
+            NVIC_SystemReset();
+            
+        }
 #else
 #error "No mode selected on hard.h"    
 #endif
@@ -748,7 +758,9 @@ void Manager (parameters_typedef * pmem)
     // save flash after configs
     if ((need_to_save) && (!need_to_save_timer))
     {
+        __disable_irq();
         need_to_save = Flash_WriteConfigurations();
+        __enable_irq();
 
 #ifdef USART_DEBUG_MODE
         if (need_to_save)
