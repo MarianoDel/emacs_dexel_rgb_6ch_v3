@@ -66,7 +66,7 @@ void Cct_ManualModeReset (void)
 resp_t Cct_ManualMode (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
-    unsigned char * ch_val;
+    // unsigned char * ch_val;
 
     switch (cct_manual_state)
     {

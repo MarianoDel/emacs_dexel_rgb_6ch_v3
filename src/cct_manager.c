@@ -153,6 +153,8 @@ void Cct_Manager (parameters_typedef * pmem)
         while (timer_mngr)
             display_update_int_state_machine();
 
+        // force CCT_MANUAL_CCT_MODE
+        pmem->program_inner_type = CCT_MANUAL_CCT_MODE;
         cct_mngr_state++;            
         break;
 
@@ -353,7 +355,7 @@ void Cct_Manager (parameters_typedef * pmem)
         if ((resp == resp_change) ||
             (resp == resp_change_all_up))    //fixed mode save and change
         {
-            for (unsigned char n = 0; n < 6; n++)
+            for (unsigned char n = 0; n < 5; n++)    //ch6 saves the dimmer
                 ch_values[n] = pmem->fixed_channels[n];
 
             FiltersAndOffsets_Channels_to_Backup (ch_values);

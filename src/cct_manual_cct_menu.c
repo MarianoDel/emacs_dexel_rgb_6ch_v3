@@ -23,8 +23,11 @@ typedef enum {
     CCT_MANUAL_CCT_MENU_CHECK_OPTIONS,
     CCT_MANUAL_CCT_MENU_CHECK_OPTIONS_WAIT_FREE,    
     CCT_MANUAL_CCT_MENU_SELECT_LINE1,
-    CCT_MANUAL_CCT_MENU_SELECT_LINE2,    
-    CCT_MANUAL_CCT_MENU_SELECT_LINE3
+    CCT_MANUAL_CCT_MENU_SELECT_LINE1_WAIT_FREE,
+    CCT_MANUAL_CCT_MENU_SELECT_LINE2,
+    CCT_MANUAL_CCT_MENU_SELECT_LINE2_WAIT_FREE,
+    CCT_MANUAL_CCT_MENU_SELECT_LINE3,
+    CCT_MANUAL_CCT_MENU_SELECT_LINE3_WAIT_FREE    
     
 } cct_manual_cct_menu_state_e;
 
@@ -47,7 +50,8 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Globals ---------------------------------------------------------------------
-
+unsigned char cct_dimmer = 0;    //TODO: saves this to mem
+unsigned char cct_temp_color = 0;    //TODO: saves this to mem
 
 
 // Module Private Functions ----------------------------------------------------
@@ -75,7 +79,8 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
     char s_temp[ALL_LINE_LENGTH_NULL];
     unsigned char dim_int;
     unsigned char dim_dec;
-    unsigned short cct_int;    
+    unsigned short cct_int;
+    unsigned int calc = 0;
 
     switch (cct_state)
     {
@@ -84,17 +89,17 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_ClearLines();
 
         // line 1
-        GetPercentage (mem->fixed_channels[0], &dim_int, &dim_dec);
+        GetPercentage (cct_dimmer, &dim_int, &dim_dec);        
         sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
         Display_SetLine1(s_temp);
 
         // line 2
-        cct_int = GetCct (mem->fixed_channels[1], CCT_MODE_2700_6500);
+        cct_int = GetCct (cct_temp_color, CCT_MODE_2700_6500);        
         sprintf(s_temp, "CCT: %dK", cct_int);
         Display_SetLine2(s_temp);
 
         // line 3
-        sprintf(s_temp, "Green: %3d", mem->fixed_channels[2]);
+        sprintf(s_temp, "Green: %3d", mem->fixed_channels[1]);
         Display_SetLine3(s_temp);
 
         // bottom line
@@ -119,8 +124,38 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         }
         break;
         
-    case CCT_MANUAL_CCT_MENU_SELECT_LINE1:        
-        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
+    case CCT_MANUAL_CCT_MENU_SELECT_LINE1:
+        resp = Cct_Utils_Update_Actions_Values (actions, &cct_dimmer);
+
+        // update colors
+        if (cct_dimmer)
+        {
+            unsigned char offset;
+            
+            offset = 0;
+            calc = 255 - cct_temp_color;
+            if (calc)
+                offset = 1;
+            
+            calc = calc * cct_dimmer;
+            calc >>= 8;
+
+            mem->fixed_channels[3] = calc + offset;
+
+            offset = 0;            
+            calc = cct_temp_color;            
+            if (calc)
+                offset = 1;
+            
+            calc = calc * cct_dimmer;
+            calc >>= 8;
+            mem->fixed_channels[4] = calc + offset;
+        }
+        else
+        {
+            mem->fixed_channels[3] = 0;
+            mem->fixed_channels[4] = 0;
+        }        
 
         if (actions == selection_enter)
         {
@@ -142,7 +177,7 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                GetPercentage (mem->fixed_channels[0], &dim_int, &dim_dec);
+                GetPercentage (cct_dimmer, &dim_int, &dim_dec);
                 sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
                 Display_SetLine1(s_temp);
             }
@@ -152,9 +187,47 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         }
         break;
 
-    case CCT_MANUAL_CCT_MENU_SELECT_LINE2:
-        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
+    case CCT_MANUAL_CCT_MENU_SELECT_LINE1_WAIT_FREE:
+        if (actions == do_nothing)    // change start or end selections
+        {
+            cct_state++;
+            showing = 1;
+        }
+        break;
 
+    case CCT_MANUAL_CCT_MENU_SELECT_LINE2:
+        resp = Cct_Utils_Update_Actions_Values (actions, &cct_temp_color);
+
+        // update colors
+        if (cct_dimmer)
+        {
+            unsigned char offset;
+            
+            offset = 0;
+            calc = 255 - cct_temp_color;
+            if (calc)
+                offset = 1;
+            
+            calc = calc * cct_dimmer;
+            calc >>= 8;
+
+            mem->fixed_channels[3] = calc + offset;
+
+            offset = 0;            
+            calc = cct_temp_color;            
+            if (calc)
+                offset = 1;
+            
+            calc = calc * cct_dimmer;
+            calc >>= 8;
+            mem->fixed_channels[4] = calc + offset;
+        }
+        else
+        {
+            mem->fixed_channels[3] = 0;
+            mem->fixed_channels[4] = 0;
+        }
+        
         if (actions == selection_enter)
         {
             cct_state++;
@@ -175,7 +248,7 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                cct_int = GetCct (mem->fixed_channels[1], CCT_MODE_2700_6500);
+                cct_int = GetCct (cct_temp_color, CCT_MODE_2700_6500);
                 sprintf(s_temp, "CCT: %dK", cct_int);
                 Display_SetLine2(s_temp);
             }
@@ -185,12 +258,20 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         }
         break;
 
+    case CCT_MANUAL_CCT_MENU_SELECT_LINE2_WAIT_FREE:
+        if (actions == do_nothing)    // change start or end selections
+        {
+            cct_state++;
+            showing = 1;
+        }
+        break;
+
     case CCT_MANUAL_CCT_MENU_SELECT_LINE3:
-        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[2]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
 
         if (actions == selection_enter)
         {
-            cct_state = CCT_MANUAL_CCT_MENU_CHECK_OPTIONS;
+            cct_state++;
         }
 
         if (actions != do_nothing)
@@ -208,7 +289,7 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                sprintf(s_temp, "Green: %3d", mem->fixed_channels[2]);
+                sprintf(s_temp, "Green: %3d", mem->fixed_channels[1]);
                 Display_SetLine3(s_temp);
             }
             
@@ -216,6 +297,14 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             cct_need_display_update = 1;
         }
         break;
+
+    case CCT_MANUAL_CCT_MENU_SELECT_LINE3_WAIT_FREE:
+        if (actions == do_nothing)    // change start or end selections
+        {
+            cct_state = CCT_MANUAL_CCT_MENU_CHECK_OPTIONS;
+        }
+        break;
+        
         
         
     default:
