@@ -72,7 +72,7 @@ resp_t Cct_ManualMode (parameters_typedef * mem, sw_actions_t actions)
     {
     case CCT_MANUAL_MODE_INIT:
 
-        switch (mem->program_inner_type)
+        switch (mem->program_inner_type_in_cct)
         {
         case CCT_MANUAL_CCT_MODE:
             ptFCct_ManualMenuTT = &Cct_Manual_Cct_Menu_UpdateTimer;
@@ -94,7 +94,7 @@ resp_t Cct_ManualMode (parameters_typedef * mem, sw_actions_t actions)
             
             // default to cct dimmer mode
         default:
-            mem->program_inner_type = CCT_MANUAL_CCT_MODE;
+            mem->program_inner_type_in_cct = CCT_MANUAL_CCT_MODE;
             ptFCct_ManualMenuTT = &Cct_Manual_Cct_Menu_UpdateTimer;
             Cct_Manual_Cct_Menu_Reset ();
             cct_manual_state = CCT_MANUAL_MODE_CCT_MODE;

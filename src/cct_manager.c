@@ -154,16 +154,16 @@ void Cct_Manager (parameters_typedef * pmem)
             display_update_int_state_machine();
 
         // force CCT_MANUAL_CCT_MODE
-        // pmem->program_inner_type = CCT_MANUAL_CCT_MODE;
+        // pmem->program_inner_type_in_cct = CCT_MANUAL_CCT_MODE;
         // force CCT_MANUAL_STATIC_MODE
-        pmem->program_inner_type = CCT_MANUAL_STATIC_MODE;
+        pmem->program_inner_type_in_cct = CCT_MANUAL_STATIC_MODE;
 
         cct_mngr_state++;            
         break;
 
     case GET_CONF:
 
-        if (pmem->program_inner_type == CCT_MASTER_SLAVE_MODE)
+        if (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_MODE)
         {
             //reception variables for slave mode
             Packet_Detected_Flag = 0;
@@ -181,9 +181,9 @@ void Cct_Manager (parameters_typedef * pmem)
             cct_mngr_state = CCT_MNGR_MASTER_SLAVE_MODE;
         }
 
-        else if ((pmem->program_inner_type == CCT_MANUAL_CCT_MODE) ||
-                 (pmem->program_inner_type == CCT_MANUAL_STATIC_MODE) ||
-                 (pmem->program_inner_type == CCT_MANUAL_PRESET_MODE))
+        else if ((pmem->program_inner_type_in_cct == CCT_MANUAL_CCT_MODE) ||
+                 (pmem->program_inner_type_in_cct == CCT_MANUAL_STATIC_MODE) ||
+                 (pmem->program_inner_type_in_cct == CCT_MANUAL_PRESET_MODE))
         {
             //enable int outputs
             FiltersAndOffsets_Enable_Outputs();
@@ -197,7 +197,7 @@ void Cct_Manager (parameters_typedef * pmem)
         }
         else    // default to CCT_DMX_MODE
         {
-            pmem->program_inner_type = CCT_DMX_MODE;
+            pmem->program_inner_type_in_cct = CCT_DMX_MODE;
 
             // //reception variables
             // Packet_Detected_Flag = 0;

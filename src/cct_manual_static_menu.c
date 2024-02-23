@@ -58,6 +58,7 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Globals ---------------------------------------------------------------------
+volatile unsigned short cct_manual_static_strobe_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
@@ -68,6 +69,9 @@ void Cct_Manual_Static_Menu_UpdateTimer (void)
 {
     if (cct_manual_static_menu_timer)
         cct_manual_static_menu_timer--;
+
+    if (cct_manual_static_strobe_timer)
+        cct_manual_static_strobe_timer--;
 }
 
 
@@ -77,10 +81,15 @@ void Cct_Manual_Static_Menu_Reset (void)
 }
 
 
+#define STB_FLAG_RUNNING    0
+#define STB_FLAG_END    1
+#define STB_FLAG_ENDED    2
 extern void display_update (void);
 resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
     static unsigned char showing = 0;
+    static unsigned char strobe_flag = STB_FLAG_ENDED;
+    static unsigned char strobe_flag_on = 0;    
     resp_t resp = resp_continue;
     char s_temp[ALL_LINE_LENGTH_NULL];
 
@@ -392,6 +401,24 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT6:
         resp = Cct_Utils_Update_Actions_Values (actions, &mem->cct_strobe);
 
+        if (resp == resp_change)
+        {
+            resp = resp_continue;
+            
+            if (mem->cct_strobe)
+            {
+                // disable fast filters
+                mem->program_inner_type = DMX2_INNER_STROBE_MODE;
+                strobe_flag = STB_FLAG_RUNNING;
+            }
+            else
+            {
+                // enable filters
+                mem->program_inner_type = MANUAL_NO_INNER_MODE;
+                strobe_flag = STB_FLAG_END;
+            }
+        }
+
         if (actions == selection_enter)
         {
             cct_state++;
@@ -432,15 +459,20 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
     case CCT_MANUAL_STATIC_MENU_SELECT_OPT7:
         resp = Cct_Utils_Update_Actions_Values (actions, &mem->cct_dimmer);
 
-        // update all colors
+        // update all colors if not in strobe, else the strobe func will update the dimmer
         if (resp == resp_change)
         {
-            for (int i = 0; i < 5; i++)
+            if (strobe_flag != STB_FLAG_RUNNING)
             {
-                mem->fixed_channels[i] = Cct_Utils_Dim_Color (
-                    mem->cct_dimmer,
-                    mem->dimmed_channels[i]);
+                for (int i = 0; i < 5; i++)
+                {
+                    mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                        mem->cct_dimmer,
+                        mem->dimmed_channels[i]);
+                }
             }
+            else
+                resp = resp_continue;
         }
         
         if (actions == selection_enter)
@@ -489,6 +521,48 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
     {
         display_update();
         cct_need_display_update = 0;
+    }
+
+    // Strobe functions
+    if (strobe_flag == STB_FLAG_RUNNING)
+    {
+        if (!cct_manual_static_strobe_timer)
+        {
+            if (!strobe_flag_on)
+            {
+                // update all colors
+                for (int i = 0; i < 5; i++)
+                {
+                    mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                        mem->cct_dimmer,
+                        mem->dimmed_channels[i]);
+                }
+                strobe_flag_on = 1;
+            }
+            else
+            {
+                for (int i = 0; i < 5; i++)
+                    mem->fixed_channels[i] = 0;
+
+                strobe_flag_on = 0;
+            }
+        
+            cct_manual_static_strobe_timer = 1060 - mem->cct_strobe * 4;
+            resp = resp_change;
+        }
+    }
+    else if (strobe_flag == STB_FLAG_END)
+    {
+        // update all colors
+        for (int i = 0; i < 5; i++)
+        {
+            mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                mem->cct_dimmer,
+                mem->dimmed_channels[i]);
+        }
+        cct_manual_static_strobe_timer = 0;
+        resp = resp_change;
+        strobe_flag = STB_FLAG_ENDED;
     }
 
     return resp;
