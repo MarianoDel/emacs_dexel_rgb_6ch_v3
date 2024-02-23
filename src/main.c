@@ -176,6 +176,15 @@ int main (void)
         
         mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
 
+        // default config for cct channels
+        // for (int i = 0; i < 5; i++)
+        //     mem_conf.dimmed_channels[i] = 0;
+
+        mem_conf.cct_dimmer = 255;
+        // mem_conf.cct_strobe = 0;
+        
+        
+
 #if (defined USE_ENCODER_DIRECT)
         mem_conf.encoder_direction = 0;
 #elif (defined USE_ENCODER_INVERT)

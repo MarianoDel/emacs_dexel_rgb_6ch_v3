@@ -154,7 +154,10 @@ void Cct_Manager (parameters_typedef * pmem)
             display_update_int_state_machine();
 
         // force CCT_MANUAL_CCT_MODE
-        pmem->program_inner_type = CCT_MANUAL_CCT_MODE;
+        // pmem->program_inner_type = CCT_MANUAL_CCT_MODE;
+        // force CCT_MANUAL_STATIC_MODE
+        pmem->program_inner_type = CCT_MANUAL_STATIC_MODE;
+
         cct_mngr_state++;            
         break;
 

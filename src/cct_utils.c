@@ -133,5 +133,25 @@ unsigned short GetCct (unsigned char value, unsigned char cct_mode)
 }
 
 
+unsigned char Cct_Utils_Dim_Color (unsigned char dim_value, unsigned char color_value)
+{
+    unsigned int calc = 0;
+    unsigned char offset = 0;    
+    
+    if (dim_value)
+    {            
+        if (color_value)
+            offset = 1;
+            
+        calc = color_value * dim_value;
+        calc >>= 8;
+        calc += offset;
+    }
+    else
+        calc = 0;
+    
+    return (unsigned char) calc;
+}
+
 //--- end of file ---//
 

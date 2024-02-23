@@ -50,8 +50,6 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Globals ---------------------------------------------------------------------
-unsigned char cct_dimmer = 0;    //TODO: saves this to mem
-unsigned char cct_temp_color = 0;    //TODO: saves this to mem
 
 
 // Module Private Functions ----------------------------------------------------
@@ -89,12 +87,12 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_ClearLines();
 
         // line 1
-        GetPercentage (cct_dimmer, &dim_int, &dim_dec);        
+        GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);        
         sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
         Display_SetLine1(s_temp);
 
         // line 2
-        cct_int = GetCct (cct_temp_color, CCT_MODE_2700_6500);        
+        cct_int = GetCct (mem->cct_temp_color, CCT_MODE_2700_6500);        
         sprintf(s_temp, "CCT: %dK", cct_int);
         Display_SetLine2(s_temp);
 
@@ -125,29 +123,29 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
         
     case CCT_MANUAL_CCT_MENU_SELECT_LINE1:
-        resp = Cct_Utils_Update_Actions_Values (actions, &cct_dimmer);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->cct_dimmer);
 
         // update colors
-        if (cct_dimmer)
+        if (mem->cct_dimmer)
         {
             unsigned char offset;
             
             offset = 0;
-            calc = 255 - cct_temp_color;
+            calc = 255 - mem->cct_temp_color;
             if (calc)
                 offset = 1;
             
-            calc = calc * cct_dimmer;
+            calc = calc * mem->cct_dimmer;
             calc >>= 8;
 
             mem->fixed_channels[3] = calc + offset;
 
             offset = 0;            
-            calc = cct_temp_color;            
+            calc = mem->cct_temp_color;            
             if (calc)
                 offset = 1;
             
-            calc = calc * cct_dimmer;
+            calc = calc * mem->cct_dimmer;
             calc >>= 8;
             mem->fixed_channels[4] = calc + offset;
         }
@@ -177,7 +175,7 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                GetPercentage (cct_dimmer, &dim_int, &dim_dec);
+                GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);
                 sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
                 Display_SetLine1(s_temp);
             }
@@ -196,29 +194,29 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_CCT_MENU_SELECT_LINE2:
-        resp = Cct_Utils_Update_Actions_Values (actions, &cct_temp_color);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->cct_temp_color);
 
         // update colors
-        if (cct_dimmer)
+        if (mem->cct_dimmer)
         {
             unsigned char offset;
             
             offset = 0;
-            calc = 255 - cct_temp_color;
+            calc = 255 - mem->cct_temp_color;
             if (calc)
                 offset = 1;
             
-            calc = calc * cct_dimmer;
+            calc = calc * mem->cct_dimmer;
             calc >>= 8;
 
             mem->fixed_channels[3] = calc + offset;
 
             offset = 0;            
-            calc = cct_temp_color;            
+            calc = mem->cct_temp_color;            
             if (calc)
                 offset = 1;
             
-            calc = calc * cct_dimmer;
+            calc = calc * mem->cct_dimmer;
             calc >>= 8;
             mem->fixed_channels[4] = calc + offset;
         }
@@ -248,7 +246,7 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                cct_int = GetCct (cct_temp_color, CCT_MODE_2700_6500);
+                cct_int = GetCct (mem->cct_temp_color, CCT_MODE_2700_6500);
                 sprintf(s_temp, "CCT: %dK", cct_int);
                 Display_SetLine2(s_temp);
             }

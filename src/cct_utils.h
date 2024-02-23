@@ -23,7 +23,7 @@
 void GetPercentage (unsigned char dmx_value, unsigned char * val_int, unsigned char * val_dec);
 unsigned short GetCct (unsigned char value, unsigned char cct_mode);
 resp_t Cct_Utils_Update_Actions_Values (sw_actions_t actions, unsigned char * values);
-
+unsigned char Cct_Utils_Dim_Color (unsigned char dim_value, unsigned char color_value);
 
 
 #endif    /* __CCT_UTILS_H_ */
