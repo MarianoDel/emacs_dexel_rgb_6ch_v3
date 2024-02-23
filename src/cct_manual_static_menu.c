@@ -138,6 +138,7 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 mem->cct_dimmer,
                 mem->dimmed_channels[i]);
         }
+        resp = resp_change;
         
         cct_need_display_update = 1;
         cct_state++;

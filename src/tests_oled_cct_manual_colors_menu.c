@@ -63,7 +63,7 @@ gboolean Test_Timeouts_Loop_1ms (gpointer user_data)
     if (timer_standby)
         timer_standby--;
 
-    CCT_Manual_Colors_Menu_UpdateTimer ();
+    Cct_Manual_Colors_Menu_UpdateTimer ();
     
     return TRUE;
 }
@@ -115,7 +115,7 @@ void Test_CCT_Manual_Colors (void)
 
         SCREEN_Init();
 
-        CCT_Manual_Colors_Menu_Reset ();
+        Cct_Manual_Colors_Menu_Reset ();
 
         display_update_int_state_machine ();
     }
@@ -124,7 +124,7 @@ void Test_CCT_Manual_Colors (void)
     {
         resp_t resp = resp_continue;
 
-        resp = CCT_Manual_Colors_Menu (&mem_conf, encoder_actions);
+        resp = Cct_Manual_Colors_Menu (&mem_conf, encoder_actions);
         encoder_actions = do_nothing;
 
         if (resp != resp_continue)

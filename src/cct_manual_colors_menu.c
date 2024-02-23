@@ -35,16 +35,39 @@ char str_colors [20][11] = {"2700K",
                             "Amber",
                             "Peach",
                             "Turquoise",
-                            "Aqua",
+                            "Orange Red",
                             "Steel Blue",
                             "Cherry"};
+
+unsigned char rgb_colors [20][5] = {{0,0,0,255,0},
+                                    {0,0,0,225,29},
+                                    {0,0,0,200,55},
+                                    {0,0,0,175,80},
+                                    {0,0,0,127,128},
+                                    {0,0,0,63,192},
+                                    {0,0,0,0,255},
+                                    {127,128,0,0,0},
+                                    {0,127,128,0,0},
+                                    {127,0,128,0,0},
+                                    {127,0,128,0,0},
+                                    {100,75,80,0,0},
+                                    {155,77,23,0,0},
+                                    {130,66,59,0,0},
+                                    {146,109,0,0,0},
+                                    {100,84,71,0,0},
+                                    {33,115,107,0,0},
+                                    {201,54,0,0,0},
+                                    {47,87,121,0,0},
+                                    {206,4,45,0,0}};
 
 typedef enum {
     CCT_MANUAL_COLORS_MENU_INIT = 0,
     CCT_MANUAL_COLORS_MENU_CHECK_OPTIONS,
     CCT_MANUAL_COLORS_MENU_CHECK_OPTIONS_WAIT_FREE,    
     CCT_MANUAL_COLORS_MENU_SELECT_LINE1,
-    CCT_MANUAL_COLORS_MENU_SELECT_LINE2
+    CCT_MANUAL_COLORS_MENU_SELECT_LINE1_WAIT_FREE,
+    CCT_MANUAL_COLORS_MENU_SELECT_LINE2,
+    CCT_MANUAL_COLORS_MENU_SELECT_LINE2_WAIT_FREE
     
 } cct_manual_colors_menu_state_e;
 
@@ -71,6 +94,7 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Module Private Functions ----------------------------------------------------
+void Cct_Index_To_Channels(unsigned char * rgb_table, unsigned char * chnls);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -87,6 +111,7 @@ void Cct_Manual_Colors_Menu_Reset (void)
 }
 
 
+// color index in cct_temp_color
 extern void display_update (void);
 resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
@@ -95,8 +120,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
     char s_temp[ALL_LINE_LENGTH_NULL];
     unsigned char dim_int;
     unsigned char dim_dec;
-    unsigned short cct_int;    
-
+    
     switch (cct_state)
     {
     case CCT_MANUAL_COLORS_MENU_INIT:
@@ -104,19 +128,29 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_ClearLines();
 
         // line 1
-        GetPercentage (mem->fixed_channels[0], &dim_int, &dim_dec);
+        GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);
         sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
         Display_SetLine1(s_temp);
 
         // line 2
         sprintf(s_temp, "%2d -> %s",
-                mem->fixed_channels[1] + 1,
-                &str_colors[mem->fixed_channels[1]][0]);
+                mem->cct_temp_color + 1,
+                &str_colors[mem->cct_temp_color][0]);
         Display_SetLine2(s_temp);
 
         // bottom line
         Display_SetLine8("         Preset Color");
-        
+
+        // update all colors
+        Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+        for (int i = 0; i < 5; i++)
+        {
+            mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                mem->cct_dimmer,
+                mem->dimmed_channels[i]);
+        }
+        resp = resp_change;        
+                
         cct_need_display_update = 1;
         cct_state++;
         break;
@@ -137,8 +171,20 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         break;
         
     case CCT_MANUAL_COLORS_MENU_SELECT_LINE1:        
-        resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
+        resp = Cct_Utils_Update_Actions_Values (actions, &mem->cct_dimmer);
 
+        // colors change
+        if (resp = resp_change)
+        {
+            Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+            for (int i = 0; i < 5; i++)
+            {
+                mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                    mem->cct_dimmer,
+                    mem->dimmed_channels[i]);
+            }
+        }
+        
         if (actions == selection_enter)
         {
             cct_state++;
@@ -159,7 +205,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                GetPercentage (mem->fixed_channels[0], &dim_int, &dim_dec);
+                GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);
                 sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
                 Display_SetLine1(s_temp);
             }
@@ -169,45 +215,65 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         }
         break;
 
+    case CCT_MANUAL_COLORS_MENU_SELECT_LINE1_WAIT_FREE:
+        if (actions == do_nothing)    // change start or end selections
+        {
+            cct_state++;
+            showing = 1;
+        }
+        break;
+
     case CCT_MANUAL_COLORS_MENU_SELECT_LINE2:
         // resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
 
         if (actions == selection_dwn_fast)
         {
-            if (mem->fixed_channels[1] >= 4)
-                mem->fixed_channels[1] -= 4;
+            if (mem->cct_temp_color >= 4)
+                mem->cct_temp_color -= 4;
             else
-                mem->fixed_channels[1] = 0;
+                mem->cct_temp_color = 0;
 
             resp = resp_change;
         }
         else if (actions == selection_dwn)
         {
-            if (mem->fixed_channels[1])
-                mem->fixed_channels[1] -= 1;
+            if (mem->cct_temp_color)
+                mem->cct_temp_color -= 1;
 
             resp = resp_change;        
         }
         else if (actions == selection_up_fast)
         {
-            if (mem->fixed_channels[1] <= 19 - 4)
-                mem->fixed_channels[1] += 4;
+            if (mem->cct_temp_color <= 19 - 4)
+                mem->cct_temp_color += 4;
             else
-                mem->fixed_channels[1] = 19;
+                mem->cct_temp_color = 19;
 
             resp = resp_change;        
         }
         else if (actions == selection_up)
         {
-            if (mem->fixed_channels[1] <= 19 - 1)
-                mem->fixed_channels[1] += 1;
+            if (mem->cct_temp_color <= 19 - 1)
+                mem->cct_temp_color += 1;
 
             resp = resp_change;        
+        }
+
+        // colors change
+        if (resp = resp_change)
+        {
+            Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+            for (int i = 0; i < 5; i++)
+            {
+                mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                    mem->cct_dimmer,
+                    mem->dimmed_channels[i]);
+            }
         }
         
         if (actions == selection_enter)
         {
-            cct_state = CCT_MANUAL_COLORS_MENU_CHECK_OPTIONS;
+            cct_state++;
         }
 
         if (actions != do_nothing)
@@ -226,8 +292,8 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
             {
                 showing = 1;
                 sprintf(s_temp, "%2d -> %s",
-                        mem->fixed_channels[1] + 1,
-                        &str_colors[mem->fixed_channels[1]][0]);
+                        mem->cct_temp_color + 1,
+                        &str_colors[mem->cct_temp_color][0]);
                 Display_SetLine2(s_temp);
             }
             
@@ -236,6 +302,14 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         }
         break;        
         
+    case CCT_MANUAL_COLORS_MENU_SELECT_LINE2_WAIT_FREE:
+        if (actions == do_nothing)    // change start or end selections
+        {
+            cct_state = CCT_MANUAL_COLORS_MENU_CHECK_OPTIONS;
+            showing = 1;
+        }
+        break;
+
     default:
         cct_state = CCT_MANUAL_COLORS_MENU_INIT;
         break;
@@ -252,4 +326,10 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 }
 
 
+// void Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0])
+void Cct_Index_To_Channels(unsigned char * rgb_table, unsigned char * chnls)
+{
+    for (int i = 0; i < 5; i++)
+        *(chnls + i) = *(rgb_table + i);
+}
 //--- end of file ---//

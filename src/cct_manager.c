@@ -156,7 +156,9 @@ void Cct_Manager (parameters_typedef * pmem)
         // force CCT_MANUAL_CCT_MODE
         // pmem->program_inner_type_in_cct = CCT_MANUAL_CCT_MODE;
         // force CCT_MANUAL_STATIC_MODE
-        pmem->program_inner_type_in_cct = CCT_MANUAL_STATIC_MODE;
+        // pmem->program_inner_type_in_cct = CCT_MANUAL_STATIC_MODE;
+        // force CCT_MANUAL_STATIC_MODE
+        pmem->program_inner_type_in_cct = CCT_MANUAL_PRESET_MODE;
 
         cct_mngr_state++;            
         break;
