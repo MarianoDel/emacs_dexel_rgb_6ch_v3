@@ -38,6 +38,7 @@
 
 #include "cct_hardware_mode.h"
 #include "cct_manual_mode.h"
+#include "cct_main_menu.h"
 #include "master_slave_mode.h"
 
 
@@ -382,127 +383,100 @@ void Cct_Manager (parameters_typedef * pmem)
             
         break;
 
-
-//     case CCT_MNGR_RESET_MODE:
-//         // Check encoder first
-//         action = CheckActions();
-
-//         resp = ResetMode (pmem, action);
-
-//         if (resp == resp_finish)
-//         {
-//             // if (pmem->program_type == RESET_MODE)    //not save, go to main menu again
-//             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
-//         }
-
-//         if (resp == resp_need_to_save)
-//         {
-//             need_to_save_timer = 100;    //save almost instantly
-//             need_to_save = 1;
-//             cct_mngr_state = INIT;
-//         }
-
-//         if (CheckSET() > SW_MIN)
-//             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
-
-//         UpdateEncoder();
+    case CCT_MNGR_ENTERING_MAIN_MENU:
+        //deshabilitar salidas hardware
+        DMX_Disable();
             
-//         break;
+        //reseteo canales
+        DisconnectChannels();
 
-//     case CCT_MNGR_ENTERING_MAIN_MENU:
-//         //deshabilitar salidas hardware
-//         DMX_Disable();
+        Cct_Main_Menu_Reset ();
+
+        SCREEN_ShowText2(
+            "Entering ",
+            " Main    ",
+            "  Menu   ",
+            "         "
+            );
             
-//         //reseteo canales
-//         DisconnectChannels();
+        cct_mngr_state++;
+        break;
 
-//         MainMenuReset();
-
-//         SCREEN_ShowText2(
-//             "Entering ",
-//             " Main    ",
-//             "  Menu   ",
-//             "         "
-//             );
+    case CCT_MNGR_ENTERING_MAIN_MENU_WAIT_FREE:
+        if (CheckSET() == SW_NO)
+        {
+            cct_mngr_state++;
+        }
+        break;
             
-//         cct_mngr_state++;
-//         break;
+    case CCT_MNGR_IN_MAIN_MENU:
+        // Check encoder first
+        action = CheckActions();
 
-//     case CCT_MNGR_ENTERING_MAIN_MENU_WAIT_FREE:
-//         if (CheckSET() == SW_NO)
-//         {
-//             cct_mngr_state++;
-//         }
-//         break;
+        resp = Cct_Main_Menu (pmem, action);
+
+        if (resp == resp_need_to_save)
+        {
+#ifdef SAVE_FLASH_IMMEDIATE
+            need_to_save_timer = 0;
+#endif
+#ifdef SAVE_FLASH_WITH_TIMEOUT
+            need_to_save_timer = 10000;
+#endif
+            need_to_save = 1;
+            cct_mngr_state = INIT;
+        }
             
-//     case CCT_MNGR_IN_MAIN_MENU:
-//         // Check encoder first
-//         action = CheckActions();
+        if (resp == resp_finish)
+            cct_mngr_state = INIT;
 
-//         resp = MainMenu(pmem, action);
+        UpdateEncoder();
 
-//         if (resp == resp_need_to_save)
-//         {
-// #ifdef SAVE_FLASH_IMMEDIATE
-//             need_to_save_timer = 0;
-// #endif
-// #ifdef SAVE_FLASH_WITH_TIMEOUT
-//             need_to_save_timer = 10000;
-// #endif
-//             need_to_save = 1;
-//             cct_mngr_state = INIT;
-//         }
+        if (CheckSET() > SW_HALF)
+            cct_mngr_state = CCT_MNGR_ENTERING_HARDWARE_MENU;
             
-//         if (resp == resp_finish)
-//             cct_mngr_state = INIT;
+        break;
 
-//         UpdateEncoder();
+    case CCT_MNGR_ENTERING_HARDWARE_MENU:
+        Cct_HardwareModeReset();
 
-//         if (CheckSET() > SW_HALF)
-//             cct_mngr_state = CCT_MNGR_ENTERING_HARDWARE_MENU;
-            
-//         break;
-
-//     case CCT_MNGR_ENTERING_HARDWARE_MENU:
-//         HardwareModeReset();
-
-//         //Mode Timeout enable
-//         ptFTT = &HardwareMode_UpdateTimers;
+        //Mode Timeout enable
+        ptFTT = &Cct_HardwareMode_UpdateTimers;
             
 
-//         SCREEN_ShowText2(
-//             "Entering ",
-//             " Hardware",
-//             "  Menu   ",
-//             "         "
-//             );
+        SCREEN_ShowText2(
+            "Entering ",
+            " Hardware",
+            "  Menu   ",
+            "         "
+            );
             
-//         cct_mngr_state++;
-//         break;
+        cct_mngr_state++;
+        break;
 
-//     case CCT_MNGR_ENTERING_HARDWARE_MENU_WAIT_FREE:
-//         if (CheckSET() == SW_NO)
-//         {
-//             cct_mngr_state++;
-//         }
-//         break;
+    case CCT_MNGR_ENTERING_HARDWARE_MENU_WAIT_FREE:
+        if (CheckSET() == SW_NO)
+        {
+            cct_mngr_state++;
+        }
+        break;
             
-//     case CCT_MNGR_IN_HARDWARE_MENU:
-//         // Check encoder first
-//         action = CheckActions();
+    case CCT_MNGR_IN_HARDWARE_MENU:
+        // Check encoder first
+        action = CheckActions();
 
-//         resp = Cct_HardwareMode_New (pmem, action);
+        resp = Cct_HardwareMode_New (pmem, action);
 
-//         if ((resp == resp_need_to_save) ||
-//             (resp == resp_finish))
-//         {
-//             //hardware config its saved instantly
-//             need_to_save = 1;
-//             cct_mngr_state = INIT;
-//         }
+        if ((resp == resp_need_to_save) ||
+            (resp == resp_finish))
+        {
+            //hardware config its saved instantly
+            need_to_save = 1;
+            cct_mngr_state = INIT;
+        }
 
-//         UpdateEncoder();
-//         break;
+        UpdateEncoder();
+        break;
             
     default:
         cct_mngr_state = INIT;

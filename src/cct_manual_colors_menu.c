@@ -18,47 +18,54 @@
 
 
 // Module Private Types Constants and Macros -----------------------------------
-char str_colors [20][11] = {"2700K",
-                            "3200K",
-                            "4000K",
-                            "4500K",
-                            "5000K",
-                            "5500K",
-                            "6500K",
-                            "Yellow",
-                            "Cyan",
-                            "Magenta",
-                            "Purple",
-                            "Pink",
-                            "Chocolate",
-                            "Salmon",
-                            "Amber",
-                            "Peach",
-                            "Turquoise",
-                            "Orange Red",
-                            "Steel Blue",
-                            "Cherry"};
+#define COLORS_QTTY    23
+char str_colors [COLORS_QTTY][11] = {"2700K",
+                                     "3200K",
+                                     "4000K",
+                                     "4500K",
+                                     "5000K",
+                                     "5500K",
+                                     "6500K",
+                                     "Red",
+                                     "Green",
+                                     "Blue",
+                                     "Yellow",
+                                     "Cyan",
+                                     "Magenta",
+                                     "Marine",
+                                     "Pink",
+                                     "Chocolate",
+                                     "Deep Pink",                                     
+                                     "Amber",
+                                     "Purple",
+                                     "Turquoise",
+                                     "Orange Red",
+                                     "Steel Blue",
+                                     "Cherry"};
 
-unsigned char rgb_colors [20][5] = {{0,0,0,255,0},
-                                    {0,0,0,225,29},
-                                    {0,0,0,200,55},
-                                    {0,0,0,175,80},
-                                    {0,0,0,127,128},
-                                    {0,0,0,63,192},
-                                    {0,0,0,0,255},
-                                    {127,128,0,0,0},
-                                    {0,127,128,0,0},
-                                    {127,0,128,0,0},
-                                    {127,0,128,0,0},
-                                    {100,75,80,0,0},
-                                    {155,77,23,0,0},
-                                    {130,66,59,0,0},
-                                    {146,109,0,0,0},
-                                    {100,84,71,0,0},
-                                    {33,115,107,0,0},
-                                    {201,54,0,0,0},
-                                    {47,87,121,0,0},
-                                    {206,4,45,0,0}};
+unsigned char rgb_colors [COLORS_QTTY][5] = {{0,0,0,255,0},
+                                             {0,0,0,225,29},
+                                             {0,0,0,200,55},
+                                             {0,0,0,175,80},
+                                             {0,0,0,127,128},
+                                             {0,0,0,63,192},
+                                             {0,0,0,0,255},
+                                             {255,0,0,0,0},
+                                             {0,255,0,0,0},
+                                             {0,0,255,0,0},
+                                             {127,128,0,0,0},
+                                             {0,127,128,0,0},
+                                             {127,0,128,0,0},
+                                             {6,240,9,0,0},                                             
+                                             {171,5,79,0,0},
+                                             {237,18,0,0,0},
+                                             {247,0,8,0,0},
+                                             {146,109,0,0,0},
+                                             {90,0,165,0,0},
+                                             {33,115,107,0,0},
+                                             {201,54,0,0,0},
+                                             {47,87,121,0,0},
+                                             {206,4,45,0,0}};
 
 typedef enum {
     CCT_MANUAL_COLORS_MENU_INIT = 0,
@@ -143,12 +150,40 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 
         // update all colors
         Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+
+        // // line 3 & 4 FOR DEBUG dimmed_channels
+        // Display_BlankLine3();
+        // sprintf(s_temp, "%d %d %d",
+        //         mem->dimmed_channels[0],
+        //         mem->dimmed_channels[1],
+        //         mem->dimmed_channels[2]);
+        // Display_SetLine3(s_temp);
+        // Display_BlankLine4();
+        // sprintf(s_temp, "%d %d",
+        //         mem->dimmed_channels[3],
+        //         mem->dimmed_channels[4]);
+        // Display_SetLine4(s_temp);
+        
         for (int i = 0; i < 5; i++)
         {
             mem->fixed_channels[i] = Cct_Utils_Dim_Color (
                 mem->cct_dimmer,
                 mem->dimmed_channels[i]);
         }
+
+        // line 3 & 4 FOR DEBUG fixed_channels
+        Display_BlankLine3();
+        sprintf(s_temp, "%d %d %d",
+                mem->fixed_channels[0],
+                mem->fixed_channels[1],
+                mem->fixed_channels[2]);
+        Display_SetLine3(s_temp);
+        Display_BlankLine4();
+        sprintf(s_temp, "%d %d",
+                mem->fixed_channels[3],
+                mem->fixed_channels[4]);
+        Display_SetLine4(s_temp);
+        
         resp = resp_change;        
                 
         cct_need_display_update = 1;
@@ -174,15 +209,30 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         resp = Cct_Utils_Update_Actions_Values (actions, &mem->cct_dimmer);
 
         // colors change
-        if (resp = resp_change)
+        if (resp == resp_change)
         {
             Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+
             for (int i = 0; i < 5; i++)
             {
                 mem->fixed_channels[i] = Cct_Utils_Dim_Color (
                     mem->cct_dimmer,
                     mem->dimmed_channels[i]);
             }
+
+            // line 3 & 4 FOR DEBUG fixed_channels
+            Display_BlankLine3();
+            sprintf(s_temp, "%d %d %d",
+                    mem->fixed_channels[0],
+                    mem->fixed_channels[1],
+                    mem->fixed_channels[2]);
+            Display_SetLine3(s_temp);
+            Display_BlankLine4();
+            sprintf(s_temp, "%d %d",
+                    mem->fixed_channels[3],
+                    mem->fixed_channels[4]);
+            Display_SetLine4(s_temp);
+            
         }
         
         if (actions == selection_enter)
@@ -226,49 +276,94 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
     case CCT_MANUAL_COLORS_MENU_SELECT_LINE2:
         // resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
 
-        if (actions == selection_dwn_fast)
-        {
-            if (mem->cct_temp_color >= 4)
-                mem->cct_temp_color -= 4;
-            else
-                mem->cct_temp_color = 0;
+        // if (actions == selection_dwn_fast)
+        // {
+        //     if (mem->cct_temp_color >= 4)
+        //         mem->cct_temp_color -= 4;
+        //     else
+        //         mem->cct_temp_color = 0;
 
-            resp = resp_change;
-        }
-        else if (actions == selection_dwn)
+        //     resp = resp_change;
+        // }
+        // else if (actions == selection_dwn)
+        // {
+        //     if (mem->cct_temp_color)
+        //         mem->cct_temp_color -= 1;
+
+        //     resp = resp_change;        
+        // }
+        // else if (actions == selection_up_fast)
+        // {
+        //     if (mem->cct_temp_color <= 19 - 4)
+        //         mem->cct_temp_color += 4;
+        //     else
+        //         mem->cct_temp_color = 19;
+
+        //     resp = resp_change;        
+        // }
+        // else if (actions == selection_up)
+        // {
+        //     if (mem->cct_temp_color <= 19 - 1)
+        //         mem->cct_temp_color += 1;
+
+        //     resp = resp_change;        
+        // }
+
+        if ((actions == selection_dwn) ||
+            (actions == selection_dwn_fast))
         {
             if (mem->cct_temp_color)
                 mem->cct_temp_color -= 1;
 
             resp = resp_change;        
         }
-        else if (actions == selection_up_fast)
+        else if ((actions == selection_up) ||
+                 (actions == selection_up_fast))
         {
-            if (mem->cct_temp_color <= 19 - 4)
-                mem->cct_temp_color += 4;
-            else
-                mem->cct_temp_color = 19;
-
-            resp = resp_change;        
-        }
-        else if (actions == selection_up)
-        {
-            if (mem->cct_temp_color <= 19 - 1)
+            if (mem->cct_temp_color < COLORS_QTTY - 1)
                 mem->cct_temp_color += 1;
 
             resp = resp_change;        
         }
-
+        
         // colors change
-        if (resp = resp_change)
+        if (resp == resp_change)
         {
             Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+
+            // // line 3 & 4 FOR DEBUG dimmed_channels
+            // Display_BlankLine3();
+            // sprintf(s_temp, "%d %d %d",
+            //         mem->dimmed_channels[0],
+            //         mem->dimmed_channels[1],
+            //         mem->dimmed_channels[2]);
+            // Display_SetLine3(s_temp);
+            // Display_BlankLine4();
+            // sprintf(s_temp, "%d %d",
+            //         mem->dimmed_channels[3],
+            //         mem->dimmed_channels[4]);
+            // Display_SetLine4(s_temp);
+            
             for (int i = 0; i < 5; i++)
             {
                 mem->fixed_channels[i] = Cct_Utils_Dim_Color (
                     mem->cct_dimmer,
                     mem->dimmed_channels[i]);
             }
+
+            // line 3 & 4 FOR DEBUG fixed_channels
+            Display_BlankLine3();
+            sprintf(s_temp, "%d %d %d",
+                    mem->fixed_channels[0],
+                    mem->fixed_channels[1],
+                    mem->fixed_channels[2]);
+            Display_SetLine3(s_temp);
+            Display_BlankLine4();
+            sprintf(s_temp, "%d %d",
+                    mem->fixed_channels[3],
+                    mem->fixed_channels[4]);
+            Display_SetLine4(s_temp);
+            
         }
         
         if (actions == selection_enter)

@@ -59,21 +59,21 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Module Funtions -------------------------------------------------------------
-void CCT_Main_Menu_UpdateTimer (void)
+void Cct_Main_Menu_UpdateTimer (void)
 {
     if (cct_main_menu_timer)
         cct_main_menu_timer--;
 }
 
 
-void CCT_Main_Menu_Reset (void)
+void Cct_Main_Menu_Reset (void)
 {
     cct_state = CCT_MAIN_MENU_INIT;
 }
 
 
 extern void display_update (void);
-resp_t CCT_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
+resp_t Cct_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
     static unsigned char showing = 0;
     resp_t resp = resp_continue;
@@ -89,7 +89,10 @@ resp_t CCT_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine1("MODE:");
 
         // line 2
-        sprintf(s_temp, "%s", &str_modes[mem->program_type][0]);
+        if (mem->program_inner_type_in_cct < CCT_DMX_MODE)
+            mem->program_inner_type_in_cct = CCT_DMX_MODE;
+        
+        sprintf(s_temp, "%s", &str_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
         Display_SetLine2(s_temp);
 
         // bottom line
@@ -120,15 +123,15 @@ resp_t CCT_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
         if ((actions == selection_dwn) ||
             (actions == selection_dwn_fast))
         {
-            if (mem->program_type)
-                mem->program_type -= 1;
+            if (mem->program_inner_type > CCT_DMX_MODE)
+                mem->program_inner_type -= 1;
 
         }
         else if ((actions == selection_up) ||
                  (actions == selection_up_fast))
         {
-            if (mem->program_type <= 4 - 1)
-                mem->program_type += 1;
+            if (mem->program_inner_type < CCT_MANUAL_PRESET_MODE)
+                mem->program_inner_type += 1;
 
         }
         
@@ -153,7 +156,7 @@ resp_t CCT_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                sprintf(s_temp, "%s", &str_modes[mem->program_type][0]);
+                sprintf(s_temp, "%s", &str_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
                 Display_SetLine2(s_temp);
             }
             
