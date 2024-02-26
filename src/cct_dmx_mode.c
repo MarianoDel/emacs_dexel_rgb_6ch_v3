@@ -12,7 +12,8 @@
 #include "cct_dmx_mode.h"
 #include "cct_dmx_menu.h"
 #include "cct_utils.h"
-// #include "colors_functions.h"
+#include "cct_manual_colors_menu.h"
+
 #include "flash_program.h"
 #include "parameters.h"
 
@@ -205,7 +206,27 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
                 {                    
                     if (cct_dmx_effect != DMX_CLR_EFFECT)
                         cct_dmx_effect = DMX_CLR_EFFECT;
+
+                    // map the color
+                    unsigned char rgb_color[5] = { 0 };
+                    int index = data11[CCT_DMX_CLR_CH] / 10;
+                    index -= 1;
+
+                    Cct_Index_To_Channels_Mapping (index, rgb_color);
                     
+                    // for (int i = 0; i < 5; i++)
+                    // {
+                    //     *(ch_val + i) = Cct_Utils_Dim_Color (
+                    //         data11[CCT_DMX_DIM_CH],
+                    //         rgb_color[i]);
+                    // }
+                    for (int i = 0; i < 5; i++)
+                    {
+                        *(ch_val + i) = Cct_Utils_Dim_Color (
+                            255,
+                            rgb_color[i]);
+                    }
+
                     // map the channels values to strobe
                     Cct_DMXMode_ChannelsStrobeSet((unsigned char *) &data11[CCT_DMX_CH1]);
                     

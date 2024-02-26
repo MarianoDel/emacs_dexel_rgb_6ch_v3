@@ -427,4 +427,14 @@ void Cct_Index_To_Channels(unsigned char * rgb_table, unsigned char * chnls)
     for (int i = 0; i < 5; i++)
         *(chnls + i) = *(rgb_table + i);
 }
+
+
+void Cct_Index_To_Channels_Mapping (unsigned char index, unsigned char * chnls)
+{
+    if (index > COLORS_QTTY - 1)
+        index = COLORS_QTTY - 1;
+    
+    Cct_Index_To_Channels (&rgb_colors[index][0], chnls);
+}
+
 //--- end of file ---//
