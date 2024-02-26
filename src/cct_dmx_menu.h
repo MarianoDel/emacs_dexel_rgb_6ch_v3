@@ -38,8 +38,8 @@ typedef struct {
 
 
 // Module Exported Functions ---------------------------------------------------
-void CCT_DMX_MenuReset (void);
-resp_t CCT_DMX_Menu (dmx_menu_data_t *);
+void Cct_DMX_MenuReset (void);
+resp_t Cct_DMX_Menu (dmx_menu_data_t *);
 void DMXModeMenu_ChangeAddressReset (void);
 resp_t DMXModeMenu_ChangeAddress (dmx_menu_address_data_t *);
 

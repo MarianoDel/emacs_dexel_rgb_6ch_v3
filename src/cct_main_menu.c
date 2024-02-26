@@ -123,15 +123,15 @@ resp_t Cct_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
         if ((actions == selection_dwn) ||
             (actions == selection_dwn_fast))
         {
-            if (mem->program_inner_type > CCT_DMX_MODE)
-                mem->program_inner_type -= 1;
+            if (mem->program_inner_type_in_cct > CCT_DMX_MODE)
+                mem->program_inner_type_in_cct -= 1;
 
         }
         else if ((actions == selection_up) ||
                  (actions == selection_up_fast))
         {
-            if (mem->program_inner_type < CCT_MANUAL_PRESET_MODE)
-                mem->program_inner_type += 1;
+            if (mem->program_inner_type_in_cct < CCT_MANUAL_PRESET_MODE)
+                mem->program_inner_type_in_cct += 1;
 
         }
         

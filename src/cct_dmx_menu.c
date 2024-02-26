@@ -42,7 +42,7 @@ static cct_dmx_menu_e cct_dmx_menu_state = CCT_DMX_MENU_INIT;
 
 
 // Module Functions ------------------------------------------------------------
-void CCT_DMX_MenuReset (void)
+void Cct_DMX_MenuReset (void)
 {
     cct_dmx_menu_state = CCT_DMX_MENU_INIT;
 }
@@ -50,7 +50,7 @@ void CCT_DMX_MenuReset (void)
 
 extern unsigned char display_is_free (void);
 extern void display_update (void);
-resp_t CCT_DMX_Menu (dmx_menu_data_t * pmenu_data)
+resp_t Cct_DMX_Menu (dmx_menu_data_t * pmenu_data)
 {
     resp_t resp = resp_continue;
     char s_temp[21];    //20 caracteres por linea + '\0'

@@ -40,6 +40,7 @@
 #include "cct_manual_mode.h"
 #include "cct_main_menu.h"
 #include "master_slave_mode.h"
+#include "cct_dmx_mode.h"
 
 
 #include <stdio.h>
@@ -159,7 +160,7 @@ void Cct_Manager (parameters_typedef * pmem)
         // force CCT_MANUAL_STATIC_MODE
         // pmem->program_inner_type_in_cct = CCT_MANUAL_STATIC_MODE;
         // force CCT_MANUAL_STATIC_MODE
-        pmem->program_inner_type_in_cct = CCT_MANUAL_PRESET_MODE;
+        // pmem->program_inner_type_in_cct = CCT_MANUAL_PRESET_MODE;
 
         cct_mngr_state++;            
         break;
@@ -201,23 +202,24 @@ void Cct_Manager (parameters_typedef * pmem)
         else    // default to CCT_DMX_MODE
         {
             pmem->program_inner_type_in_cct = CCT_DMX_MODE;
+            // pmem->program_inner_type_in_cct = CCT_MANUAL_PRESET_MODE;
 
-            // //reception variables
-            // Packet_Detected_Flag = 0;
-            // DMX_channel_selected = pmem->dmx_first_channel;
-            // DMX_channel_quantity = pmem->dmx_channel_quantity;
+            //reception variables
+            Packet_Detected_Flag = 0;
+            DMX_channel_selected = pmem->dmx_first_channel;
+            DMX_channel_quantity = pmem->dmx_channel_quantity;
 
-            // //Mode Timeout enable
-            // ptFTT = &DMX1Mode_UpdateTimers;
+            //Mode Timeout enable
+            ptFTT = &Cct_DMXMode_UpdateTimers;
 
-            // //packet reception enable
-            // DMX_EnableRx();
+            //packet reception enable
+            DMX_EnableRx();
 
-            // //enable int outputs
-            // FiltersAndOffsets_Enable_Outputs();
+            //enable int outputs
+            FiltersAndOffsets_Enable_Outputs();
                 
-            // DMX1ModeReset();
-            // cct_mngr_state = CCT_MNGR_DMX_MODE;
+            Cct_DMXMode_Reset();
+            cct_mngr_state = CCT_MNGR_DMX_MODE;
         }
         break;
 
@@ -225,23 +227,23 @@ void Cct_Manager (parameters_typedef * pmem)
         // Check encoder first
         action = CheckActions();
             
-        // resp = DMX1Mode (ch_values, action);
+        resp = Cct_DMXMode (ch_values, action);
 
-        // if (resp == resp_change)
-        // {
-        //     FiltersAndOffsets_Channels_to_Backup(ch_values);
-        // }
+        if (resp == resp_change)
+        {
+            FiltersAndOffsets_Channels_to_Backup(ch_values);
+        }
 
-        // if (resp == resp_need_to_save)
-        // {
-        //     need_to_save_timer = 10000;
-        //     need_to_save = 1;
-        // }
+        if (resp == resp_need_to_save)
+        {
+            need_to_save_timer = 10000;
+            need_to_save = 1;
+        }
 
-        // if (CheckSET() > SW_MIN)
-        //     cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
+        if (CheckSET() > SW_MIN)
+            cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
             
-        // UpdateEncoder();
+        UpdateEncoder();
                        
         break;
 
@@ -415,7 +417,7 @@ void Cct_Manager (parameters_typedef * pmem)
 
         resp = Cct_Main_Menu (pmem, action);
 
-        if (resp == resp_need_to_save)
+        if (resp == resp_change)
         {
 #ifdef SAVE_FLASH_IMMEDIATE
             need_to_save_timer = 0;
@@ -427,9 +429,6 @@ void Cct_Manager (parameters_typedef * pmem)
             cct_mngr_state = INIT;
         }
             
-        if (resp == resp_finish)
-            cct_mngr_state = INIT;
-
         UpdateEncoder();
 
         if (CheckSET() > SW_HALF)

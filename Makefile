@@ -127,7 +127,8 @@ SRC += ./src/cct_manual_cct_menu.c
 SRC += ./src/cct_manual_static_menu.c
 SRC += ./src/cct_manual_colors_menu.c
 SRC += ./src/cct_utils.c
-
+SRC += ./src/cct_dmx_mode.c
+SRC += ./src/cct_dmx_menu.c
 
 
 
