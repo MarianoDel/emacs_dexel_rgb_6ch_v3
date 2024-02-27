@@ -510,5 +510,19 @@ tests_oled_cct_enc_dir_mode_menu:
 	# ./tests_gtk
 
 
+tests_cct_manual_colors_menu:
+	# first module objects to test and coverage
+	gcc -c --coverage src/cct_manual_colors_menu.c -I. $(INCDIR) $(DDEFS)
+	gcc -c src/cct_utils.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc --coverage src/tests_cct_manual_colors_menu.c cct_manual_colors_menu.o cct_utils.o tests_ok.o
+	# test execution
+	./a.out
+	# process coverage
+	gcov cct_manual_colors_menu.c -m
+
+
 
 # *** EOF ***

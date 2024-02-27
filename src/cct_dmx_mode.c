@@ -21,6 +21,9 @@
 #include <string.h>
 
 
+// for tests with 6ch console
+// #define DEBUG_DIMMER_ALWAYS_ON
+
 // Private Types Constants and Macros ------------------------------------------
 typedef enum {
     CCT_DMX_MODE_INIT = 0,
@@ -35,13 +38,18 @@ typedef enum {
 #define CCT_DMX_CH3    3
 #define CCT_DMX_CH4    4
 #define CCT_DMX_CH5    5
-// #define CCT_DMX_CCT_CH    6
-#define CCT_DMX_CCT_CH    7
-#define CCT_DMX_STB_CH    6
-// #define CCT_DMX_STB_CH    7
+#define CCT_DMX_CCT_CH    6
+#define CCT_DMX_STB_CH    7
 #define CCT_DMX_CLR_CH    8
 #define CCT_DMX_DIM_CH    9
+
+// for tests
+#ifdef DEBUG_DIMMER_ALWAYS_ON
+// #define CCT_DMX_CCT_CH    7
+// #define CCT_DMX_STB_CH    6
+// #define CCT_DMX_CLR_CH    6
 // #define CCT_DMX_DIM_CH    6
+#endif
 
 
 #define TT_MENU_TIMEOUT    30000
@@ -156,14 +164,8 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
                     *(ch_val + 0) = 0;
                     *(ch_val + 1) = 0;
                     *(ch_val + 2) = 0;
-                    // *(ch_val + 3) = Cct_Utils_Dim_Color (
-                    //     data11[CCT_DMX_DIM_CH],
-                    //     255 - temp_color);
 
-                    // *(ch_val + 4) = Cct_Utils_Dim_Color (
-                    //     data11[CCT_DMX_DIM_CH],
-                    //     temp_color);
-
+#ifdef DEBUG_DIMMER_ALWAYS_ON
                     *(ch_val + 3) = Cct_Utils_Dim_Color (
                         255,
                         255 - temp_color);
@@ -172,7 +174,17 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
                         255,
                         temp_color);
                     
-                    cct_dmx_end_of_packet_update = 1;
+#else
+                    *(ch_val + 3) = Cct_Utils_Dim_Color (
+                        data11[CCT_DMX_DIM_CH],
+                        255 - temp_color);
+
+                    *(ch_val + 4) = Cct_Utils_Dim_Color (
+                        data11[CCT_DMX_DIM_CH],
+                        temp_color);
+                    
+#endif
+                    cct_dmx_end_of_packet_update++;
                     resp = resp_change;
                     break;                    
                 }
@@ -181,22 +193,26 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
                     if (cct_dmx_effect != DMX_STB_EFFECT)
                         cct_dmx_effect = DMX_STB_EFFECT;
 
-                    // dim the channels
-                    // for (int i = 0; i < 5; i++)
-                    // {
-                    //     *(ch_val + i) = Cct_Utils_Dim_Color (
-                    //         data11[CCT_DMX_DIM_CH],
-                    //         data11[CCT_DMX_CH1 + i]);
-                    // }
+#ifdef DEBUG_DIMMER_ALWAYS_ON
                     for (int i = 0; i < 5; i++)
                     {
                         *(ch_val + i) = Cct_Utils_Dim_Color (
                             255,
                             data11[CCT_DMX_CH1 + i]);
                     }
+#else
+                    // dim the channels
+                    for (int i = 0; i < 5; i++)
+                    {
+                        *(ch_val + i) = Cct_Utils_Dim_Color (
+                            data11[CCT_DMX_DIM_CH],
+                            data11[CCT_DMX_CH1 + i]);
+                    }
+                    
+#endif
                     
                     // map the channels values to strobe
-                    Cct_DMXMode_ChannelsStrobeSet((unsigned char *) &data11[CCT_DMX_CH1]);
+                    Cct_DMXMode_ChannelsStrobeSet(ch_val);
                     
                     // map the speed in this mode
                     mem_conf.program_inner_type_speed = Cct_DMXMode_MapSpeed(data11[CCT_DMX_STB_CH]);
@@ -214,35 +230,36 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
 
                     Cct_Index_To_Channels_Mapping (index, rgb_color);
                     
-                    // for (int i = 0; i < 5; i++)
-                    // {
-                    //     *(ch_val + i) = Cct_Utils_Dim_Color (
-                    //         data11[CCT_DMX_DIM_CH],
-                    //         rgb_color[i]);
-                    // }
+#ifdef DEBUG_DIMMER_ALWAYS_ON
                     for (int i = 0; i < 5; i++)
                     {
                         *(ch_val + i) = Cct_Utils_Dim_Color (
                             255,
                             rgb_color[i]);
                     }
-
-                    // map the channels values to strobe
-                    Cct_DMXMode_ChannelsStrobeSet((unsigned char *) &data11[CCT_DMX_CH1]);
+#else
+                    for (int i = 0; i < 5; i++)
+                    {
+                        *(ch_val + i) = Cct_Utils_Dim_Color (
+                            data11[CCT_DMX_DIM_CH],
+                            rgb_color[i]);
+                    }
                     
-                    // map the speed in this mode
-                    mem_conf.program_inner_type_speed = Cct_DMXMode_MapSpeed(data11[CCT_DMX_STB_CH]);
-                    
+#endif
+                    cct_dmx_end_of_packet_update++;
+                    resp = resp_change;
+                    break;
                 }
                 else    // we are in DMX mode with grandmaster
                 {
+                    cct_dmx_effect = DMX_NO_EFFECT;
                     Cct_DMXMode_ChannelsDimmer(ch_val, (unsigned char *) data11);
-                    cct_dmx_end_of_packet_update = 1;
+                    cct_dmx_end_of_packet_update++;
                     resp = resp_change;
                     break;
                 }
 
-                cct_dmx_end_of_packet_update = 1;                
+                cct_dmx_end_of_packet_update++;
             }
         }
 
@@ -260,7 +277,11 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
 
             resp = Cct_DMX_Menu (&cct_dmx_st);
             if (resp == resp_finish)
-                cct_dmx_end_of_packet_update = 0;
+            {
+                // update until all data will show
+                if (cct_dmx_end_of_packet_update)
+                    cct_dmx_end_of_packet_update--;
+            }
             
         }
         break;
@@ -274,18 +295,6 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
     //Effects in modes
     switch (cct_dmx_effect)
     {
-    case DMX_CLR_EFFECT:
-        // if (!cct_dmx_mode_effect_timer)
-        // {
-        //     resp = Colors_Fading_Pallete (ch_val);
-        //     // if (resp == resp_finish)
-        //     //     resp = resp_continue;
-
-        //     resp = resp_change;
-        //     cct_dmx_mode_effect_timer = 10 - mem_conf.program_inner_type_speed;
-        // }
-        break;
-
     // case CCT_DMX_INNER_GRADUAL_MODE:
     //     if (!cct_dmx_mode_effect_timer)
     //     {
@@ -320,7 +329,8 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
             }
         }
         break;
-
+        
+    case DMX_CLR_EFFECT:
     case DMX_NO_EFFECT:
     case DMX_CCT_EFFECT:
     default:

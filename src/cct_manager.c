@@ -167,7 +167,11 @@ void Cct_Manager (parameters_typedef * pmem)
 
     case GET_CONF:
 
-        if (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_MODE)
+        if ((pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_MODE) ||
+            (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_CCT_MODE) ||
+            (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_STATIC_MODE) ||
+            (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_PRESET_MODE) ||
+            (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_SLAVE_MODE))
         {
             //reception variables for slave mode
             Packet_Detected_Flag = 0;
@@ -178,9 +182,9 @@ void Cct_Manager (parameters_typedef * pmem)
             FiltersAndOffsets_Enable_Outputs();            
 
             //Mode Timeout enable
-            ptFTT = &MasterSlaveMode_UpdateTimers;
+            ptFTT = &Cct_MasterSlaveMode_UpdateTimers;
                 
-            MasterSlaveModeReset();
+            Cct_MasterSlaveModeReset();
                 
             cct_mngr_state = CCT_MNGR_MASTER_SLAVE_MODE;
         }
@@ -207,7 +211,7 @@ void Cct_Manager (parameters_typedef * pmem)
             //reception variables
             Packet_Detected_Flag = 0;
             DMX_channel_selected = pmem->dmx_first_channel;
-            DMX_channel_quantity = pmem->dmx_channel_quantity;
+            DMX_channel_quantity = 4 + pmem->dmx_channel_quantity;
 
             //Mode Timeout enable
             ptFTT = &Cct_DMXMode_UpdateTimers;
@@ -306,53 +310,45 @@ void Cct_Manager (parameters_typedef * pmem)
 // #endif
             
 //         break;
-//     case CCT_MNGR_MASTER_SLAVE_MODE:
-//         // Check encoder first
-//         action = CheckActions();
 
-//         resp = MasterSlaveMode (pmem, action);
+    case CCT_MNGR_MASTER_SLAVE_MODE:
+        // Check encoder first
+        action = CheckActions();
 
-//         if ((resp == resp_change) ||
-//             (resp == resp_change_all_up))    //fixed mode save and change
-//         {
-//             //TODO: check how to do this in the new version data512?
-//             // data512[0] = 0;
-//             // for (unsigned char n = 0; n < sizeof(ch_values); n++)
-//             // {
-//             //     ch_values[n] = pmem->fixed_channels[n];
-//             //     data512[n + 1] = ch_values[n];
-//             // }
+        resp = Cct_MasterSlaveMode (pmem, action);
 
-//             FiltersAndOffsets_Channels_to_Backup (ch_values);
+        if ((resp == resp_change) ||
+            (resp == resp_change_all_up))    //fixed mode save and change
+        {
+            FiltersAndOffsets_Channels_to_Backup (ch_values);
             
-//             if (resp == resp_change_all_up)    //fixed mode changes will be saved
-//                 resp = resp_need_to_save;                
-//         }
+            if (resp == resp_change_all_up)    //fixed mode changes will be saved
+                resp = resp_need_to_save;                
+        }
 
-//         if (!timer_mngr)
-//         {
-//             if ((pmem->program_inner_type == MASTER_INNER_FIXED_MODE) ||
-//                 (pmem->program_inner_type == MASTER_INNER_SKIPPING_MODE) ||
-//                 (pmem->program_inner_type == MASTER_INNER_GRADUAL_MODE) ||
-//                 (pmem->program_inner_type == MASTER_INNER_STROBE_MODE))
-//             {
-//                 timer_mngr = 40;
-//                 SendDMXPacket (PCKT_INIT);
-//             }
-//         }
+        if (!timer_mngr)
+        {
+            if ((pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_CCT_MODE) ||
+                (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_STATIC_MODE) ||
+                (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_PRESET_MODE))
+            {
+                timer_mngr = 40;
+                SendDMXPacket (PCKT_INIT);
+            }
+        }
 
-//         if (resp == resp_need_to_save)
-//         {
-//             need_to_save_timer = 10000;
-//             need_to_save = 1;
-//         }
+        if (resp == resp_need_to_save)
+        {
+            need_to_save_timer = 10000;
+            need_to_save = 1;
+        }
 
-//         if (CheckSET() > SW_MIN)
-//             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
+        if (CheckSET() > SW_MIN)
+            cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
 
-//         UpdateEncoder();
+        UpdateEncoder();
             
-//         break;
+        break;
 
     case CCT_MNGR_MANUAL_MODE:
         // Check encoder first

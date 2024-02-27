@@ -102,7 +102,7 @@ resp_t CCT_Master_Slave_Menu (parameters_typedef * mem, sw_actions_t actions)
         }
         
         // bottom line
-        Display_SetLine8("            Master/Slave Menu");        
+        Display_SetLine8("    Master/Slave Menu");
         
         cct_need_display_update = 1;
         cct_state++;
