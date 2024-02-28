@@ -11,14 +11,11 @@
 // Includes --------------------------------------------------------------------
 #include "cct_master_slave_mode.h"
 #include "cct_master_slave_menu.h"
-#include "cct_master_menu.h"
-#include "slave_menu.h"
-#include "fixed_menu.h"
-#include "colors_menu.h"
+#include "cct_manual_cct_menu.h"
+#include "cct_manual_static_menu.h"
+#include "cct_manual_colors_menu.h"
 #include "display_utils.h"
 #include "dmx_transceiver.h"
-
-#include "colors_functions.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -27,15 +24,11 @@
 // Module Private Types Constants and Macros -----------------------------------
 typedef enum {
     CCT_MASTER_SLAVE_MODE_INIT = 0,
-    CCT_MASTER_SLAVE_MODE_CHECK_INNER_MODE_0,
-    CCT_MASTER_SLAVE_MODE_CHECK_INNER_MODE_1,    
-    CCT_MASTER_SLAVE_MODE_GLOBAL_MENU,
-    CCT_MASTER_SLAVE_MODE_IN_COLORS_FIXED,
-    CCT_MASTER_SLAVE_MODE_IN_COLORS_SKIPPING,
-    CCT_MASTER_SLAVE_MODE_IN_COLORS_GRADUAL,
-    CCT_MASTER_SLAVE_MODE_IN_COLORS_STROBE,
+    CCT_MASTER_SLAVE_SELECTING,
+    CCT_MASTER_SLAVE_MODE_IN_CCT_MODE,    
+    CCT_MASTER_SLAVE_MODE_IN_STATIC_MODE,    
+    CCT_MASTER_SLAVE_MODE_IN_PRESET_MODE,
     CCT_MASTER_SLAVE_MODE_IN_SLAVE
-
     
 } cct_master_slave_mode_state_e;
 
@@ -65,8 +58,8 @@ void Cct_MasterSlaveMode_UpdateTimers (void)
     if (ptFCct_MasterMenuTT != NULL)
         ptFCct_MasterMenuTT();
 
-    if (cct_master_effect_timer)
-        cct_master_effect_timer--;
+    // if (cct_master_effect_timer)
+    //     cct_master_effect_timer--;
 }
 
 
@@ -76,6 +69,9 @@ void Cct_MasterSlaveModeReset (void)
 }
 
 
+// resp_change will update colors
+// resp_change_all_up will update colors and save selections
+// resp_need_to_save will save selections
 resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
@@ -85,183 +81,95 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
     {
     case CCT_MASTER_SLAVE_MODE_INIT:
 
+        // check first time
+        // if ((mem->program_inner_type_in_cct < CCT_MASTER_SLAVE_CCT_MODE) ||
+        //     (mem->program_inner_type_in_cct > CCT_MASTER_SLAVE_SLAVE_MODE))
+        // {
+        //     mem->program_inner_type_in_cct = CCT_MASTER_SLAVE_CCT_MODE;
+        //     resp = resp_need_to_save;    // saves this default selection
+        // }
+
         switch (mem->program_inner_type_in_cct)
         {
-        case CCT_MASTER_INNER_FIXED_MODE:
-            ptFCct_MasterMenuTT = &FixedMenu_UpdateTimer;            
-            FixedMenuReset();
-            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_COLORS_FIXED;
+        case CCT_MASTER_SLAVE_CCT_MODE:
+            ptFCct_MasterMenuTT = &Cct_Manual_Cct_Menu_UpdateTimer;
+            Cct_Manual_Cct_Menu_Reset ();
+            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_CCT_MODE;
+            
             DMX_EnableTx();
             break;
 
-        case CCT_MASTER_INNER_SKIPPING_MODE:
-            ptFCct_MasterMenuTT = &ColorsMenu_UpdateTimer;
-            ColorsMenuReset();
-            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_COLORS_SKIPPING;
+        case CCT_MASTER_SLAVE_STATIC_MODE:
+            ptFCct_MasterMenuTT = &Cct_Manual_Static_Menu_UpdateTimer;
+            Cct_Manual_Static_Menu_Reset ();
+            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_STATIC_MODE;
+            
             DMX_EnableTx();            
             break;
             
-        case CCT_MASTER_INNER_GRADUAL_MODE:
-            ptFCct_MasterMenuTT = &ColorsMenu_UpdateTimer;
-            ColorsMenuReset();
-            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_COLORS_GRADUAL;
+        case CCT_MASTER_SLAVE_PRESET_MODE:
+            ptFCct_MasterMenuTT = &Cct_Manual_Colors_Menu_UpdateTimer;
+            Cct_Manual_Colors_Menu_Reset ();
+            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_PRESET_MODE;
+            
             DMX_EnableTx();            
             break;
             
-        case CCT_MASTER_INNER_STROBE_MODE:
-            ptFCct_MasterMenuTT = &ColorsMenu_UpdateTimer;
-            ColorsMenuReset();
-            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_COLORS_STROBE;
-            DMX_EnableTx();            
-            break;
-
-        case CCT_MASTER_INNER_SLAVE:
+        case CCT_MASTER_SLAVE_SLAVE_MODE:
             // ptFCct_MasterMenuTT = &SlaveMenu_UpdateTimer;    //this is not nedded
-            SlaveMenuReset();
+            // SlaveMenuReset();
             cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_SLAVE;
-            DMX_EnableRx();
+
+            //packet reception enable
+            DMX_EnableRx();            
             break;
             
-        default:
-            ptFCct_MasterMenuTT = NULL;
-            Cct_MasterSlaveMenuReset ();
-            cct_master_slave_state = CCT_MASTER_SLAVE_MODE_CHECK_INNER_MODE_0;
+        default:           // go to selection menu
+            ptFCct_MasterMenuTT = &Cct_Master_Slave_Menu_UpdateTimer;
+            Cct_Master_Slave_Menu_Reset ();
+            cct_master_slave_state = CCT_MASTER_SLAVE_SELECTING;
             break;
         }
         break;
 
-    case CCT_MASTER_SLAVE_MODE_CHECK_INNER_MODE_0:
-        resp = Cct_MasterSlaveMenu (mem, actions);
+    case CCT_MASTER_SLAVE_SELECTING:
+        resp = Cct_Master_Slave_Menu (mem, actions);
 
-        if (resp == resp_finish)
-        {
-            if (mem->program_inner_type == CCT_MASTER_INNER_SLAVE)
-            {
-                cct_master_slave_state = CCT_MASTER_SLAVE_MODE_INIT;
-                resp = resp_need_to_save;
-            }
-            else
-            {
-                Cct_MasterMenuReset();
-                cct_master_slave_state++;
-            }
-        }
-        break;
-
-    case CCT_MASTER_SLAVE_MODE_CHECK_INNER_MODE_1:
-        resp = Cct_MasterMenu (mem, actions);
-
-        if (resp == resp_finish)
+        if (resp == resp_change)
         {
             cct_master_slave_state = CCT_MASTER_SLAVE_MODE_INIT;
             resp = resp_need_to_save;
         }
         break;
+
+    case CCT_MASTER_SLAVE_MODE_IN_CCT_MODE:
+        resp = Cct_Manual_Cct_Menu (mem, actions);
+
+        // if (resp == resp_finish)
+        // {
+        //     cct_master_slave_state = CCT_MASTER_SLAVE_MODE_INIT;
+        //     resp = resp_need_to_save;
+        // }
+        break;
         
-    case CCT_MASTER_SLAVE_MODE_IN_COLORS_FIXED:
-        
-        //resp_change translates to resp_change_all_up in this mode, resp_finish end of this mode
-        resp = FixedMenu(mem, actions);
+    case CCT_MASTER_SLAVE_MODE_IN_STATIC_MODE:        
+        //resp_change translates to resp_change_all_up in this mode
+        resp = Cct_Manual_Static_Menu (mem, actions);
 
         if (resp == resp_change)
             resp = resp_change_all_up;
-
-        if (resp == resp_finish)
-        {
-            Cct_MasterResetInnerMode(mem);
-            resp = resp_change;
-        }
-        break;
-
-    case CCT_MASTER_SLAVE_MODE_IN_COLORS_SKIPPING:
-
-        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
-        resp = ColorsMenu (mem, actions);
-
-        if (resp == resp_finish)
-        {
-            Cct_MasterResetInnerMode(mem);            
-            resp = resp_change;
-            break;
-        }
-
-        // speed change, save it
-        if (resp == resp_need_to_save)
-            break;
-
-        if (!cct_master_effect_timer)
-        {
-            ch_val = mem->fixed_channels;
-
-            resp = Colors_Fading_Pallete (ch_val);
-            if (resp == resp_finish)
-                resp = resp_continue;
-
-            cct_master_effect_timer = 10 - mem->program_inner_type_speed;
-            resp = resp_change;
-        }
-        break;
-
-    case CCT_MASTER_SLAVE_MODE_IN_COLORS_GRADUAL:
-
-        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
-        resp = ColorsMenu (mem, actions);
-
-        if (resp == resp_finish)
-        {
-            Cct_MasterResetInnerMode(mem);
-            resp = resp_change;
-            break;
-        }
-
-        // speed change, save it
-        if (resp == resp_need_to_save)
-            break;
         
-        if (!cct_master_effect_timer)
-        {
-            ch_val = mem->fixed_channels;
-
-            resp = Colors_Fading_Shuffle_Pallete (ch_val);
-            if (resp == resp_finish)
-                resp = resp_continue;
-
-            cct_master_effect_timer = 10 - mem->program_inner_type_speed;
-            resp = resp_change;
-        }
-
         break;
+        
+    case CCT_MASTER_SLAVE_MODE_IN_PRESET_MODE:
+        //resp_change translates to resp_change_all_up in this mode        
+        resp = Cct_Manual_Colors_Menu (mem, actions);
 
-    case CCT_MASTER_SLAVE_MODE_IN_COLORS_STROBE:
-
-        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
-        resp = ColorsMenu (mem, actions);
-
-        if (resp == resp_finish)
-        {
-            Cct_MasterResetInnerMode(mem);
-            resp = resp_change;
-            break;
-        }
-
-        // speed change, save it
-        if (resp == resp_need_to_save)
-            break;
-
-        if (!cct_master_effect_timer)
-        {
-            ch_val = mem->fixed_channels;
-
-            resp = Colors_Strobe_Pallete (ch_val);
-            if (resp == resp_finish)
-                resp = resp_continue;
-
-            // cct_master_effect_timer = 2000 - mem->program_inner_type_speed * 200;
-            cct_master_effect_timer = 1000 - mem->program_inner_type_speed * 100;                        
-            resp = resp_change;
-        }
+        if (resp == resp_change)
+            resp = resp_change_all_up;
+        
         break;
-
+        
     case CCT_MASTER_SLAVE_MODE_IN_SLAVE:
         //update del dmx - generalmente a 40Hz -
         if (Packet_Detected_Flag)
@@ -271,20 +179,12 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
             if (data11[0] == 0x00)    //dmx packet
             {
                 //update the colors channels
-                for (unsigned char i = 0; i < 6; i++)
+                for (unsigned char i = 0; i < 5; i++)
                     mem->fixed_channels[i] = data11[i + 1];
                 
                 resp = resp_change;
                 break;
             }
-        }
-        
-        resp = SlaveMenu (mem, actions);
-
-        if (resp == resp_finish)
-        {
-            Cct_MasterResetInnerMode(mem);            
-            resp = resp_change;
         }
         break;
         
@@ -298,16 +198,4 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 }
 
 
-void Cct_MasterResetInnerMode (parameters_typedef * mem)
-{
-    mem->program_inner_type = CCT_MASTER_NO_INNER_MODE;
-    cct_master_slave_state = CCT_MASTER_SLAVE_MODE_INIT;
-    
-    //colors reset
-    for (unsigned char i = 0; i < 6; i++)
-        mem->fixed_channels[i] = 0;
-
-    DMX_Disable();
-        
-}
 //--- end of file ---//

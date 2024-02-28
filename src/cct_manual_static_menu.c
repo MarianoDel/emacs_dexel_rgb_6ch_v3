@@ -129,7 +129,10 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine7(s_temp);
         
         // bottom line
-        Display_SetLine8("        Manual Static");        
+        if (mem->program_inner_type_in_cct == CCT_MASTER_SLAVE_STATIC_MODE)
+            Display_SetLine8(" MASTER Manual Static");
+        else
+            Display_SetLine8("        Manual Static");        
 
         // update all colors
         for (int i = 0; i < 5; i++)

@@ -19,9 +19,9 @@
     
 
 // Module Exported Functions ---------------------------------------------------
-void CCT_Master_Slave_Menu_UpdateTimer (void);
-void CCT_Master_Slave_Menu_Reset (void);
-resp_t CCT_Master_Slave_Menu (parameters_typedef *, sw_actions_t);
+void Cct_Master_Slave_Menu_UpdateTimer (void);
+void Cct_Master_Slave_Menu_Reset (void);
+resp_t Cct_Master_Slave_Menu (parameters_typedef *, sw_actions_t);
 
 
 #endif    /* _CCT_MASTER_SLAVE_MENU_H_ */

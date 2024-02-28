@@ -39,8 +39,9 @@
 #include "cct_hardware_mode.h"
 #include "cct_manual_mode.h"
 #include "cct_main_menu.h"
-#include "master_slave_mode.h"
+#include "cct_master_slave_mode.h"
 #include "cct_dmx_mode.h"
+
 
 
 #include <stdio.h>
@@ -67,6 +68,8 @@ typedef enum {
 extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
 extern volatile unsigned char Packet_Detected_Flag;
+extern volatile unsigned char data11[];
+
 // extern volatile unsigned char DMX_packet_flag;
 
 extern void (* ptFTT ) (void);
@@ -176,7 +179,8 @@ void Cct_Manager (parameters_typedef * pmem)
             //reception variables for slave mode
             Packet_Detected_Flag = 0;
             DMX_channel_selected = pmem->dmx_first_channel;
-            DMX_channel_quantity = pmem->dmx_channel_quantity;
+            // DMX_channel_quantity = pmem->dmx_channel_quantity;
+            DMX_channel_quantity = 5;            
 
             //enable int outputs
             FiltersAndOffsets_Enable_Outputs();            
@@ -320,10 +324,28 @@ void Cct_Manager (parameters_typedef * pmem)
         if ((resp == resp_change) ||
             (resp == resp_change_all_up))    //fixed mode save and change
         {
+            for (unsigned char n = 0; n < 5; n++)
+                ch_values[n] = pmem->fixed_channels[n];
+
             FiltersAndOffsets_Channels_to_Backup (ch_values);
+
+            // ch to dmx transmit
+            if ((pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_CCT_MODE) ||
+                (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_STATIC_MODE) ||
+                (pmem->program_inner_type_in_cct == CCT_MASTER_SLAVE_PRESET_MODE))
+            {
+                for (int n = 0; n < 5; n++)
+                    data11[n + 1] = pmem->fixed_channels[n];
+            }
             
-            if (resp == resp_change_all_up)    //fixed mode changes will be saved
-                resp = resp_need_to_save;                
+            if (resp == resp_change_all_up)
+                resp = resp_need_to_save;
+        }
+
+        if (resp == resp_need_to_save)
+        {
+            need_to_save_timer = 10000;
+            need_to_save = 1;
         }
 
         if (!timer_mngr)
@@ -359,7 +381,7 @@ void Cct_Manager (parameters_typedef * pmem)
         if ((resp == resp_change) ||
             (resp == resp_change_all_up))    //fixed mode save and change
         {
-            for (unsigned char n = 0; n < 5; n++)    //ch6 saves the dimmer
+            for (unsigned char n = 0; n < 5; n++)
                 ch_values[n] = pmem->fixed_channels[n];
 
             FiltersAndOffsets_Channels_to_Backup (ch_values);

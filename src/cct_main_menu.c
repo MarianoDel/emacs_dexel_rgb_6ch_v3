@@ -18,11 +18,11 @@
 
 
 // Module Private Types Constants and Macros -----------------------------------
-char str_modes [5][14] = {"DMX",
-                          "MASTER/SLAVE",
-                          "MANUAL CCT",
-                          "MANUAL STATIC",
-                          "MANUAL PRESET"};
+char str_main_modes [5][14] = {"DMX",
+                               "MASTER/SLAVE",
+                               "MANUAL CCT",
+                               "MANUAL STATIC",
+                               "MANUAL PRESET"};
 
 
 typedef enum {
@@ -89,11 +89,13 @@ resp_t Cct_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine1("MODE:");
 
         // line 2
-        if (mem->program_inner_type_in_cct < CCT_DMX_MODE)
+        if ((mem->program_inner_type_in_cct < CCT_DMX_MODE) ||
+            (mem->program_inner_type_in_cct > CCT_MANUAL_PRESET_MODE))
             mem->program_inner_type_in_cct = CCT_DMX_MODE;
         
-        sprintf(s_temp, "%s", &str_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
-        Display_SetLine2(s_temp);
+        sprintf(s_temp, "%s",
+                &str_main_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
+        Display_SetLine3(s_temp);
 
         // bottom line
         Display_SetLine8("            Main Menu");        
@@ -149,15 +151,16 @@ resp_t Cct_Main_Menu (parameters_typedef * mem, sw_actions_t actions)
         
         if (!cct_main_menu_timer)
         {
-            Display_BlankLine2();
+            Display_BlankLine3();
 
             if (showing)
                 showing = 0;
             else
             {
                 showing = 1;
-                sprintf(s_temp, "%s", &str_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
-                Display_SetLine2(s_temp);
+                sprintf(s_temp, "%s",
+                        &str_main_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
+                Display_SetLine3(s_temp);
             }
             
             cct_main_menu_timer = TT_SHOW;

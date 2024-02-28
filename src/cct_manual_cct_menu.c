@@ -101,7 +101,10 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine3(s_temp);
 
         // bottom line
-        Display_SetLine8("           Manual CCT");
+        if (mem->program_inner_type_in_cct == CCT_MASTER_SLAVE_CCT_MODE)
+            Display_SetLine8("    MASTER Manual CCT");
+        else
+            Display_SetLine8("           Manual CCT");
         
         cct_need_display_update = 1;
         cct_state++;
