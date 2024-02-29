@@ -131,7 +131,7 @@ SRC += ./src/cct_dmx_mode.c
 SRC += ./src/cct_dmx_menu.c
 SRC += ./src/cct_master_slave_mode.c
 SRC += ./src/cct_master_slave_menu.c
-
+SRC += ./src/cct_hardware_new_menu.c
 
 
 

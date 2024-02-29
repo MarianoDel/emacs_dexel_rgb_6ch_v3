@@ -5,12 +5,12 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### CCT_HARDWARE_MODE.H #######################
+// #### CCT_HARDWARE_MENU.H #######################
 //-------------------------------------------------
 
 // Prevent recursive inclusion -------------------------------------------------
-#ifndef _CCT_HARDWARE_MODE_H_
-#define _CCT_HARDWARE_MODE_H_
+#ifndef _CCT_HARDWARE_MENU_H_
+#define _CCT_HARDWARE_MENU_H_
 
 //-- includes to help configurations --//
 #include "switches_answers.h"
@@ -19,11 +19,11 @@
     
 
 // Module Exported Functions ---------------------------------------------------
-void Cct_Hardware_Mode_UpdateTimers (void);
-resp_t Cct_Hardware_Mode (parameters_typedef * mem, sw_actions_t actions);
-void Cct_Hardware_Mode_Reset (void);
+void Cct_Hardware_New_Menu_UpdateTimers (void);
+resp_t Cct_Hardware_New_Menu (parameters_typedef * mem, sw_actions_t actions);
+void Cct_Hardware_New_Menu_Reset (void);
 
-#endif    /* _CCT_HARDWARE_MODE_H_ */
+#endif    /* _CCT_HARDWARE_MENU_H_ */
 
 //--- end of file ---//
 

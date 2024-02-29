@@ -548,10 +548,10 @@ void Manager (parameters_typedef * pmem)
         //Mode Timeout enable
         ptFTT = &HardwareMode_UpdateTimers;
 #elif (defined DMX_AND_CCT_MODE)
-        Cct_HardwareModeReset ();
+        Cct_Hardware_Mode_Reset ();
 
         //Mode Timeout enable
-        ptFTT = &Cct_HardwareMode_UpdateTimers;
+        ptFTT = &Cct_Hardware_Mode_UpdateTimers;
 #else
 #error "No mode selected on hard.h"    
 #endif                    
@@ -583,7 +583,7 @@ void Manager (parameters_typedef * pmem)
 
 #elif (defined DMX_AND_CCT_MODE)
 
-        resp = Cct_HardwareMode (pmem, action);
+        resp = Cct_Hardware_Mode (pmem, action);
         if ((resp == resp_need_to_save) &&
             ((pmem->program_type == CCT1_MODE) || (pmem->program_type == CCT2_MODE)))                
         {

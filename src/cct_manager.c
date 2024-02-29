@@ -36,7 +36,7 @@
 #include "dsp.h"
 #include "temperatures.h"
 
-#include "cct_hardware_mode.h"
+#include "cct_hardware_new_menu.h"
 #include "cct_manual_mode.h"
 #include "cct_main_menu.h"
 #include "cct_master_slave_mode.h"
@@ -455,10 +455,10 @@ void Cct_Manager (parameters_typedef * pmem)
         break;
 
     case CCT_MNGR_ENTERING_HARDWARE_MENU:
-        Cct_HardwareModeReset();
+        Cct_Hardware_New_Menu_Reset();
 
         //Mode Timeout enable
-        ptFTT = &Cct_HardwareMode_UpdateTimers;
+        ptFTT = &Cct_Hardware_New_Menu_UpdateTimers;
             
 
         SCREEN_ShowText2(
@@ -482,7 +482,7 @@ void Cct_Manager (parameters_typedef * pmem)
         // Check encoder first
         action = CheckActions();
 
-        resp = Cct_HardwareMode_New (pmem, action);
+        resp = Cct_Hardware_New_Menu (pmem, action);        
 
         if ((resp == resp_need_to_save) ||
             (resp == resp_finish))

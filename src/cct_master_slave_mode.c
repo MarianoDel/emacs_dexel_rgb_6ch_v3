@@ -15,6 +15,7 @@
 #include "cct_manual_static_menu.h"
 #include "cct_manual_colors_menu.h"
 #include "display_utils.h"
+#include "ssd1306_display.h"
 #include "dmx_transceiver.h"
 
 #include <string.h>
@@ -58,8 +59,8 @@ void Cct_MasterSlaveMode_UpdateTimers (void)
     if (ptFCct_MasterMenuTT != NULL)
         ptFCct_MasterMenuTT();
 
-    // if (cct_master_effect_timer)
-    //     cct_master_effect_timer--;
+    if (cct_master_effect_timer)
+        cct_master_effect_timer--;
 }
 
 
@@ -72,22 +73,15 @@ void Cct_MasterSlaveModeReset (void)
 // resp_change will update colors
 // resp_change_all_up will update colors and save selections
 // resp_need_to_save will save selections
+int packet_cnt = 0;
 resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
-    unsigned char * ch_val;
+    // unsigned char * ch_val;
 
     switch (cct_master_slave_state)
     {
     case CCT_MASTER_SLAVE_MODE_INIT:
-
-        // check first time
-        // if ((mem->program_inner_type_in_cct < CCT_MASTER_SLAVE_CCT_MODE) ||
-        //     (mem->program_inner_type_in_cct > CCT_MASTER_SLAVE_SLAVE_MODE))
-        // {
-        //     mem->program_inner_type_in_cct = CCT_MASTER_SLAVE_CCT_MODE;
-        //     resp = resp_need_to_save;    // saves this default selection
-        // }
 
         switch (mem->program_inner_type_in_cct)
         {
@@ -116,10 +110,13 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
             break;
             
         case CCT_MASTER_SLAVE_SLAVE_MODE:
-            // ptFCct_MasterMenuTT = &SlaveMenu_UpdateTimer;    //this is not nedded
-            // SlaveMenuReset();
             cct_master_slave_state = CCT_MASTER_SLAVE_MODE_IN_SLAVE;
 
+            Display_ClearLines();
+            Display_SetLine3("SLAVE RUNNING");
+            Display_SetLine8("           Slave Mode");
+            display_update();
+            
             //packet reception enable
             DMX_EnableRx();            
             break;
@@ -179,12 +176,24 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
             if (data11[0] == 0x00)    //dmx packet
             {
                 //update the colors channels
-                for (unsigned char i = 0; i < 5; i++)
+                for (int i = 0; i < 5; i++)
                     mem->fixed_channels[i] = data11[i + 1];
                 
                 resp = resp_change;
-                break;
             }
+            packet_cnt++;
+        }
+
+        if (!cct_master_effect_timer)
+        {
+            char buff[20];
+            cct_master_effect_timer = 1000;
+
+            Display_BlankLine4();
+            sprintf(buff, "cnt: %d", packet_cnt);
+            packet_cnt = 0;
+            Display_SetLine4(buff);
+            display_update();
         }
         break;
         
