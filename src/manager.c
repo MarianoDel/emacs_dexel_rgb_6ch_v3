@@ -116,7 +116,6 @@ unsigned char check_ntc = 0;
 
 // Module Private Functions ----------------------------------------------------
 unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_prot);
-sw_actions_t CheckActions (void);
 void DisconnectByVoltage (void);
 void DisconnectChannels (void);
 
@@ -280,7 +279,8 @@ void Manager (parameters_typedef * pmem)
             need_to_save = 1;
         }
 
-        if (CheckSET() > SW_MIN)
+        if ((CheckSET() > SW_MIN) &&
+            (!Hard_Enter_Is_Block()))
             mngr_state = MNGR_ENTERING_MAIN_MENU;
             
         UpdateEncoder();
@@ -339,7 +339,8 @@ void Manager (parameters_typedef * pmem)
             need_to_save = 1;
         }
 
-        if (CheckSET() > SW_MIN)
+        if ((CheckSET() > SW_MIN) &&
+            (!Hard_Enter_Is_Block()))
             mngr_state = MNGR_ENTERING_MAIN_MENU;
             
         UpdateEncoder();            
@@ -819,23 +820,6 @@ unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_
 #endif
     
     return is_greater;
-}
-
-
-sw_actions_t CheckActions (void)
-{
-    sw_actions_t a = do_nothing;
-
-    if (CheckCCW())
-        a = selection_dwn;
-
-    if (CheckCW())
-        a = selection_up;
-
-    if (CheckSET() > SW_NO)
-        a = selection_enter;
-
-    return a;
 }
 
 

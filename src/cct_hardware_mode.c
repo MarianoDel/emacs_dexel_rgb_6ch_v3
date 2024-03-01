@@ -31,7 +31,8 @@ typedef enum {
     CCT_HARDWARE_MODE_CHANNELS,
     CCT_HARDWARE_MODE_TEMP,
     CCT_HARDWARE_MODE_ENC_DIR_CCT,
-    CCT_HARDWARE_MODE_VERSION
+    CCT_HARDWARE_MODE_VERSION,
+    CCT_HARDWARE_MODE_CHANNELS_FIXED
     
 } cct_hardware_mode_state_e;
 
@@ -75,7 +76,10 @@ resp_t Cct_Hardware_Mode (parameters_typedef * mem, sw_actions_t actions)
         mem_options.argv[1] = "CURRENT LIMIT";
         mem_options.argv[2] = "CHANNELS SELECTION";
         mem_options.argv[3] = "TEMP CONFIG";
-        mem_options.argv[4] = "ENC DIR / CCT MODE";
+        if (Cct_Hardware_Running_Get() != CCT_HARD_RUNNING_CCT)
+            mem_options.argv[4] = "ENC DIR / GO TO CCT";
+        else
+            mem_options.argv[4] = "ENC DIR / GO TO DMX";
         mem_options.argv[5] = "VERSION";
         mem_options.argv[6] = "EXIT";        
         mem_options.options_qtty = 7;
@@ -107,9 +111,18 @@ resp_t Cct_Hardware_Mode (parameters_typedef * mem, sw_actions_t actions)
                 break;
 
             case 2:
-                cct_hardware_mode_state = CCT_HARDWARE_MODE_CHANNELS;
-                ptFCctHardMenuTT = &ChannelsMenu_UpdateTimer;                
-                ChannelsMenuReset();
+                if (Cct_Hardware_Running_Get() == CCT_HARD_RUNNING_CCT)
+                {
+                    cct_hardware_mode_state = CCT_HARDWARE_MODE_CHANNELS_FIXED;
+                    ptFCctHardMenuTT = &ChannelsMenu_UpdateTimer;
+                    ChannelsMenuReset();
+                }
+                else
+                {
+                    cct_hardware_mode_state = CCT_HARDWARE_MODE_CHANNELS;
+                    ptFCctHardMenuTT = &ChannelsMenu_UpdateTimer;                
+                    ChannelsMenuReset();
+                }
                 break;
 
             case 3:
@@ -203,6 +216,17 @@ resp_t Cct_Hardware_Mode (parameters_typedef * mem, sw_actions_t actions)
             resp = resp_continue;
         }
         break;
+
+    case CCT_HARDWARE_MODE_CHANNELS_FIXED:
+        resp = ChannelsMenuFixed ();
+
+        if (resp == resp_finish)
+        {
+            cct_hardware_mode_state = CCT_HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
+        break;
+        
         
     default:
         cct_hardware_mode_state = CCT_HARDWARE_MODE_INIT;
@@ -213,5 +237,17 @@ resp_t Cct_Hardware_Mode (parameters_typedef * mem, sw_actions_t actions)
     
 }
 
+
+unsigned char running_on_cct = 0;
+unsigned char Cct_Hardware_Running_Get (void)
+{
+    return running_on_cct;
+}
+
+
+void Cct_Hardware_Running_Set (unsigned char new_val)
+{
+    running_on_cct = new_val;
+}
 
 //--- end of file ---//

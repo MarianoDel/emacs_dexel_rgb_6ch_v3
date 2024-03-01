@@ -5,46 +5,55 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### HARDWARE_MENU.C ###########################
+// #### CCT_HARDWARE_NEW_MENU.C ###################
 //-------------------------------------------------
 
 // Includes --------------------------------------------------------------------
 #include "cct_hardware_new_menu.h"
-#include "current_menu.h"
-#include "limits_menu.h"
-#include "channels_menu.h"
-#include "temp_menu.h"
-#include "cct_enc_dir_mode_menu.h"
-#include "version_menu.h"
-#include "options_menu.h"
+#include "display_utils.h"
+#include "ssd1306_display.h"
+#include "cct_utils.h"
 
 #include <string.h>
 #include <stdio.h>
 
 
 // Module Private Types Constants and Macros -----------------------------------
+char str_hard_modes [5][20] = {"CURRENT IN CHANNELS",
+                               "CURRENT LIMIT",
+                               "TEMP CONFIG",
+                               "ENC DIR / DMX MENU",
+                               "VERSION"};
+
 typedef enum {
     CCT_HARDWARE_MENU_INIT = 0,
-    CCT_HARDWARE_MENU_SELECT,
-    CCT_HARDWARE_MENU_CURRENTS,
-    CCT_HARDWARE_MENU_LIMIT,
-    CCT_HARDWARE_MENU_CHANNELS,
-    CCT_HARDWARE_MENU_TEMP,
-    CCT_HARDWARE_MENU_ENC_DIR_CCT,
-    CCT_HARDWARE_MENU_VERSION
+    CCT_HARDWARE_MENU_CHECK_OPTIONS,
+    CCT_HARDWARE_MENU_CHECK_OPTIONS_WAIT_FREE,
+    CCT_HARDWARE_MENU_SELECT_OPT1
     
 } cct_hardware_menu_state_e;
 
-// variables re-use
-#define cct_hardware_menu_state    menu_state
+#define TT_SHOW    500
+
+// variable re-use
+#define cct_hard_selected    menu_selected
+#define cct_hard_state    menu_state
+#define cct_hard_need_display_update    menu_need_display_update
+#define cct_hard_selection_show    menu_selection_show
+#define cct_hard_menu_timer    menu_menu_timer
 
 // Externals -------------------------------------------------------------------
+extern unsigned char menu_selected;
 extern unsigned char menu_state;
-extern options_menu_st mem_options;
+extern unsigned char menu_need_display_update;
+extern unsigned char menu_selection_show;
+extern volatile unsigned short menu_menu_timer;
+
 
 
 // Globals ---------------------------------------------------------------------
-void (* ptFCctHardNewMenu ) (void) = NULL;
+// void (* ptFCctHardNewMenu ) (void) = NULL;
+
 
 // Module Private Functions ----------------------------------------------------
 
@@ -52,165 +61,110 @@ void (* ptFCctHardNewMenu ) (void) = NULL;
 // Module Funtions -------------------------------------------------------------
 void Cct_Hardware_New_Menu_UpdateTimers (void)
 {
-    if (ptFCctHardNewMenu != NULL)
-        ptFCctHardNewMenu();
+    if (cct_hard_menu_timer)
+        cct_hard_menu_timer--;
+    // if (ptFCctHardNewMenu != NULL)
+    //     ptFCctHardNewMenu();
     
 }
 
 
 void Cct_Hardware_New_Menu_Reset (void)
 {
-    cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
+    cct_hard_state = CCT_HARDWARE_MENU_INIT;
 }
 
 
 resp_t Cct_Hardware_New_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
+    static unsigned char showing = 0;
     resp_t resp = resp_continue;
+    char s_temp[ALL_LINE_LENGTH_NULL];
 
-    switch (cct_hardware_menu_state)
+    switch (cct_hard_state)
     {
     case CCT_HARDWARE_MENU_INIT:
-        mem_options.argv[0] = "CURRENT IN CHANNELS";
-        mem_options.argv[1] = "CURRENT LIMIT";
-        mem_options.argv[2] = "CHANNELS SELECTION";
-        mem_options.argv[3] = "TEMP CONFIG";
-        mem_options.argv[4] = "ENC DIR / CCT MENU";
-        mem_options.argv[5] = "VERSION";
-        mem_options.argv[6] = "EXIT";        
-        mem_options.options_qtty = 7;
-        mem_options.argv[7] = "        Cct_Hardware Menu";
-        OptionsMenuReset();
-
-        cct_hardware_menu_state++;
+        // call former menu
+        
+        cct_hard_state++;
         break;
 
-    case CCT_HARDWARE_MENU_SELECT:
-        resp = OptionsMenu(&mem_options, actions);
-        
-        if (resp == resp_finish)
+    case CCT_HARDWARE_MENU_CHECK_OPTIONS:
+        if (actions == selection_enter)
         {
-            resp = resp_continue;
-            
-            switch (mem_options.options_selected)
+            cct_hard_state++;
+        }
+        break;
+
+    case CCT_HARDWARE_MENU_CHECK_OPTIONS_WAIT_FREE:
+        if (actions == do_nothing)    // change start or end selections
+        {
+            cct_hard_state++;
+            showing = 1;
+        }
+        break;
+        
+    case CCT_HARDWARE_MENU_SELECT_OPT1:
+        // resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[0]);
+
+        if ((actions == selection_dwn) ||
+            (actions == selection_dwn_fast))
+        {
+            if (mem->program_inner_type_in_cct > CCT_DMX_MODE)
+                mem->program_inner_type_in_cct -= 1;
+
+        }
+        else if ((actions == selection_up) ||
+                 (actions == selection_up_fast))
+        {
+            if (mem->program_inner_type_in_cct < CCT_MANUAL_PRESET_MODE)
+                mem->program_inner_type_in_cct += 1;
+
+        }
+        
+        if (actions == selection_enter)
+        {
+            cct_hard_state = CCT_HARDWARE_MENU_CHECK_OPTIONS;
+            resp = resp_change;
+        }
+
+        if (actions != do_nothing)
+        {
+            cct_hard_menu_timer = 0;
+            showing = 0;
+        }
+        
+        if (!cct_hard_menu_timer)
+        {
+            Display_BlankLine3();
+
+            if (showing)
+                showing = 0;
+            else
             {
-            case 0:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_CURRENTS;
-                ptFCctHardNewMenu = &CurrentMenu_UpdateTimer;
-                CurrentMenuReset();
-                break;
-
-            case 1:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_LIMIT;
-                ptFCctHardNewMenu = &LimitsMenu_UpdateTimer;                
-                LimitsMenuReset();
-                break;
-
-            case 2:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_CHANNELS;
-                ptFCctHardNewMenu = &ChannelsMenu_UpdateTimer;                
-                ChannelsMenuReset();
-                break;
-
-            case 3:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_TEMP;
-                ptFCctHardNewMenu = &TempMenu_UpdateTimer;                
-                TempMenuReset();
-                break;
-
-            case 4:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_ENC_DIR_CCT;
-                Cct_Enc_Dir_Mode_Menu_Reset ();
-                break;
-
-            case 5:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_VERSION;
-                ptFCctHardNewMenu = &VersionMenu_UpdateTimer;
-                VersionMenuReset();
-                break;
-                
-            case 6:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-                ptFCctHardNewMenu = NULL;
-                resp = resp_finish;
-                break;
-                
-            default:
-                cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-                ptFCctHardNewMenu = NULL;
-                break;
-                
+                showing = 1;
+                sprintf(s_temp, "%s",
+                        &str_hard_modes[mem->program_inner_type_in_cct - CCT_DMX_MODE][0]);
+                Display_SetLine3(s_temp);
             }
-        }
-        break;
-
-    case CCT_HARDWARE_MENU_CURRENTS:
-        resp = CurrentMenu(mem, actions);
-
-        if (resp == resp_finish)
-        {
-            cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-            resp = resp_continue;
-        }
-        break;
-
-    case CCT_HARDWARE_MENU_LIMIT:
-        resp = LimitsMenu(mem, actions);
-
-        if (resp == resp_finish)
-        {
-            cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-            resp = resp_continue;
-        }
-        break;
-
-    case CCT_HARDWARE_MENU_CHANNELS:
-        resp = ChannelsMenu(mem, actions);
-
-        if (resp == resp_finish)
-        {
-            cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-            resp = resp_continue;
-        }
-        break;
-
-    case CCT_HARDWARE_MENU_TEMP:
-        resp = TempMenu(mem, actions);
-
-        if (resp == resp_finish)
-        {
-            cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-            resp = resp_continue;
-        }
-        break;
-
-    case CCT_HARDWARE_MENU_ENC_DIR_CCT:
-        resp = Cct_Enc_Dir_Mode_Menu (mem, actions);
-
-        if (resp == resp_finish)
-        {
-            cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-            resp = resp_continue;
-        }
-        break;
-        
-    case CCT_HARDWARE_MENU_VERSION:
-        resp = VersionMenu(mem, actions);
-
-        if (resp == resp_finish)
-        {
-            cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
-            resp = resp_continue;
+            
+            cct_hard_menu_timer = TT_SHOW;
+            cct_hard_need_display_update = 1;
         }
         break;
         
     default:
-        cct_hardware_menu_state = CCT_HARDWARE_MENU_INIT;
+        cct_hard_state = CCT_HARDWARE_MENU_INIT;
         break;
     }
 
+    if (cct_hard_need_display_update)
+    {
+        display_update();
+        cct_hard_need_display_update = 0;
+    }
+
     return resp;
-    
 }
 
 

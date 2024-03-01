@@ -103,13 +103,15 @@ resp_t Cct_ManualMode (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MANUAL_MODE_CCT_MODE:
+        //resp_change translates to resp_change_all_up in this mode        
         resp = Cct_Manual_Cct_Menu (mem, actions);
 
-        if (resp == resp_finish)
-        {
-            cct_manual_state = CCT_MANUAL_MODE_INIT;
-            resp = resp_need_to_save;
-        }
+        if (resp == resp_change)
+            resp = resp_change_all_up;
+
+        if (resp == resp_working)
+            resp = resp_change;
+        
         break;
         
     case CCT_MANUAL_MODE_STATIC_MODE:        
@@ -119,6 +121,9 @@ resp_t Cct_ManualMode (parameters_typedef * mem, sw_actions_t actions)
         if (resp == resp_change)
             resp = resp_change_all_up;
 
+        if (resp == resp_working)
+            resp = resp_change;
+        
         break;
 
     case CCT_MANUAL_MODE_PRESET_MODE:

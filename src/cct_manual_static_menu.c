@@ -134,6 +134,7 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         else
             Display_SetLine8("        Manual Static");        
 
+        // Default Colors / update colors first time
         // update all colors
         for (int i = 0; i < 5; i++)
         {
@@ -141,7 +142,15 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 mem->cct_dimmer,
                 mem->dimmed_channels[i]);
         }
-        resp = resp_change;
+        // strobe
+        if (mem->cct_strobe)
+        {
+            // disable fast filters
+            mem->program_inner_type = DMX2_INNER_STROBE_MODE;
+            strobe_flag = STB_FLAG_RUNNING;
+        }
+        
+        resp = resp_working;
         
         cct_need_display_update = 1;
         cct_state++;
@@ -159,6 +168,7 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+            // Hard_Enter_Block ();
         }
         break;
         
@@ -407,7 +417,7 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_change)
         {
-            resp = resp_continue;
+            // resp = resp_continue;
             
             if (mem->cct_strobe)
             {
@@ -421,6 +431,8 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 mem->program_inner_type = MANUAL_NO_INNER_MODE;
                 strobe_flag = STB_FLAG_END;
             }
+            
+            return resp;
         }
 
         if (actions == selection_enter)
@@ -552,7 +564,7 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
             }
         
             cct_manual_static_strobe_timer = 1060 - mem->cct_strobe * 4;
-            resp = resp_change;
+            resp = resp_working;
         }
     }
     else if (strobe_flag == STB_FLAG_END)
@@ -565,8 +577,8 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 mem->dimmed_channels[i]);
         }
         cct_manual_static_strobe_timer = 0;
-        resp = resp_change;
         strobe_flag = STB_FLAG_ENDED;
+        resp = resp_working;        
     }
 
     return resp;

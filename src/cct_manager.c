@@ -14,6 +14,7 @@
 #include "adc.h"
 #include "usart.h"
 #include "tim.h"
+// #include "hard.h"
 
 #include "stm32f10x.h"
 
@@ -36,7 +37,7 @@
 #include "dsp.h"
 #include "temperatures.h"
 
-#include "cct_hardware_new_menu.h"
+#include "cct_hardware_mode.h"
 #include "cct_manual_mode.h"
 #include "cct_main_menu.h"
 #include "cct_master_slave_mode.h"
@@ -96,7 +97,6 @@ extern volatile unsigned char protections_sample_timer;
 
 extern unsigned char check_ntc;
 extern unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_prot);
-extern sw_actions_t CheckActions (void);
 extern void DisconnectByVoltage (void);
 extern void DisconnectChannels (void);
 
@@ -248,72 +248,12 @@ void Cct_Manager (parameters_typedef * pmem)
             need_to_save = 1;
         }
 
-        if (CheckSET() > SW_MIN)
+        if ((CheckSET() > SW_MIN) &&
+            (!Hard_Enter_Is_Block()))
             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
             
-        UpdateEncoder();
-                       
+        UpdateEncoder();                       
         break;
-
-//     case CCT_MNGR_DMX2_MODE:
-//         // Check encoder first
-//         action = CheckActions();
-            
-//         resp = DMX2Mode (ch_values, action);
-
-//         if (resp == resp_change)
-//         {
-//             FiltersAndOffsets_Channels_to_Backup(ch_values);
-//         }
-
-//         if (resp == resp_need_to_save)
-//         {
-//             need_to_save_timer = 10000;
-//             need_to_save = 1;
-//         }
-
-//         if (CheckSET() > SW_MIN)
-//             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
-            
-//         UpdateEncoder();            
-
-            
-// #ifdef USART_DEBUG_MODE
-//         if (!timer_mngr)
-//         {
-//             timer_mngr = 1000;
-
-//             sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-//                     *(ch_values + 0),
-//                     *(ch_values + 1),
-//                     *(ch_values + 2),
-//                     *(ch_values + 3),
-//                     *(ch_values + 4),
-//                     *(ch_values + 5));
-//             UsartDebug(s_to_send);
-
-//             sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
-//                     dac_chnls[0],
-//                     dac_chnls[1],
-//                     dac_chnls[2],
-//                     dac_chnls[3],
-//                     dac_chnls[4],
-//                     dac_chnls[5]);
-//             UsartDebug(s_to_send);
-
-//             sprintf(s_to_send, "p1: %d, p2: %d, p3: %d, p4: %d, p5: %d, p6: %d\n",
-//                     pwm_chnls[0],
-//                     pwm_chnls[1],
-//                     pwm_chnls[2],
-//                     pwm_chnls[3],
-//                     pwm_chnls[4],
-//                     pwm_chnls[5]);
-//             UsartDebug(s_to_send);
-            
-//         }
-// #endif
-            
-//         break;
 
     case CCT_MNGR_MASTER_SLAVE_MODE:
         // Check encoder first
@@ -365,7 +305,7 @@ void Cct_Manager (parameters_typedef * pmem)
             need_to_save = 1;
         }
 
-        if (CheckSET() > SW_MIN)
+        if (CheckSET() > SW_HALF)
             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
 
         UpdateEncoder();
@@ -396,9 +336,9 @@ void Cct_Manager (parameters_typedef * pmem)
             need_to_save = 1;
         }
 
-        if (CheckSET() > SW_MIN)
+        if (CheckSET() > SW_HALF)
             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
-
+        
         UpdateEncoder();
             
         break;
@@ -455,11 +395,11 @@ void Cct_Manager (parameters_typedef * pmem)
         break;
 
     case CCT_MNGR_ENTERING_HARDWARE_MENU:
-        Cct_Hardware_New_Menu_Reset();
+        Cct_Hardware_Mode_Reset ();
+        Cct_Hardware_Running_Set (CCT_HARD_RUNNING_CCT);
 
         //Mode Timeout enable
-        ptFTT = &Cct_Hardware_New_Menu_UpdateTimers;
-            
+        ptFTT = &Cct_Hardware_Mode_UpdateTimers;            
 
         SCREEN_ShowText2(
             "Entering ",
@@ -482,7 +422,19 @@ void Cct_Manager (parameters_typedef * pmem)
         // Check encoder first
         action = CheckActions();
 
-        resp = Cct_Hardware_New_Menu (pmem, action);        
+        resp = Cct_Hardware_Mode (pmem, action);
+        if ((resp == resp_need_to_save) &&
+            (pmem->program_type == DMX1_MODE))
+        {
+            Cct_Hardware_Running_Set (CCT_HARD_RUNNING_DMX);
+            // save inmediatly and reboot
+            __disable_irq();
+            Flash_WriteConfigurations();
+            __enable_irq();
+            
+            NVIC_SystemReset();
+            
+        }
 
         if ((resp == resp_need_to_save) ||
             (resp == resp_finish))

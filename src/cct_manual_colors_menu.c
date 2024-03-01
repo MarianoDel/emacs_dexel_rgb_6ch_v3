@@ -118,7 +118,7 @@ void Cct_Manual_Colors_Menu_Reset (void)
 }
 
 
-// color index in cct_temp_color
+// color index in cct_preset_index
 extern void display_update (void);
 resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
@@ -141,8 +141,8 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 
         // line 2
         sprintf(s_temp, "%2d -> %s",
-                mem->cct_temp_color + 1,
-                &str_colors[mem->cct_temp_color][0]);
+                mem->cct_preset_index + 1,
+                &str_colors[mem->cct_preset_index][0]);
         Display_SetLine2(s_temp);
 
         // bottom line
@@ -152,7 +152,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
             Display_SetLine8("         Preset Color");
         
         // update all colors
-        Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+        Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
 
         for (int i = 0; i < 5; i++)
         {
@@ -188,7 +188,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         // colors change
         if (resp == resp_change)
         {
-            Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+            Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
 
             for (int i = 0; i < 5; i++)
             {
@@ -241,33 +241,33 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 
         // if (actions == selection_dwn_fast)
         // {
-        //     if (mem->cct_temp_color >= 4)
-        //         mem->cct_temp_color -= 4;
+        //     if (mem->cct_preset_index >= 4)
+        //         mem->cct_preset_index -= 4;
         //     else
-        //         mem->cct_temp_color = 0;
+        //         mem->cct_preset_index = 0;
 
         //     resp = resp_change;
         // }
         // else if (actions == selection_dwn)
         // {
-        //     if (mem->cct_temp_color)
-        //         mem->cct_temp_color -= 1;
+        //     if (mem->cct_preset_index)
+        //         mem->cct_preset_index -= 1;
 
         //     resp = resp_change;        
         // }
         // else if (actions == selection_up_fast)
         // {
-        //     if (mem->cct_temp_color <= 19 - 4)
-        //         mem->cct_temp_color += 4;
+        //     if (mem->cct_preset_index <= 19 - 4)
+        //         mem->cct_preset_index += 4;
         //     else
-        //         mem->cct_temp_color = 19;
+        //         mem->cct_preset_index = 19;
 
         //     resp = resp_change;        
         // }
         // else if (actions == selection_up)
         // {
-        //     if (mem->cct_temp_color <= 19 - 1)
-        //         mem->cct_temp_color += 1;
+        //     if (mem->cct_preset_index <= 19 - 1)
+        //         mem->cct_preset_index += 1;
 
         //     resp = resp_change;        
         // }
@@ -275,16 +275,16 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         if ((actions == selection_dwn) ||
             (actions == selection_dwn_fast))
         {
-            if (mem->cct_temp_color)
-                mem->cct_temp_color -= 1;
+            if (mem->cct_preset_index)
+                mem->cct_preset_index -= 1;
 
             resp = resp_change;        
         }
         else if ((actions == selection_up) ||
                  (actions == selection_up_fast))
         {
-            if (mem->cct_temp_color < COLORS_QTTY - 1)
-                mem->cct_temp_color += 1;
+            if (mem->cct_preset_index < COLORS_QTTY - 1)
+                mem->cct_preset_index += 1;
 
             resp = resp_change;        
         }
@@ -292,7 +292,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         // colors change
         if (resp == resp_change)
         {
-            Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0]);
+            Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
 
             for (int i = 0; i < 5; i++)
             {
@@ -323,8 +323,8 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
             {
                 showing = 1;
                 sprintf(s_temp, "%2d -> %s",
-                        mem->cct_temp_color + 1,
-                        &str_colors[mem->cct_temp_color][0]);
+                        mem->cct_preset_index + 1,
+                        &str_colors[mem->cct_preset_index][0]);
                 Display_SetLine2(s_temp);
             }
             
@@ -357,7 +357,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 }
 
 
-// void Cct_Index_To_Channels(&rgb_colors[mem->cct_temp_color][0],&mem->dimmed_channels[0])
+// void Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0])
 void Cct_Index_To_Channels(unsigned char * rgb_table, unsigned char * chnls)
 {
     for (int i = 0; i < 5; i++)

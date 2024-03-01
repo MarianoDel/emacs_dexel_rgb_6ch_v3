@@ -92,7 +92,11 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine1(s_temp);
 
         // line 2
-        cct_int = GetCct (mem->cct_temp_color, CCT_MODE_2700_6500);        
+        if (mem->program_type == CCT1_MODE)
+            cct_int = GetCct (mem->cct_temp_color, CCT_MODE_2700_6500);
+        else
+            cct_int = GetCct (mem->cct_temp_color, CCT_MODE_3200_5700);
+        
         sprintf(s_temp, "CCT: %dK", cct_int);
         Display_SetLine2(s_temp);
 
@@ -105,6 +109,40 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             Display_SetLine8("    MASTER Manual CCT");
         else
             Display_SetLine8("           Manual CCT");
+
+        // Default Colors / update colors first time
+        // update colors
+        if (mem->cct_dimmer)
+        {
+            unsigned char offset;
+            
+            offset = 0;
+            calc = 255 - mem->cct_temp_color;
+            if (calc)
+                offset = 1;
+            
+            calc = calc * mem->cct_dimmer;
+            calc >>= 8;
+
+            mem->fixed_channels[3] = calc + offset;
+
+            offset = 0;            
+            calc = mem->cct_temp_color;            
+            if (calc)
+                offset = 1;
+            
+            calc = calc * mem->cct_dimmer;
+            calc >>= 8;
+            mem->fixed_channels[4] = calc + offset;
+        }
+        else
+        {
+            mem->fixed_channels[3] = 0;
+            mem->fixed_channels[4] = 0;
+        }
+
+        // green already on mem->fixed_channel[1]
+        resp = resp_working;
         
         cct_need_display_update = 1;
         cct_state++;
@@ -249,7 +287,11 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
             else
             {
                 showing = 1;
-                cct_int = GetCct (mem->cct_temp_color, CCT_MODE_2700_6500);
+                if (mem->program_type == CCT1_MODE)
+                    cct_int = GetCct (mem->cct_temp_color, CCT_MODE_2700_6500);
+                else
+                    cct_int = GetCct (mem->cct_temp_color, CCT_MODE_3200_5700);
+                
                 sprintf(s_temp, "CCT: %dK", cct_int);
                 Display_SetLine2(s_temp);
             }

@@ -259,12 +259,19 @@ typedef enum {
 
 
 // Module Exported Functions ---------------------------------------------------
+#include "switches_answers.h"
+
 void HARD_Timeouts (void);
 resp_sw_t CheckSET (void);
 unsigned char CheckCCW (void);
 unsigned char CheckCW (void);
 void UpdateSwitches (void);
 void UpdateEncoder (void);
+
+sw_actions_t CheckActions (void);
+void Hard_Enter_Block (void);
+void Hard_Enter_UnBlock (void);
+unsigned char Hard_Enter_Is_Block (void);
 
 
 #endif    /* _HARD_H_ */

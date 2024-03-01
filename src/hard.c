@@ -195,6 +195,78 @@ unsigned char CheckCW (void)
     return a;
 }
 
+
+unsigned char last_was_enter = 0;
+sw_actions_t CheckActions (void)
+{
+    sw_actions_t sw = do_nothing;
+    resp_sw_t s_sel = SW_NO;
+
+    s_sel = CheckSET ();
+    
+    if (CheckCW () > SW_NO)
+    {
+        if (s_sel > SW_NO)
+        {
+            sw = selection_up_fast;
+            last_was_enter = 2;
+        }
+        else
+            sw = selection_up;
+    }
+
+    if (CheckCCW () > SW_NO)
+    {
+        if (s_sel > SW_NO)
+        {
+            sw = selection_dwn_fast;
+            last_was_enter = 2;
+        }
+        else
+            sw = selection_dwn;
+    }
+    
+    if (s_sel > SW_HALF)
+        sw = selection_back;
+    else if (s_sel > SW_NO)
+    {
+        if (!last_was_enter)
+            last_was_enter = 1;
+    }
+    else    // s_sel == SW_NO
+    {
+        if (last_was_enter == 2)    // fast update
+        {
+        }
+        else if (last_was_enter == 1)    // no fast update
+        {
+            sw = selection_enter;
+        }
+        
+        last_was_enter = 0;            
+    }
+    
+    return sw;    
+}
+
+
+unsigned char enter_block = 0;
+void Hard_Enter_Block (void)
+{
+    enter_block = 1;
+}
+
+
+void Hard_Enter_UnBlock (void)
+{
+    enter_block = 0;
+}
+
+
+unsigned char Hard_Enter_Is_Block (void)
+{
+    return enter_block;
+}
 // End of Encoder Routines -----------------------------------------------------
 
 
