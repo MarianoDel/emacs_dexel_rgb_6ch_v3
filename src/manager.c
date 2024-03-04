@@ -85,6 +85,7 @@ unsigned char menu_need_display_update = 0;
 unsigned char menu_selection_show = 0;
 volatile unsigned short menu_menu_timer = 0;
 options_menu_st mem_options;
+unsigned char menu_counter_out = 0;
 
 extern volatile unsigned short dac_chnls [];
 extern volatile unsigned char pwm_chnls[];

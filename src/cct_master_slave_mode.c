@@ -36,6 +36,7 @@ typedef enum {
 // variables re-use
 #define cct_master_slave_state    mode_state
 #define cct_master_effect_timer    mode_effect_timer
+#define cct_counter_out    menu_counter_out
 
 
 // Externals -------------------------------------------------------------------
@@ -44,6 +45,12 @@ extern volatile unsigned char Packet_Detected_Flag;
 
 extern unsigned char mode_state;
 extern volatile unsigned short mode_effect_timer;
+extern unsigned char menu_counter_out;
+
+// -- for current temp --
+#include "adc.h"
+#include "temperatures.h"
+extern volatile unsigned short adc_ch [];
 
 
 // Globals ---------------------------------------------------------------------
@@ -52,6 +59,7 @@ void (* ptFCct_MasterMenuTT ) (void) = NULL;
 
 // Module Private Functions ----------------------------------------------------
 void Cct_MasterResetInnerMode (parameters_typedef *);
+
 
 // Module Funtions -------------------------------------------------------------
 void Cct_MasterSlaveMode_UpdateTimers (void)
@@ -77,7 +85,6 @@ int packet_cnt = 0;
 resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
-    // unsigned char * ch_val;
 
     switch (cct_master_slave_state)
     {
@@ -140,13 +147,15 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CCT_MASTER_SLAVE_MODE_IN_CCT_MODE:
+        //resp_change translates to resp_change_all_up in this mode
         resp = Cct_Manual_Cct_Menu (mem, actions);
 
-        // if (resp == resp_finish)
-        // {
-        //     cct_master_slave_state = CCT_MASTER_SLAVE_MODE_INIT;
-        //     resp = resp_need_to_save;
-        // }
+        if (resp == resp_change)
+            resp = resp_change_all_up;
+
+        if (resp == resp_working)
+            resp = resp_change;
+
         break;
         
     case CCT_MASTER_SLAVE_MODE_IN_STATIC_MODE:        
@@ -155,6 +164,9 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_change)
             resp = resp_change_all_up;
+
+        if (resp == resp_working)
+            resp = resp_change;
         
         break;
         
@@ -164,6 +176,9 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_change)
             resp = resp_change_all_up;
+
+        if (resp == resp_working)
+            resp = resp_change;
         
         break;
         
@@ -193,7 +208,28 @@ resp_t Cct_MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
             sprintf(buff, "cnt: %d", packet_cnt);
             packet_cnt = 0;
             Display_SetLine4(buff);
+
+            if (cct_counter_out)
+                cct_counter_out--;
+            else
+            {
+                Display_BlankLine8();
+                Display_SetLine8("           Slave Mode");
+            }
+
             display_update();
+        }
+
+        if (actions == selection_enter)
+        {
+            cct_counter_out = 2;
+
+            // current temp
+            char s_temp[ALL_LINE_LENGTH_NULL];
+            Display_BlankLine8();
+            char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+            sprintf(s_temp, "CURR T: %dC", curr_temp);
+            Display_SetLine8(s_temp);
         }
         break;
         

@@ -41,6 +41,7 @@ typedef enum {
 
 #define TT_SHOW    500
 // #define TT_NOT_SHOW    600
+#define CCT_COUNTER_OUT_VALUE    10
 
 // variable re-use
 #define cct_selected    menu_selected
@@ -48,17 +49,26 @@ typedef enum {
 #define cct_need_display_update    menu_need_display_update
 #define cct_selection_show    menu_selection_show
 #define cct_manual_static_menu_timer    menu_menu_timer
+#define cct_counter_out    menu_counter_out
+
 
 // Externals -------------------------------------------------------------------
 extern unsigned char menu_selected;
 extern unsigned char menu_state;
 extern unsigned char menu_need_display_update;
 extern unsigned char menu_selection_show;
+extern unsigned char menu_counter_out;
 extern volatile unsigned short menu_menu_timer;
+
+// -- for current temp --
+#include "adc.h"
+#include "temperatures.h"
+extern volatile unsigned short adc_ch [];
 
 
 // Globals ---------------------------------------------------------------------
 volatile unsigned short cct_manual_static_strobe_timer = 0;
+
 
 
 // Module Private Functions ----------------------------------------------------
@@ -160,6 +170,12 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == selection_enter)
         {
             cct_state++;
+
+            // meas temp on config
+            Display_BlankLine8();
+            char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+            sprintf(s_temp, "CURR T: %dC", curr_temp);
+            Display_SetLine8(s_temp);
         }
         break;
 
@@ -168,7 +184,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
-            // Hard_Enter_Block ();
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
         
@@ -192,6 +210,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -205,6 +226,17 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, "RED: %3d", mem->dimmed_channels[0]);
                 Display_SetLine1(s_temp);
+
+                // current temp
+                Display_BlankLine8();
+                char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+                sprintf(s_temp, "CURR T: %dC", curr_temp);
+                Display_SetLine8(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -217,6 +249,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
 
@@ -240,6 +275,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -253,6 +291,11 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, "GRN: %3d", mem->dimmed_channels[1]);
                 Display_SetLine2(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -265,6 +308,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
 
@@ -288,6 +334,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -301,6 +350,11 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, "BLU: %3d", mem->dimmed_channels[2]);
                 Display_SetLine3(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -313,6 +367,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
 
@@ -336,6 +393,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -349,6 +409,11 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, " WW: %3d", mem->dimmed_channels[3]);
                 Display_SetLine4(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -361,6 +426,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
 
@@ -384,6 +452,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -397,6 +468,11 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, " CW: %3d", mem->dimmed_channels[4]);
                 Display_SetLine5(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -409,6 +485,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
 
@@ -444,6 +523,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -457,6 +539,11 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, "STB: %3d", mem->cct_strobe);
                 Display_SetLine6(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -469,6 +556,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         break;
 
@@ -500,6 +590,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_static_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;
         }
         
         if (!cct_manual_static_menu_timer)
@@ -513,6 +606,11 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 showing = 1;
                 sprintf(s_temp, "DIM: %3d", mem->cct_dimmer);
                 Display_SetLine7(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_STATIC_MENU_SELECT_OPT7_WAIT_FREE;
             }
             
             cct_manual_static_menu_timer = TT_SHOW;
@@ -524,6 +622,16 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)    // change start or end selections
         {
             cct_state = CCT_MANUAL_STATIC_MENU_CHECK_OPTIONS;
+
+            // bottom line
+            Display_BlankLine8();
+
+            if (mem->program_inner_type_in_cct == CCT_MASTER_SLAVE_STATIC_MODE)
+                Display_SetLine8(" MASTER Manual Static");
+            else
+                Display_SetLine8("        Manual Static");        
+
+            cct_need_display_update = 1;            
         }
         break;
         

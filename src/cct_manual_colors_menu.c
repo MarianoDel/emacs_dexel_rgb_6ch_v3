@@ -80,6 +80,7 @@ typedef enum {
 
 #define TT_SHOW    500
 // #define TT_NOT_SHOW    600
+#define CCT_COUNTER_OUT_VALUE    10
 
 // variable re-use
 #define cct_selected    menu_selected
@@ -87,17 +88,24 @@ typedef enum {
 #define cct_need_display_update    menu_need_display_update
 #define cct_selection_show    menu_selection_show
 #define cct_manual_colors_menu_timer    menu_menu_timer
+#define cct_counter_out    menu_counter_out
+
 
 // Externals -------------------------------------------------------------------
 extern unsigned char menu_selected;
 extern unsigned char menu_state;
 extern unsigned char menu_need_display_update;
 extern unsigned char menu_selection_show;
+extern unsigned char menu_counter_out;
 extern volatile unsigned short menu_menu_timer;
+
+// -- for current temp --
+#include "adc.h"
+#include "temperatures.h"
+extern volatile unsigned short adc_ch [];
 
 
 // Globals ---------------------------------------------------------------------
-
 
 
 // Module Private Functions ----------------------------------------------------
@@ -161,7 +169,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
                 mem->dimmed_channels[i]);
         }
 
-        resp = resp_change;        
+        resp = resp_working;
                 
         cct_need_display_update = 1;
         cct_state++;
@@ -171,6 +179,12 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == selection_enter)
         {
             cct_state++;
+
+            // meas temp on config
+            Display_BlankLine8();
+            char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+            sprintf(s_temp, "CURR T: %dC", curr_temp);
+            Display_SetLine8(s_temp);
         }
         break;
 
@@ -179,6 +193,9 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;            
         }
         break;
         
@@ -207,6 +224,9 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_colors_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;            
         }
         
         if (!cct_manual_colors_menu_timer)
@@ -221,6 +241,17 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
                 GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);
                 sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);
                 Display_SetLine1(s_temp);
+
+                // current temp
+                Display_BlankLine8();
+                char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+                sprintf(s_temp, "CURR T: %dC", curr_temp);
+                Display_SetLine8(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_COLORS_MENU_SELECT_LINE2_WAIT_FREE;
             }
             
             cct_manual_colors_menu_timer = TT_SHOW;
@@ -233,44 +264,14 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_state++;
             showing = 1;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;            
         }
         break;
 
     case CCT_MANUAL_COLORS_MENU_SELECT_LINE2:
-        // resp = CCT_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
-
-        // if (actions == selection_dwn_fast)
-        // {
-        //     if (mem->cct_preset_index >= 4)
-        //         mem->cct_preset_index -= 4;
-        //     else
-        //         mem->cct_preset_index = 0;
-
-        //     resp = resp_change;
-        // }
-        // else if (actions == selection_dwn)
-        // {
-        //     if (mem->cct_preset_index)
-        //         mem->cct_preset_index -= 1;
-
-        //     resp = resp_change;        
-        // }
-        // else if (actions == selection_up_fast)
-        // {
-        //     if (mem->cct_preset_index <= 19 - 4)
-        //         mem->cct_preset_index += 4;
-        //     else
-        //         mem->cct_preset_index = 19;
-
-        //     resp = resp_change;        
-        // }
-        // else if (actions == selection_up)
-        // {
-        //     if (mem->cct_preset_index <= 19 - 1)
-        //         mem->cct_preset_index += 1;
-
-        //     resp = resp_change;        
-        // }
+        // resp = Cct_Utils_Update_Actions_Values (actions, &mem->fixed_channels[1]);
 
         if ((actions == selection_dwn) ||
             (actions == selection_dwn_fast))
@@ -300,6 +301,36 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
                     mem->cct_dimmer,
                     mem->dimmed_channels[i]);
             }
+
+            
+            // Display_BlankLine3();
+            // Display_BlankLine4();
+            // sprintf(s_temp, "%d %d %d",
+            //         mem->dimmed_channels[0],
+            //         mem->dimmed_channels[1],
+            //         mem->dimmed_channels[2]);
+            // Display_SetLine3(s_temp);
+
+            // sprintf(s_temp, "%d %d",
+            //         mem->dimmed_channels[3],
+            //         mem->dimmed_channels[4]);
+            // Display_SetLine4(s_temp);
+            // cct_need_display_update = 1;
+
+            Display_BlankLine3();
+            Display_BlankLine4();
+            sprintf(s_temp, "%d %d %d",
+                    mem->fixed_channels[0],
+                    mem->fixed_channels[1],
+                    mem->fixed_channels[2]);
+            Display_SetLine3(s_temp);
+
+            sprintf(s_temp, "%d %d",
+                    mem->fixed_channels[3],
+                    mem->fixed_channels[4]);
+            Display_SetLine4(s_temp);
+            cct_need_display_update = 1;
+            
         }
         
         if (actions == selection_enter)
@@ -311,6 +342,9 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         {
             cct_manual_colors_menu_timer = 0;
             showing = 0;
+
+            // counter out
+            cct_counter_out = CCT_COUNTER_OUT_VALUE;            
         }
         
         if (!cct_manual_colors_menu_timer)
@@ -326,6 +360,11 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
                         mem->cct_preset_index + 1,
                         &str_colors[mem->cct_preset_index][0]);
                 Display_SetLine2(s_temp);
+
+                if (cct_counter_out)
+                    cct_counter_out--;            
+                else
+                    cct_state = CCT_MANUAL_COLORS_MENU_SELECT_LINE2_WAIT_FREE;
             }
             
             cct_manual_colors_menu_timer = TT_SHOW;
@@ -337,7 +376,15 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)    // change start or end selections
         {
             cct_state = CCT_MANUAL_COLORS_MENU_CHECK_OPTIONS;
-            showing = 1;
+
+            // bottom line
+            Display_BlankLine8();
+            if (mem->program_inner_type_in_cct == CCT_MASTER_SLAVE_PRESET_MODE)
+                Display_SetLine8("  MASTER Preset Color");
+            else
+                Display_SetLine8("         Preset Color");
+
+            cct_need_display_update = 1;
         }
         break;
 

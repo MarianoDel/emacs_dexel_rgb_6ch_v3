@@ -17,6 +17,8 @@
 #include "flash_program.h"
 #include "parameters.h"
 
+#include "display_utils.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -64,6 +66,7 @@ typedef enum {
 // variables re-use
 #define cct_dmx_mode_state    mode_state
 #define cct_dmx_mode_effect_timer    mode_effect_timer
+#define cct_counter_out    menu_counter_out
 
 
 // Externals -------------------------------------------------------------------
@@ -72,7 +75,7 @@ extern volatile unsigned char data11[];
 // -- externals re-used
 extern unsigned char mode_state;
 extern volatile unsigned short mode_effect_timer;
-
+extern unsigned char menu_counter_out;
 
 //del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;
@@ -270,10 +273,15 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
             cct_dmx_st.mode = CCT_DMX_MODE;
             cct_dmx_st.pchannels = (const unsigned char *) &(data11[1]);
             cct_dmx_st.chnls_qtty = mem_conf.dmx_channel_quantity;
+
+            // show address & temp flag
+            cct_dmx_st.show_addres = 0;
             if (cct_dmx_address_show)
-                cct_dmx_st.show_addres = 1;
-            else
-                cct_dmx_st.show_addres = 0;
+                cct_dmx_st.show_addres |= 0x01;
+
+            if (cct_counter_out)
+                cct_dmx_st.show_addres |= 0x02;
+            
 
             resp = Cct_DMX_Menu (&cct_dmx_st);
             if (resp == resp_finish)
@@ -355,16 +363,21 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
             // change the DMX address
             DMX_channel_selected = cct_dmx_addr_st.dmx_address;
             mem_conf.dmx_first_channel = DMX_channel_selected;
-        
+
             // force a display update
             cct_dmx_end_of_packet_update = 1;
+
+            // use for temp indication
+            cct_counter_out = 1;
         }
 
         if (resp == resp_finish)
         {
             //end of changing ask for a memory save
             resp = resp_need_to_save;
-        
+
+            // end of temp indication
+            cct_counter_out = 0;
         }
     }
     return resp;
