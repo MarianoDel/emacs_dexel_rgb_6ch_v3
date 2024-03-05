@@ -95,6 +95,10 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_StartLines ();
         Display_ClearLines();
 
+        // Flush all colors
+        for (int i = 0; i < 5; i++)
+            mem->fixed_channels[i] = 0;
+
         // line 1
         GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);        
         sprintf(s_temp, "Dimmer: %3d.%01d%%", dim_int, dim_dec);

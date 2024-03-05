@@ -109,7 +109,7 @@ extern volatile unsigned short adc_ch [];
 
 
 // Module Private Functions ----------------------------------------------------
-void Cct_Index_To_Channels(unsigned char * rgb_table, unsigned char * chnls);
+void Cct_Index_To_Channels(unsigned char * rgb_table, volatile unsigned char * chnls);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -127,6 +127,7 @@ void Cct_Manual_Colors_Menu_Reset (void)
 
 
 // color index in cct_preset_index
+volatile unsigned char * pcolor;
 extern void display_update (void);
 resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 {
@@ -160,13 +161,19 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
             Display_SetLine8("         Preset Color");
         
         // update all colors
-        Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
+        pcolor = &mem->dimmed_channels[0];
+        // Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
+        Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0], pcolor);
 
         for (int i = 0; i < 5; i++)
         {
+            // mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+            //     mem->cct_dimmer,
+            //     mem->dimmed_channels[i]);
+
             mem->fixed_channels[i] = Cct_Utils_Dim_Color (
                 mem->cct_dimmer,
-                mem->dimmed_channels[i]);
+                *(pcolor + i));
         }
 
         resp = resp_working;
@@ -205,13 +212,19 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
         // colors change
         if (resp == resp_change)
         {
-            Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
+            pcolor = &mem->dimmed_channels[0];
+            // Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0]);
+            Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0], pcolor);
 
             for (int i = 0; i < 5; i++)
             {
+                // mem->fixed_channels[i] = Cct_Utils_Dim_Color (
+                //     mem->cct_dimmer,
+                //     mem->dimmed_channels[i]);
+
                 mem->fixed_channels[i] = Cct_Utils_Dim_Color (
                     mem->cct_dimmer,
-                    mem->dimmed_channels[i]);
+                    *(pcolor + i));
             }
         }
         
@@ -317,19 +330,19 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
             // Display_SetLine4(s_temp);
             // cct_need_display_update = 1;
 
-            Display_BlankLine3();
-            Display_BlankLine4();
-            sprintf(s_temp, "%d %d %d",
-                    mem->fixed_channels[0],
-                    mem->fixed_channels[1],
-                    mem->fixed_channels[2]);
-            Display_SetLine3(s_temp);
+            // Display_BlankLine3();
+            // Display_BlankLine4();
+            // sprintf(s_temp, "%d %d %d",
+            //         mem->fixed_channels[0],
+            //         mem->fixed_channels[1],
+            //         mem->fixed_channels[2]);
+            // Display_SetLine3(s_temp);
 
-            sprintf(s_temp, "%d %d",
-                    mem->fixed_channels[3],
-                    mem->fixed_channels[4]);
-            Display_SetLine4(s_temp);
-            cct_need_display_update = 1;
+            // sprintf(s_temp, "%d %d",
+            //         mem->fixed_channels[3],
+            //         mem->fixed_channels[4]);
+            // Display_SetLine4(s_temp);
+            // cct_need_display_update = 1;
             
         }
         
@@ -405,7 +418,7 @@ resp_t Cct_Manual_Colors_Menu (parameters_typedef * mem, sw_actions_t actions)
 
 
 // void Cct_Index_To_Channels(&rgb_colors[mem->cct_preset_index][0],&mem->dimmed_channels[0])
-void Cct_Index_To_Channels(unsigned char * rgb_table, unsigned char * chnls)
+void Cct_Index_To_Channels(unsigned char * rgb_table, volatile unsigned char * chnls)
 {
     for (int i = 0; i < 5; i++)
         *(chnls + i) = *(rgb_table + i);

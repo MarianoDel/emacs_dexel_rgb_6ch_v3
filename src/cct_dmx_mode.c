@@ -367,19 +367,21 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
             // force a display update
             cct_dmx_end_of_packet_update = 1;
 
-            // use for temp indication
+        }
+
+        // ask for temp indication
+        if (resp == resp_working)
+        {
             cct_counter_out = 1;
         }
 
-        if (resp == resp_finish)
+        if (resp == resp_need_to_save)
         {
-            //end of changing ask for a memory save
-            resp = resp_need_to_save;
-
             // end of temp indication
             cct_counter_out = 0;
         }
     }
+    
     return resp;
     
 }
