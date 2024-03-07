@@ -96,8 +96,11 @@ resp_t Cct_Manual_Cct_Menu (parameters_typedef * mem, sw_actions_t actions)
         Display_ClearLines();
 
         // Flush all colors
-        for (int i = 0; i < 5; i++)
-            mem->fixed_channels[i] = 0;
+        mem->fixed_channels[0] = 0;
+        // mem->fixed_channels[1] = 0;    // this is the saved green
+        mem->fixed_channels[2] = 0;
+        mem->fixed_channels[3] = 0;
+        mem->fixed_channels[4] = 0;
 
         // line 1
         GetPercentage (mem->cct_dimmer, &dim_int, &dim_dec);        

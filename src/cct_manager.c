@@ -252,7 +252,43 @@ void Cct_Manager (parameters_typedef * pmem)
             (!Hard_Enter_Is_Block()))
             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
             
-        UpdateEncoder();                       
+        UpdateEncoder();
+
+#ifdef USART_DEBUG_MODE
+        if (!timer_mngr)
+        {
+            timer_mngr = 2000;
+
+            sprintf(s_to_send, "chn: %3d %3d %3d %3d %3d %3d\n",
+                    *(ch_values + 0),
+                    *(ch_values + 1),
+                    *(ch_values + 2),
+                    *(ch_values + 3),
+                    *(ch_values + 4),
+                    *(ch_values + 5));
+            UsartDebug(s_to_send);
+
+            sprintf(s_to_send, "dac: %3d %3d %3d %3d %3d %3d\n",
+                    dac_chnls[0],
+                    dac_chnls[1],
+                    dac_chnls[2],
+                    dac_chnls[3],
+                    dac_chnls[4],
+                    dac_chnls[5]);
+            UsartDebug(s_to_send);
+
+            sprintf(s_to_send, "pwm: %3d %3d %3d %3d %3d %3d\n\n",
+                    pwm_chnls[0],
+                    pwm_chnls[1],
+                    pwm_chnls[2],
+                    pwm_chnls[3],
+                    pwm_chnls[4],
+                    pwm_chnls[5]);
+            UsartDebug(s_to_send);
+            
+        }
+#endif
+        
         break;
 
     case CCT_MNGR_MASTER_SLAVE_MODE:
@@ -325,7 +361,7 @@ void Cct_Manager (parameters_typedef * pmem)
                 ch_values[n] = pmem->fixed_channels[n];
 
             FiltersAndOffsets_Channels_to_Backup (ch_values);
-            
+
             if (resp == resp_change_all_up)
                 resp = resp_need_to_save;
         }
@@ -340,6 +376,42 @@ void Cct_Manager (parameters_typedef * pmem)
             cct_mngr_state = CCT_MNGR_ENTERING_MAIN_MENU;
         
         UpdateEncoder();
+
+#ifdef USART_DEBUG_MODE
+        if (!timer_mngr)
+        {
+            timer_mngr = 2000;
+
+            sprintf(s_to_send, "chn: %3d %3d %3d %3d %3d %3d\n",
+                    *(ch_values + 0),
+                    *(ch_values + 1),
+                    *(ch_values + 2),
+                    *(ch_values + 3),
+                    *(ch_values + 4),
+                    *(ch_values + 5));
+            UsartDebug(s_to_send);
+
+            sprintf(s_to_send, "dac: %3d %3d %3d %3d %3d %3d\n",
+                    dac_chnls[0],
+                    dac_chnls[1],
+                    dac_chnls[2],
+                    dac_chnls[3],
+                    dac_chnls[4],
+                    dac_chnls[5]);
+            UsartDebug(s_to_send);
+
+            sprintf(s_to_send, "pwm: %3d %3d %3d %3d %3d %3d\n\n",
+                    pwm_chnls[0],
+                    pwm_chnls[1],
+                    pwm_chnls[2],
+                    pwm_chnls[3],
+                    pwm_chnls[4],
+                    pwm_chnls[5]);
+            UsartDebug(s_to_send);
+            
+        }
+#endif
+        
             
         break;
 
@@ -595,9 +667,7 @@ void Cct_Manager (parameters_typedef * pmem)
     // save flash after configs
     if ((need_to_save) && (!need_to_save_timer))
     {
-        __disable_irq();
         need_to_save = Flash_WriteConfigurations();
-        __enable_irq();
 
 #ifdef USART_DEBUG_MODE
         if (need_to_save)

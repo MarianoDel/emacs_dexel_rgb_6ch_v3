@@ -30,10 +30,10 @@ ma16_u16_data_obj_t st_sp4;
 ma16_u16_data_obj_t st_sp5;
 ma16_u16_data_obj_t st_sp6;
 
-unsigned char ch_dmx_val [6] = { 0 };
-unsigned short limit_output [6] = { 0 };
+volatile unsigned char ch_dmx_val [6] = { 0 };
+volatile unsigned short limit_output [6] = { 0 };
 
-unsigned char filters_enable_outputs = 0;
+volatile unsigned char filters_enable_outputs = 0;
 // Module Private Functions ----------------------------------------------------
 
 

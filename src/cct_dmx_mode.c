@@ -24,7 +24,7 @@
 
 
 // for tests with 6ch console
-// #define DEBUG_DIMMER_ALWAYS_ON
+#define DEBUG_DIMMER_ALWAYS_ON
 
 // Private Types Constants and Macros ------------------------------------------
 typedef enum {
@@ -389,12 +389,21 @@ resp_t Cct_DMXMode (unsigned char * ch_val, sw_actions_t action)
 
 void Cct_DMXMode_ChannelsDimmer (unsigned char * ch_out, unsigned char * ch_in)
 {
+#ifdef DEBUG_DIMMER_ALWAYS_ON    
+    for (int i = 0; i < 5; i++)
+    {
+        *(ch_out + i) = Cct_Utils_Dim_Color (
+            255,
+            ch_in[CCT_DMX_CH1 + i]);
+    }
+#else
     for (int i = 0; i < 5; i++)
     {
         *(ch_out + i) = Cct_Utils_Dim_Color (
             ch_in[CCT_DMX_DIM_CH],
             ch_in[CCT_DMX_CH1 + i]);
     }
+#endif
 }
 
 

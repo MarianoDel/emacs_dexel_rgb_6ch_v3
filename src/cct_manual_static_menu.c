@@ -152,13 +152,10 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
                 mem->cct_dimmer,
                 mem->dimmed_channels[i]);
         }
+
         // strobe
         if (mem->cct_strobe)
-        {
-            // disable fast filters
-            mem->program_inner_type = DMX2_INNER_STROBE_MODE;
             strobe_flag = STB_FLAG_RUNNING;
-        }
         
         resp = resp_working;
         
@@ -499,17 +496,9 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
             // resp = resp_continue;
             
             if (mem->cct_strobe)
-            {
-                // disable fast filters
-                mem->program_inner_type = DMX2_INNER_STROBE_MODE;
                 strobe_flag = STB_FLAG_RUNNING;
-            }
             else
-            {
-                // enable filters
-                mem->program_inner_type = MANUAL_NO_INNER_MODE;
                 strobe_flag = STB_FLAG_END;
-            }
             
             return resp;
         }
@@ -670,8 +659,12 @@ resp_t Cct_Manual_Static_Menu (parameters_typedef * mem, sw_actions_t actions)
 
                 strobe_flag_on = 0;
             }
-        
-            cct_manual_static_strobe_timer = 1060 - mem->cct_strobe * 4;
+
+            unsigned char stb_roof = mem->cct_strobe;
+            if (stb_roof > 245)
+                stb_roof = 245;
+            
+            cct_manual_static_strobe_timer = 1060 - stb_roof * 4;
             resp = resp_working;
         }
     }
