@@ -74,11 +74,10 @@
 #define VALUE_FOR_CONSTANT_OFF    115    //1.8us tick 15.62ns
 
 // Externals -------------------------------------------------------------------
+extern volatile unsigned short wait_ms_var;
 
 
 // Globals ---------------------------------------------------------------------
-// -- Wait_ms
-volatile unsigned short wait_ms_var;
 
 
 // Module Functions ------------------------------------------------------------

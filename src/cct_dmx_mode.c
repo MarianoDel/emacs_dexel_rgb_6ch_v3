@@ -24,7 +24,7 @@
 
 
 // for tests with 6ch console
-#define DEBUG_DIMMER_ALWAYS_ON
+// #define DEBUG_DIMMER_ALWAYS_ON
 
 // Private Types Constants and Macros ------------------------------------------
 typedef enum {

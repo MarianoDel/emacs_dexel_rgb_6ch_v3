@@ -379,12 +379,14 @@ tests_oled_cct_dmx_menu:
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
 	gcc -c src/cct_dmx_menu.c -I. $(INCDIR)
 	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/temperatures.c -I. $(INCDIR)
+	gcc -c src/dmx_menu.c -I. $(INCDIR)
 	# the module that implements tests_lcd_application.h functions
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_cct_dmx_menu.c -o tests_oled_cct_dmx_menu.o
 	# then the gtk lib modules
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
 	# link everything
-	gcc tests_glade_oled.o tests_oled_cct_dmx_menu.o cct_dmx_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	gcc tests_glade_oled.o tests_oled_cct_dmx_menu.o cct_dmx_menu.o display_utils.o temperatures.o dmx_menu.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
 	# run global tags
 	gtags -q
 	# run the simulation
