@@ -336,6 +336,49 @@ void TIM_4_Init (void)
     
 }
 
+
+// Channel 6 on ver 3.2 -- Santiago tests
+void TIM_4_Init_Test_Santiago (void)
+{
+    if (!RCC_TIM4_CLK)
+        RCC_TIM4_CLK_ON;
+
+    // timer configuration
+    // TIM4->CR1 = 0x00 | TIM_CR1_ARPE;        //clk int / 1 , auto preload enable
+    TIM4->CR1 = 0x00;        //clk int / 1 
+
+    // No link to others
+    TIM4->SMCR = 0x0000;
+    
+    //CH1 output PWM mode 1 (channel active TIM4->CNT < TIM4->CCR1)
+    TIM4->CCMR1 = 0x0060;
+    TIM4->CCMR2 = 0x0000;
+    TIM4->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;    // CH1 enable, polarity reversal
+    
+    TIM4->ARR = 1000;    // 1000pts = 64KHz
+    TIM4->CCR1 = 0;
+    TIM4->CR1 |= TIM_CR1_ARPE;        //auto preload enable    
+    TIM4->CNT = 0;
+    TIM4->PSC = 0;
+
+    TIM4->CR1 |= TIM_CR1_CEN;
+
+    unsigned int temp = 0;
+    temp = GPIOB->CRL;    
+    temp &= 0xF0FFFFFF;    //PB6 TIM4_CH1 alternative push-pull 2MHz
+    temp |= 0x0A000000;
+    GPIOB->CRL = temp;
+    
+}
+
+
+void TIM_4_Update_Ch1_Test_Santiago (unsigned short a)
+{
+    TIM4->CCR1 = a;
+}
+// End of Channel 6 on ver 3.2 -- Santiago tests
+
+
 // Channel 2 on ver 3.2
 // Channel 6 ver 3.1 3.0 -- out TIM_OUT_CH6 -> TIM5_CH4 @ PA3, in TIM5_CH2 @ PA1
 void TIM_5_Init (void)

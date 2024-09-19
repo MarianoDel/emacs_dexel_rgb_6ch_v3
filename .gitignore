@@ -16,4 +16,5 @@ GTAGS
 *.gcda
 *.gcno
 tests_gtk
+__pycache__
 

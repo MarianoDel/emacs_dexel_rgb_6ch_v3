@@ -12,6 +12,7 @@
 #include "screen.h"
 #include "parameters.h"
 #include "switches_answers.h"
+#include "ssd1306_display.h"
 
 #include "cct_main_menu.h"
 
