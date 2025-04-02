@@ -42,6 +42,7 @@ void Wait_ms (unsigned short);
 void TIM_Deactivate_Channels (unsigned char deact_chnls);
 void TIM_Activate_Channels (unsigned char act_chnls);
 
+void TIM_4_Init_Test_Santiago (void);
 
 #endif /* _TIMER_H_ */
 

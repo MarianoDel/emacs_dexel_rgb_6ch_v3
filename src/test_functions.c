@@ -100,12 +100,14 @@ void TF_Flash_Configurations_With_Uart4 (void);
 
 void TF_Uart4_Adc_Dma (void);
 
+void TF_Boost_Ch6_Test_Santiago (void);
+
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
 {
     // TF_Led_On_Ctrl_Fan ();
-    TF_Encoder_Sw ();
+    // TF_Encoder_Sw ();
     // TF_Encoder_CheckSET ();
     // TF_Encoder_CheckCW ();
     // TF_Encoder_CheckCCW ();
@@ -147,6 +149,8 @@ void TF_Hardware_Tests (void)
     // TF_Flash_Configurations_With_Uart4 ();
 
     // TF_Uart4_Adc_Dma ();
+
+    TF_Boost_Ch6_Test_Santiago ();
 }
 
 
@@ -1669,4 +1673,75 @@ void TF_Uart4_Adc_Dma (void)
 }
 
 
+pid_data_obj_t pid;
+void TF_Boost_Ch6_Test_Santiago (void)
+{
+    // unsigned short dac_chnls [6] = { 0 };
+    // unsigned short dmx_getted [6] = { 0 };
+    // unsigned char dmx_to_show [6] = { 0 };    
+
+    DAC_Config();
+    DAC_Output(3810);    // 1/4 vref = 1.23V / 4 = 0.307V
+
+    //mux to ch6 output Y5
+    CTRL_C1_ON;
+    CTRL_C2_OFF;
+    CTRL_C3_ON;
+
+    // enable timers for channel 6
+    TIM_4_Init_Test_Santiago();    //ch6 on ver 3.2
+
+    // TIM_4_Update_Ch1_Test_Santiago(100);    // 10% duty
+    TIM_4_Update_Ch1_Test_Santiago(0);    // 0% duty    
+    
+    // while (1);
+
+    // adc in 8MHz 2 channels
+    AdcConfig ();
+    DMAConfig();
+    DMA1_Channel1->CCR |= DMA_CCR1_EN;
+    AdcStart ();
+
+    // Start the pid controller
+    PID_Flush_Errors (&pid);
+    pid.kp = 40;
+    pid.ki = 8;
+    pid.kd = 0;
+    pid.setpoint = 2162;
+    short d = 0;
+    
+    // V_Sense_48V in channel 14
+    
+    while (1)
+    {
+        if (sequence_ready)
+        {
+            sequence_ready_reset;
+            if (CTRL_FAN)
+                CTRL_FAN_OFF;
+            else
+                CTRL_FAN_ON;
+
+            pid.sample = V_Sense_48V;
+            d = PID(&pid);
+
+            if (d < 0)
+            {
+                d = 0;
+                pid.last_d = 0;
+            }
+
+            if (d > 450)
+            {
+                d = 450;
+                pid.last_d = 450;
+            }
+            
+            TIM_4_Update_Ch1_Test_Santiago(d);
+        }
+    }
+
+    
+    
+}
 //--- end of file ---//
