@@ -182,7 +182,9 @@ void PWM_Map_Post_Filter (unsigned short dmx_filtered, unsigned char * pwm_ena, 
 
 #ifdef HARDWARE_VERSION_3_2
     // for ver 3.2 Toff = 1.8us Rsense = 0.1 mux = 74hc4051 (20% reduction)
-    dmx_ch = dmx_ch * 206;
+    // dmx_ch = dmx_ch * 206;    // red 2.4A green 2.26A
+    // dmx_ch = dmx_ch * 182;    // red 2.14A green 2A
+    dmx_ch = dmx_ch * 171;    // red 2A green 1.9A    
     dmx_ch >>= 8;
     // end of for ver 3.2 Toff = 1.8us Rsense = 0.1 mux = 74hc4051
 #endif

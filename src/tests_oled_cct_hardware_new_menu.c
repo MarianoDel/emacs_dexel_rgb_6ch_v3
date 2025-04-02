@@ -12,6 +12,8 @@
 #include "screen.h"
 #include "parameters.h"
 #include "switches_answers.h"
+#include "ssd1306_display.h"
+
 
 #include "cct_main_menu.h"
 
@@ -46,7 +48,6 @@ unsigned int timer_standby = 0;
 
 // Teting Functions ------------------------------------------------------------
 void Test_CCT_Hardware_New_Menu (void);
-
 
 
 // Testing Function loop -------------------------------------------------------
@@ -139,6 +140,5 @@ void Test_CCT_Hardware_New_Menu (void)
 
 
 // Mocked Functions Needed for the tests ---------------------------------------
-
 
 //--- end of file ---//

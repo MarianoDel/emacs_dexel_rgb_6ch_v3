@@ -12,6 +12,7 @@
 #include "parameters.h"
 #include "switches_answers.h"
 // #include "options_menu.h"
+#include "ssd1306_display.h"
 
 #include "cct_dmx_menu.h"
 
@@ -218,7 +219,7 @@ void Test_Cct_DMX_Address_Change (void)
             cct_dmx_addr_st.actions = encoder_actions;
             // cct_dmx_addr_st.timer = (unsigned short *) &timer_address;
             cct_dmx_addr_st.timer = (unsigned short *) &timer_standby;            
-            cct_dmx_addr_st.address_show = &cct_dmx_address_show;
+            cct_dmx_addr_st.address_show = (unsigned char *) &cct_dmx_address_show;
             resp = DMXModeMenu_ChangeAddress(&cct_dmx_addr_st);
 
             // clean encoders actions

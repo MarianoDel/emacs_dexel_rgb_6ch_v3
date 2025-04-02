@@ -41,7 +41,7 @@
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
 //------ Configuration for CCT-Mode -----
-#ifdef SOFTWARE_VERSION_2_0
+#if (defined SOFTWARE_VERSION_2_1) || (defined SOFTWARE_VERSION_2_0)
 #define DMX_AND_CCT_MODE
 // #define DMX_ONLY_MODE
 #else    // for versions from 1.4 to 1.0
